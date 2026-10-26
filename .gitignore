@@ -8,6 +8,7 @@ artifacts/
 # IDE and per-user state
 .vs/
 .idea/
+.aura/
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json

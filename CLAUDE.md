@@ -45,23 +45,26 @@ dotnet run --project src/PoFightJudge.Api       # https://localhost:5001
 
 - **master only.** All work goes on `master`. Another branch happens only when it is asked for by name.
 - **Restart and check.** After a code change, restart the app and confirm it came back up before saying it works.
-- **Overview first.** Check for a `DOCS` folder in the root for the overall summary of the project; until there
-  is one, it lives in `README.md` and this file. When a dependency, a configuration key or a major endpoint
-  changes, update `DOCS/` and `README.md` in the same commit.
+- **Overview first.** The overall summary of the project lives in `README.md` and this file. `docs/` is not it —
+  it holds only `screenshots/`, the test pictures, which git ignores. When a dependency, a configuration key or a
+  major endpoint changes, update `README.md` in the same commit, and put anything longer than a paragraph in
+  `docs/`.
 - **No `dotnet user-secrets`.** Local settings go in `appsettings*.json`; anything secret goes in Azure Key Vault.
 - **Never push.** `git push` happens only when the words **`git sync`** are typed — never off my own bat,
   and never because it seemed implied. On a `git sync`: commit with a short, non-technical subject in American slang, so
   it reads like a person wrote it, then push.
 - **TL;DR.** Any answer over 100 words ends with a 20-word summary.
 - **Run the tests the change touched**, not the whole suite — and none at all when the change is simple.
-- **Warnings are errors.** A compile warning gets fixed, not left.
+- **Warnings are errors.** A compile warning gets fixed, not left. `Directory.Build.props` turns them into
+  errors; only `CS1591` and `NU1900` are let through.
 - **Say when a lot goes.** If a prompt removes more than 100 lines of code overall, mention it.
 - **UI changes get a before/after.** Take annotated screenshots of the old and the new UI with the changes
   marked, put them in `SCREENSHOTS/YYMMDD-feature-name.html`, and give its full path.
 - **3-tier diff summary.** A code change over 20 lines ends with three one-line summaries: *Toddler* (the
   simple idea), *Child* (what it does), *Adult* (the technical/architectural change).
-- **Direction questions.** After a code change over 100 lines, end with three optional, high-level questions
-  about where the app's purpose is heading — the kind whose answer could start more changes.
+- **Direction questions.** After a code change over 100 lines, and only when the prompt asked no questions of
+  its own, end with exactly three high-level questions about where the app's purpose is heading — the kind whose
+  answer could start more changes.
 - **Build version.** Every page shows the build as `vYYMMDD` in the bottom-right corner. The client build stamps
   it (`AssemblyMetadata("BuildDate")`, the UTC build day); `BuildStamp.Version` reads it. Never typed by hand.
 - **Screenshots.** After any change that affects what a page shows, run the screenshot runner for the affected

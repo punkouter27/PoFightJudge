@@ -7,8 +7,12 @@ run it. This file is the operating detail that does not live there.
 
 - One branch: `master`. Local git identity `punkouter26 <punkouter26@gmail.com>`.
 - **One commit per task**, subject `T47: history, leaderboards and a persona's record`. The prefix is
-  `T\d\d[a-z]?`, `docs`, `chore` or `fix`. Run `dotnet format` and the Unit tier before committing.
-- Nothing is pushed without being asked for. There is no remote configured.
+  `T\d{2,}[a-z]?`, `docs`, `chore` or `fix` — the numbers have gone past two digits, so `T178` counts. Run
+  `dotnet format` and the Unit tier before committing.
+- The Husky hooks that used to police the subject are gone (removed in `6beaa79`), so the prefix is on the
+  honour system: read it back with `git log --oneline -1` before a push.
+- Nothing is pushed without being asked for. The remote is `origin`,
+  `https://github.com/punkouter27/PoFightJudge.git`.
 
 ## Environments
 
@@ -123,7 +127,7 @@ Each was a deliberate decision made while building; the commit that made it says
 | T68 | a WebGPU pass on the verdict, WebGL2 as the fallback | WebGL2 only (`PoGfx.probe()` still reports WebGPU) | a second rendering backend for one cosmetic pass, which no tier here can exercise — headless Chromium has no `navigator.gpu` — is untested code for an effect nobody could tell apart |
 | T97 | the voice slice only | plus `TtsSettings.FishReferenceId` out of the profile editor, the validator and the seed | a persona field whose only consumer was the provider being deleted is not a field any more |
 | T98 | the flags | plus `appsettings.Development.json`'s duplicate `PoFightJudge` key | the Ollama block that T86 added was a second key in the same object, and removing it fixed a silent shadow |
-| T100 | the pages and their endpoints | plus `.husky/commit-msg` | the hook took two-digit task numbers only, so T100 could not be committed under the rule the hook exists to enforce |
+| T100 | the pages and their endpoints | plus `.husky/commit-msg` | the hook took two-digit task numbers only, so T100 could not be committed under the rule the hook exists to enforce; the hooks were removed again in `6beaa79`, so the rule is kept by hand now |
 | T101 | trim the suites | 62 Unit files deleted outright | at one test per decision most of those files had no decision left that another test did not already make |
 | T110–T116 | ship the seven visual effects end to end, with full Unit tests on every commit, then run E2EUI | ship T110–T116 one task one commit each, Unit tier + `dotnet format --verify-no-changes` green on every commit; E2EUI (StageEffectTests additions) deferred to the next time `./SCRIPTS/setup.ps1` brings Azurite + the host up | the user asked for all in one session without bringing the dev env online, and Unit + format are the contracts that already run on every commit; E2EUI's job is to prove the shader/canvas paths, which the existing StageEffectTests pattern covers once the host is reachable |
 | T120 | the crosstalk glitch only | plus `EffectCatalogueTests` | the pair test between `Sfx`/`Shaders` and the JS went in T101, and T119–T138 add nine voices and three shaders to the two lists |
@@ -185,9 +189,10 @@ the judge has no order-bias correction: there was no bias to correct.
 
 - **master only.** All work goes on `master`. Another branch happens only when it is asked for by name.
 - **Restart and check.** After a code change, restart the app and confirm it came back up before saying it works.
-- **Overview first.** Check for a `DOCS` folder in the root for the overall summary of the project; until there
-  is one, it lives in `README.md` and this file. When a dependency, a configuration key or a major endpoint
-  changes, update `DOCS/` and `README.md` in the same commit.
+- **Overview first.** The overall summary of the project lives in `README.md` and this file. `docs/` is not it —
+  it holds only `screenshots/`, the test pictures, which git ignores. When a dependency, a configuration key or a
+  major endpoint changes, update `README.md` in the same commit, and put anything longer than a paragraph in
+  `docs/`.
 - **No `dotnet user-secrets`.** Local settings go in `appsettings*.json`; anything secret goes in Azure Key Vault.
 - **Never push.** `git push` happens only when the words **`git sync`** are typed — never off my own bat,
   and never because it seemed implied. On a `git sync`: commit with a short, non-technical subject in American slang, so
@@ -195,13 +200,15 @@ the judge has no order-bias correction: there was no bias to correct.
 - **TL;DR.** Any answer over 100 words ends with a 20-word summary.
 - **Run the tests the change touched**, not the whole suite — and none at all when the change is simple.
 - **Do not hand over commands to type.** If it can be run here, run it — CLI or web GUI.
-- **Warnings are errors.** A compile warning gets fixed, not left.
+- **Warnings are errors.** A compile warning gets fixed, not left. `Directory.Build.props` turns them into
+  errors; only `CS1591` and `NU1900` are let through.
 - **Say when a lot goes.** If a prompt removes more than 100 lines of code overall, mention it.
 - **UI changes get a before/after.** Take annotated screenshots of the old and the new UI with the changes
   marked, put them in `SCREENSHOTS/YYMMDD-feature-name.html`, and give its full path.
 - **3-tier diff summary.** A code change over 20 lines ends with three one-line summaries: *Toddler* (the
   simple idea), *Child* (what it does), *Adult* (the technical/architectural change).
-- **Direction questions.** After a code change over 100 lines, end with three optional, high-level questions
-  about where the app's purpose is heading — the kind whose answer could start more changes.
+- **Direction questions.** After a code change over 100 lines, and only when the prompt asked no questions of
+  its own, end with exactly three high-level questions about where the app's purpose is heading — the kind whose
+  answer could start more changes.
 - **Build version.** Every page shows the build as `vYYMMDD` in the bottom-right corner. The client build stamps
   it (`AssemblyMetadata("BuildDate")`, the UTC build day); `BuildStamp.Version` reads it. Never typed by hand.
