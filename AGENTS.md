@@ -189,7 +189,8 @@ the judge has no order-bias correction: there was no bias to correct.
 
 - **master only.** All work goes on `master`. Another branch happens only when it is asked for by name.
 - **Restart and check.** After a code change, restart the app and confirm it came back up before saying it works.
-- **Overview first.** The overall summary of the project lives in `README.md` and this file. `docs/` is not it —
+- **Overview first.** Read `README.md` (and `docs/`) before architectural work. The overall summary lives in
+  `README.md` and this file. `docs/` is not it —
   it holds only `screenshots/`, the test pictures, which git ignores. When a dependency, a configuration key or a
   major endpoint changes, update `README.md` in the same commit, and put anything longer than a paragraph in
   `docs/`.
@@ -197,7 +198,7 @@ the judge has no order-bias correction: there was no bias to correct.
 - **Never push.** `git push` happens only when the words **`git sync`** are typed — never off my own bat,
   and never because it seemed implied. On a `git sync`: commit with a short, non-technical subject in American slang, so
   it reads like a person wrote it, then push.
-- **TL;DR.** Any answer over 100 words ends with a 20-word summary.
+- **TL;DR.** Any answer over 100 words ends with a summary of at most 20 words.
 - **Run the tests the change touched**, not the whole suite — and none at all when the change is simple.
 - **Do not hand over commands to type.** If it can be run here, run it — CLI or web GUI.
 - **Warnings are errors.** A compile warning gets fixed, not left. `Directory.Build.props` turns them into
@@ -205,7 +206,7 @@ the judge has no order-bias correction: there was no bias to correct.
 - **Say when a lot goes.** If a prompt removes more than 100 lines of code overall, mention it.
 - **UI changes get a before/after.** Take annotated screenshots of the old and the new UI with the changes
   marked, put them in `SCREENSHOTS/YYMMDD-feature-name.html`, and give its full path.
-- **3-tier diff summary.** A code change over 20 lines ends with three one-line summaries: *Toddler* (the
+- **3-tier diff summary.** A code change over 20 lines ends with three summaries, strictly one sentence each: *Toddler* (the
   simple idea), *Child* (what it does), *Adult* (the technical/architectural change).
 - **Direction questions.** After a code change over 100 lines, and only when the prompt asked no questions of
   its own, end with exactly three high-level questions about where the app's purpose is heading — the kind whose
