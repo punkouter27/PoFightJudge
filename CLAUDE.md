@@ -51,16 +51,16 @@ dotnet run --project src/PoFightJudge.Api       # https://localhost:5001
   major endpoint changes, update `README.md` in the same commit, and put anything longer than a paragraph in
   `docs/`.
 - **No `dotnet user-secrets`.** Local settings go in `appsettings*.json`; anything secret goes in Azure Key Vault.
-- **Never push.** `git push` happens only when the words **`git sync`** are typed — never off my own bat,
-  and never because it seemed implied. On a `git sync`: commit with a short, non-technical subject in American slang, so
-  it reads like a person wrote it, then push.
+- **Push only on "commit and sync".** When the words **`commit and sync`** (or **`git sync`**) are typed, commit
+  everything with a short, non-technical subject in American slang, so it reads like a person wrote it, then push
+  without asking. Any other push is never done on my own initiative, and never because it seemed implied.
 - **TL;DR.** Any answer over 100 words ends with a summary of at most 20 words.
-- **Run the tests the change touched**, not the whole suite — and none at all when the change is simple.
+- **Run the tests the change touched**, and none at all when the change is simple. Never the whole suite.
 - **Warnings are errors.** A compile warning gets fixed, not left. `Directory.Build.props` turns them into
   errors; only `CS1591` and `NU1900` are let through.
 - **Say when a lot goes.** If a prompt removes more than 100 lines of code overall, mention it.
 - **UI changes get a before/after.** Take annotated screenshots of the old and the new UI with the changes
-  marked, put them in `SCREENSHOTS/YYMMDD-feature-name.html`, and give its full path.
+  marked, put them in `SCREENSHOTS/YYMMDD-feature-name.html`, and give its absolute path.
 - **3-tier diff summary.** A code change over 20 lines ends with three summaries, strictly one sentence each: *Toddler* (the
   simple idea), *Child* (what it does), *Adult* (the technical/architectural change).
 - **Direction questions.** After a code change over 100 lines, and only when the prompt asked no questions of
@@ -81,7 +81,7 @@ dotnet run --project src/PoFightJudge.Api       # https://localhost:5001
 ## Ask before
 
 Any `az` write (Key Vault, app registration, deployment, role assignment) · creating the GitHub repository or its
-OIDC credential · **every** `git push` · deleting everybody's matches or profiles · moving off the F1 plan or
+OIDC credential · **every** `git push` other than a `commit and sync` · deleting everybody's matches or profiles · moving off the F1 plan or
 changing a model tier · adding a NuGet package that is not already in `Directory.Packages.props`.
 
 ## Things that will bite
