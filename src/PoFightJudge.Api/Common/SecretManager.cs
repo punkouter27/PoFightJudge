@@ -5,7 +5,7 @@ using PoFightJudge.Shared.Configuration;
 namespace PoFightJudge.Api.Common;
 
 /// <summary>
-/// Loads only <c>PoFightJudge--*</c> secrets from the shared vault (<c>kv-poshared</c> also holds the sibling
+/// Loads only <c>PoFightJudge--*</c> secrets from the shared vault (<c>kv-poshared2</c> also holds the sibling
 /// apps' secrets) and maps them under <c>PoFightJudge:</c>, so <c>PoFightJudge--AzureAd--ClientId</c> becomes
 /// <c>PoFightJudge:AzureAd:ClientId</c>.
 /// </summary>

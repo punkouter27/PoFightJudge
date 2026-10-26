@@ -143,8 +143,8 @@ Each was a deliberate decision made while building; the commit that made it says
 ## Still outstanding
 
 - **The first release went out on 2026-09-08.** `infra/main.bicep` had been deployed by hand (resource group
-  `PoFightJudge`, `app-pofightjudge` on `asp-pofightjudge-f1`, `stpofightjudge`, the storage roles and the vault
-  policy), the six `PoFightJudge--*` secrets seeded into `kv-poshared`, and the site's redirect URI added to the
+  `PoFightJudge`, `app-pofightjudge2` on `asp-pofightjudge-f1`, `stpofightjudge2`, the storage roles and the vault
+  policy), the six `PoFightJudge--*` secrets seeded into `kv-poshared2`, and the site's redirect URI added to the
   `PoArgueJudge` Entra app the client signs in with. The GitHub half followed the same day: the private repository,
   its three `AZURE_*` variables (client id `018bf14a-14f7-4c38-8547-2ebfb12b72e7`), the `production` environment,
   and `deploy.yml`. Two things the plan had not foreseen: GitHub now stamps owner and repository ids into the OIDC

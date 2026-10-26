@@ -22,8 +22,8 @@ permissions:
   contents: read
 
 env:
-  AZURE_WEBAPP_NAME: app-pofightjudge
-  AZURE_WEBAPP_URL: https://app-pofightjudge.azurewebsites.net
+  AZURE_WEBAPP_NAME: app-pofightjudge2
+  AZURE_WEBAPP_URL: https://app-pofightjudge2.azurewebsites.net
 
 jobs:
   build:

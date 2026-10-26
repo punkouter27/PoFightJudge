@@ -14,10 +14,10 @@ param webAppLocation string = 'westus2'
 // other Po* app uses.
 var resourceGroupName = 'PoFightJudge'
 var sharedResourceGroupName = 'PoShared'
-var storageAccountName = 'stpofightjudge'
-var webAppName = 'app-pofightjudge'
+var storageAccountName = 'stpofightjudge2'
+var webAppName = 'app-pofightjudge2'
 var appServicePlanName = 'asp-pofightjudge-f1'
-var keyVaultName = 'kv-poshared'
+var keyVaultName = 'kv-poshared2'
 var appInsightsName = 'poappideinsights8f9c9a4e'
 
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {

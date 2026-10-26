@@ -9,11 +9,11 @@
       1. Prerequisites (.NET 10 SDK, Docker Desktop, Azure CLI) — installed via winget when missing
       2. The ASP.NET Core development certificate, which Azurite needs before it will speak HTTPS
       3. Azurite (OAuth + HTTPS, ports 12000/12002) and Seq (5341) via docker compose
-      4. az login, and a check that the PoFightJudge--* secrets exist in kv-poshared — names only, never values
+      4. az login, and a check that the PoFightJudge--* secrets exist in kv-poshared2 — names only, never values
       5. Restore, build (Release), Playwright's Chromium, and the whole test suite
       6. -Run: starts the API
 
-    Nothing here writes to Azure. A missing secret is set in kv-poshared by hand.
+    Nothing here writes to Azure. A missing secret is set in kv-poshared2 by hand.
 
 .PARAMETER Run
     Start the API when setup finishes.
@@ -98,16 +98,16 @@ $required = @(
     'PoFightJudge--AzureAd--ClientId'
 )
 
-$names = az keyvault secret list --vault-name kv-poshared --query '[].name' -o tsv 2>$null
+$names = az keyvault secret list --vault-name kv-poshared2 --query '[].name' -o tsv 2>$null
 if (-not $names) {
-    Write-Todo 'kv-poshared could not be read. The app still runs — without a Gemini key it uses deterministic fakes and says so.'
+    Write-Todo 'kv-poshared2 could not be read. The app still runs — without a Gemini key it uses deterministic fakes and says so.'
 } else {
     foreach ($name in $required) {
         if ($names -contains $name) {
             Write-Ok "secret $name"
         } else {
             $key = $name.Replace('--', ':')
-            Write-Todo "secret $name ($key) is missing from kv-poshared. Set it there by hand."
+            Write-Todo "secret $name ($key) is missing from kv-poshared2. Set it there by hand."
         }
     }
 }

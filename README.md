@@ -43,7 +43,7 @@ Or by hand:
 
 ```powershell
 ./SCRIPTS/azurite.ps1                        # Azurite (OAuth + HTTPS on 12000/12002) + Seq (5341)
-az login                                     # DefaultAzureCredential reads kv-poshared and Storage with this
+az login                                     # DefaultAzureCredential reads kv-poshared2 and Storage with this
 dotnet run --project src/PoFightJudge.Api  # https://localhost:5001
 ```
 
@@ -95,7 +95,7 @@ committed.
 one caller may spend per UTC day. Past it, every rate-limited AI route answers 429 until midnight UTC, and `/health`
 shows the caller where they stand. The count is in memory, so a restart forgives the day.
 
-The three secrets (`GeminiApiKey`, `AzureAd--TenantId`, `AzureAd--ClientId`) are set in `kv-poshared` by hand;
+The three secrets (`GeminiApiKey`, `AzureAd--TenantId`, `AzureAd--ClientId`) are set in `kv-poshared2` by hand;
 `./SCRIPTS/setup.ps1` checks the names are there and never reads a value.
 
 ## Deploy

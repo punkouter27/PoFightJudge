@@ -101,7 +101,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
 }
 
 // ─────────────────────────────────────────────
-// Web App — system-assigned identity; secrets from kv-poshared via DefaultAzureCredential.
+// Web App — system-assigned identity; secrets from kv-poshared2 via DefaultAzureCredential.
 // WebSockets must be on for the SignalR audio hub; the Gemini Live socket is opened server-side and does not
 // care. Always On is not available on F1 (ARM rejects the write if set), so it follows the SKU.
 // ─────────────────────────────────────────────
@@ -170,7 +170,7 @@ module storageRoles 'storage-role.bicep' = {
   }
 }
 
-// Secret get/list on kv-poshared; without it the host cannot load PoFightJudge--* and comes up degraded.
+// Secret get/list on kv-poshared2; without it the host cannot load PoFightJudge--* and comes up degraded.
 module keyVaultAccess 'keyvault-access.bicep' = {
   name: 'keyvault-access'
   scope: resourceGroup(sharedResourceGroupName)
