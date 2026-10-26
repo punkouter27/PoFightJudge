@@ -1,0 +1,18 @@
+.calm {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: var(--po-space-3);
+  align-items: center;
+  padding: var(--po-space-2) var(--po-space-3);
+  border-radius: var(--po-radius-md);
+}
+
+.who { font-size: var(--po-text-sm); transition: color var(--po-dur-slow) var(--po-ease); }
+
+.who.p2 { text-align: right; }
+
+.temper--calm { color: var(--po-muted); }
+
+.temper--warm { color: var(--po-accent); }
+
+.temper--heated { color: var(--po-danger); font-weight: 700; }

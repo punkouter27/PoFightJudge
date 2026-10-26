@@ -1,0 +1,61 @@
+@* How hot each of them is running: the share of their own talking that was loud. Fed by a second FloorClock that
+   counts loud seconds the way the first counts voiced ones. *@
+<section class="calm po-glass" aria-label="How heated it is">
+    <span class="who p1 @Class(Temper1)" role="status">@Player1 · @Label(Temper1)</span>
+    <span class="po-eyebrow">Temperature</span>
+    <span class="who p2 @Class(Temper2)" role="status">@Label(Temper2) · @Player2</span>
+</section>
+
+@code {
+    public enum Temper
+    {
+        Calm,
+        Warm,
+        Heated,
+    }
+
+    /// <summary>Below this much talk there is too little to read a temper from.</summary>
+    public const double MinTalkSeconds = 3;
+
+    // Tuning knobs: the microphone runs automatic gain, so "loud" is relative, and these were set by ear, not measured.
+    private const double WarmShare = 0.15;
+    private const double HeatedShare = 0.35;
+
+    [Parameter] public string Player1 { get; set; } = "Fighter one";
+
+    [Parameter] public string Player2 { get; set; } = "Fighter two";
+
+    /// <summary>Seconds each spent talking, and how many of those were loud (see <see cref="FloorClock"/>).</summary>
+    [Parameter] public FloorClock? Talk { get; set; }
+
+    [Parameter] public FloorClock? Loud { get; set; }
+
+    private Temper Temper1 => Read(Loud?.One ?? 0, Talk?.One ?? 0);
+
+    private Temper Temper2 => Read(Loud?.Two ?? 0, Talk?.Two ?? 0);
+
+    public static Temper Read(double loudSeconds, double talkSeconds)
+    {
+        if (talkSeconds < MinTalkSeconds)
+        {
+            return Temper.Calm;
+        }
+
+        var share = loudSeconds / talkSeconds;
+        return share >= HeatedShare ? Temper.Heated : share >= WarmShare ? Temper.Warm : Temper.Calm;
+    }
+
+    private static string Class(Temper temper) => temper switch
+    {
+        Temper.Heated => "temper--heated",
+        Temper.Warm => "temper--warm",
+        _ => "temper--calm",
+    };
+
+    private static string Label(Temper temper) => temper switch
+    {
+        Temper.Heated => "🔥 Heated",
+        Temper.Warm => "Warm",
+        _ => "Calm",
+    };
+}

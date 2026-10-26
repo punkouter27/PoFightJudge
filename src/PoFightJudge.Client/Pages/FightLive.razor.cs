@@ -32,6 +32,9 @@ public sealed partial class FightLive : ComponentBase, ILiveFightListener, IAsyn
     /// <summary>Who has done the talking so far, for the tug-of-war under the scoreboard.</summary>
     private readonly FloorClock _floor = new();
 
+    /// <summary>The same clock fed loud seconds instead of voiced ones, for the calm meter.</summary>
+    private readonly FloorClock _loud = new();
+
     private readonly CancellationTokenSource _leaving = new();
 
     /// <summary>Their records and their series, for the tale of the tape before the bell.</summary>
@@ -234,18 +237,22 @@ public sealed partial class FightLive : ComponentBase, ILiveFightListener, IAsyn
 
         await AnnounceAsync(snapshot);
         await PaintAsync(snapshot);
-        if (await VoicedAsync() is { } voiced)
+        if (await VoicedAsync() is { } heard)
         {
-            _floor.Tick(snapshot.Speaking, _hostSpeaking, voiced);
+            _floor.Tick(snapshot.Speaking, _hostSpeaking, heard.Voiced);
+            _loud.Tick(snapshot.Speaking, _hostSpeaking, heard.Loud);
         }
     });
 
-    /// <summary>Seconds of voice the microphone has heard, counted by the browser. Null when it will not say.</summary>
-    private async Task<double?> VoicedAsync()
+    /// <summary>What <c>PoLive.voiced</c> answers.</summary>
+    private sealed record Heard(double Voiced, double Loud);
+
+    /// <summary>Seconds of voice the microphone has heard, and how many were loud, counted by the browser. Null when it will not say.</summary>
+    private async Task<Heard?> VoicedAsync()
     {
         try
         {
-            return await Js.InvokeAsync<double>("PoLive.voiced");
+            return await Js.InvokeAsync<Heard>("PoLive.voiced");
         }
         catch (Exception ex) when (ex is JSException or InvalidOperationException)
         {

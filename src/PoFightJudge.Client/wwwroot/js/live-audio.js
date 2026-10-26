@@ -27,6 +27,11 @@ window.PoLive = (function () {
 
   /** Where a frame counts as voiced, on the meter's curve: above the hiss of a quiet room, below quiet speech. */
   const VOICED = 0.15;
+
+  // Seconds of it that were loud: raised voices, not ordinary speech. The calm meter divides this by each fighter's
+  // talk time. A tuning knob — the microphone runs automatic gain, so this was set by ear, not measured.
+  let loud = 0;
+  const LOUD = 0.75;
   let hostLevel = 0;
   let meterTimer = 0;
   let micAnalyser = null;
@@ -132,6 +137,7 @@ window.PoLive = (function () {
     try {
       dotnet = ref;
       voiced = 0;
+      loud = 0;
       await ensureContext();
 
       // The chosen microphone, when there is one. `exact` on purpose: silently falling back to the default is how
@@ -165,8 +171,13 @@ window.PoLive = (function () {
       worklet = new AudioWorkletNode(ctx, "pcm-capture", { numberOfInputs: 1, numberOfOutputs: 0 });
       worklet.port.onmessage = function (e) {
         micLevel = e.data.rms;
-        if (Math.min(1, Math.pow(micLevel * 3.2, 0.7)) > VOICED) {
-          voiced += e.data.pcm.byteLength / 2 / 16000;
+        const level = Math.min(1, Math.pow(micLevel * 3.2, 0.7));
+        const seconds = e.data.pcm.byteLength / 2 / 16000;
+        if (level > VOICED) {
+          voiced += seconds;
+        }
+        if (level > LOUD) {
+          loud += seconds;
         }
         if (dotnet) {
           // A dropped frame is better than a stalled microphone: the next one is 100 ms away.
@@ -286,7 +297,7 @@ window.PoLive = (function () {
     /** How loud the room is, on the same curve as the meter: what the live fluid pours with while a fighter talks. */
     micLevel: function () { return Math.min(1, Math.pow(micLevel * 3.2, 0.7)); },
 
-    /** Seconds of voice heard since capture started. */
-    voiced: function () { return voiced; },
+    /** Seconds of voice heard since capture started, and how many of them were loud: one call a snapshot. */
+    voiced: function () { return { voiced: voiced, loud: loud }; },
   };
 })();
