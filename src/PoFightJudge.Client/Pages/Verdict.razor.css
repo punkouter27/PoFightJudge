@@ -53,6 +53,9 @@
 
 ::deep .claims .rz-cell-data { overflow-wrap: anywhere; white-space: normal; }
 
+/* One source a line: a title can be a whole headline. */
+::deep .claims .source { display: block; font-size: var(--po-text-sm); }
+
 ::deep .problem { margin: 0; }
 
 .again { display: flex; gap: var(--po-space-2); flex-wrap: wrap; align-items: center; }

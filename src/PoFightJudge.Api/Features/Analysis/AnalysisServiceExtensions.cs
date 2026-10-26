@@ -28,6 +28,9 @@ public static class AnalysisServiceExtensions
             services.AddSingleton<IGeminiFilesClient, GeminiFilesClient>();
             services.AddSingleton<IGeminiTranscribeClient, GeminiTranscribeClient>();
             services.AddSingleton<IGeminiJudgeClient, GeminiJudgeClient>();
+
+            // Real only: the stand-in judge makes no claims, so there is nothing for a stand-in checker to check.
+            services.AddSingleton<IClaimChecker, GeminiClaimChecker>();
         }
 
         services.AddSingleton<AnalysisPipeline>();

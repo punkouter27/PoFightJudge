@@ -28,7 +28,8 @@ public sealed partial class AnalysisPipeline(
     TimeProvider clock,
     IOptions<AnalysisOptions> options,
     ILogger<AnalysisPipeline> logger,
-    IHubContext<LiveHub>? hub = null) : BackgroundService, IAnalysisIntake
+    IHubContext<LiveHub>? hub = null,
+    IClaimChecker? claims = null) : BackgroundService, IAnalysisIntake
 {
     public const string UserFacingFailure = "The analysis could not be completed. Try again in a moment.";
 
@@ -169,6 +170,11 @@ public sealed partial class AnalysisPipeline(
                 ct);
         }
 
+        if (ruled && claims is not null)
+        {
+            output = await CheckClaimsAsync(claims, match.Topic, output, matchId, ct);
+        }
+
         var overall = new OverallVerdictDto(
             ToSpeaker(output.Overall.WinnerLogic),
             ToSpeaker(output.Overall.WinnerCorrect),
@@ -221,6 +227,38 @@ public sealed partial class AnalysisPipeline(
             await personas.WriteAsync(match, report, ct);
         }
     }
+
+    /// <summary>
+    /// Both fighters' claims, re-read against a web search in one call. A bonus on top of the ruling, never a reason
+    /// to lose it: if the search fails, the judge's own verdicts stand.
+    /// </summary>
+    private async Task<JudgeOutputDto> CheckClaimsAsync(IClaimChecker checker, string topic, JudgeOutputDto output, MatchId matchId, CancellationToken ct)
+    {
+        var one = output.Player1.Claims;
+        var two = output.Player2.Claims;
+        if (one.Count + two.Count == 0)
+        {
+            return output;
+        }
+
+        try
+        {
+            var checkedClaims = await checker.CheckAsync(topic, [.. one, .. two], ct);
+            return output with
+            {
+                Player1 = output.Player1 with { Claims = [.. checkedClaims.Take(one.Count)] },
+                Player2 = output.Player2 with { Claims = [.. checkedClaims.Skip(one.Count)] },
+            };
+        }
+        catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException or TaskCanceledException && !ct.IsCancellationRequested)
+        {
+            LogFactCheckFailed(logger, matchId.Value, ex);
+            return output;
+        }
+    }
+
+    [LoggerMessage(EventId = 5009, Level = LogLevel.Warning, Message = "Analysis {MatchId}: the fact check failed; the judge's verdicts stand")]
+    private static partial void LogFactCheckFailed(ILogger logger, string matchId, Exception ex);
 
     /// <summary>
     /// One row per fighter, keyed on the tag the fight was started under, each carrying the snapshot their style

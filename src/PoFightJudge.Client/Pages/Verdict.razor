@@ -132,8 +132,19 @@
                                             <RadzenDataGrid Data="@report.Assessment.Claims" AllowPaging="false" AllowSorting="true" class="claims" TItem="ClaimDto">
                                                 <Columns>
                                                     <RadzenDataGridColumn TItem="ClaimDto" Property="@nameof(ClaimDto.Claim)" Title="Claim" />
-                                                    <RadzenDataGridColumn TItem="ClaimDto" Property="@nameof(ClaimDto.Verdict)" Title="True?" Width="5.5rem" />
+                                                    <RadzenDataGridColumn TItem="ClaimDto" Property="@nameof(ClaimDto.Verdict)" Title="True?" Width="7.5rem">
+                                                        <Template Context="claim"><span class="mark" aria-hidden="true">@Mark(claim.Verdict)</span> @claim.Verdict</Template>
+                                                    </RadzenDataGridColumn>
                                                     <RadzenDataGridColumn TItem="ClaimDto" Property="@nameof(ClaimDto.Note)" Title="Why" />
+                                                    @* Where the web search looked. Empty on a report from before the check, or one the search failed on. *@
+                                                    <RadzenDataGridColumn TItem="ClaimDto" Title="Sources" Sortable="false" Width="9rem">
+                                                        <Template Context="claim">
+                                                            @foreach (var source in claim.Sources ?? [])
+                                                            {
+                                                                <RadzenLink Path="@source.Url" Text="@source.Title" Target="_blank" class="source" />
+                                                            }
+                                                        </Template>
+                                                    </RadzenDataGridColumn>
                                                 </Columns>
                                             </RadzenDataGrid>
 

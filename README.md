@@ -25,6 +25,12 @@ the logo leads back to it, and the end of a match links to History and the Leade
 afterwards the recording is transcribed, diarised, measured and judged: claims, fallacies, traits, thirty
 measurements each, and the moments worth listening to again.
 
+**Fact check.** After the judge rules on a fight, every claim it found goes to one Gemini call with Google Search
+grounding. Each claim comes back True, False or Unverifiable, with up to three source links, and the verdict's "What
+they claimed" tab shows them. Each search is billed (5,000 a month free across Gemini 3), so this runs once per
+fight and never in WATCH. If the check fails, the judge's own verdicts stand. During the fight, a **Temperature** row
+shows how much of each person's talking was loud: Calm, Warm or 🔥 Heated.
+
 A merge of [PoMarriedLife](https://github.com/punkouter26/PoMarriedLife) and
 [PoArgueJudge](https://github.com/punkouter26/PoArgueJudge) into one fresh solution.
 

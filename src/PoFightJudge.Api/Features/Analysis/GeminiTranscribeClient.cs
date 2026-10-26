@@ -49,13 +49,7 @@ public sealed class GeminiTranscribeClient(IHttpClientFactory factory, GeminiMod
     {
         var words = new List<TranscriptWord>();
         var text = new StringBuilder();
-        var contents = (root?["steps"] as JsonArray)?.OfType<JsonObject>()
-                .Where(s => s["type"]?.GetValue<string>() is null or "model_output")
-                .SelectMany(s => (s["content"] as JsonArray)?.OfType<JsonObject>() ?? [])
-            ?? (root?["outputs"] as JsonArray)?.OfType<JsonObject>()
-            ?? [];
-
-        foreach (var content in contents)
+        foreach (var content in GeminiHttp.OutputContents(root))
         {
             if (content["text"] is { } spoken)
             {

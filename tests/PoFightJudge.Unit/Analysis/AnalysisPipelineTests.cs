@@ -64,14 +64,15 @@ public sealed class AnalysisPipelineTests : IDisposable
 
     public void Dispose() => _services.Dispose();
 
-    private AnalysisPipeline Pipeline(IGeminiTranscribeClient? transcriber = null, IGeminiFilesClient? files = null, AnalysisOptions? options = null) => new(
+    private AnalysisPipeline Pipeline(IGeminiTranscribeClient? transcriber = null, IGeminiFilesClient? files = null, AnalysisOptions? options = null, IClaimChecker? claims = null) => new(
         _services.GetRequiredService<IServiceScopeFactory>(),
         files ?? new FakeAnalysisClients.Files(),
         transcriber ?? new FakeAnalysisClients.Transcriber(),
         _judge,
         _clock,
         Options.Create(options ?? _options),
-        NullLogger<AnalysisPipeline>.Instance);
+        NullLogger<AnalysisPipeline>.Instance,
+        claims: claims);
 
     /// <summary>A finished fight with a recording, ready to be read.</summary>
     private async Task<MatchDto> RecordedAsync(string one = "AL", string two = "SM", bool withAudio = true)
@@ -150,6 +151,42 @@ public sealed class AnalysisPipelineTests : IDisposable
         // Somebody else's fight is not readable.
         var process = async () => await pipeline.ProcessAsync("user-2", match.Id, CancellationToken.None);
         await process.Should().ThrowAsync<InvalidOperationException>().WithMessage("*not found*");
+    }
+
+    [Fact]
+    public async Task The_claims_are_fact_checked_and_a_check_that_fails_leaves_the_judges_reading()
+    {
+        var claim = new ClaimDto("The moon is cheese", "Unverifiable", "judge was unsure");
+        _judge.JudgeAsync(Arg.Any<JudgeRequest>(), Arg.Any<CancellationToken>()).Returns(call =>
+        {
+            var judged = Judged(call.Arg<JudgeRequest>());
+            return judged with { Player2 = judged.Player2 with { Claims = [claim] } };
+        });
+
+        var checker = Substitute.For<IClaimChecker>();
+        var searched = claim with { Verdict = "False", Sources = [new SourceDto("NASA", "https://nasa.gov/moon")] };
+        checker.CheckAsync("the thermostat", Arg.Any<IReadOnlyList<ClaimDto>>(), Arg.Any<CancellationToken>()).Returns([searched]);
+
+        var match = await RecordedAsync();
+        using (var pipeline = Pipeline(claims: checker))
+        {
+            await pipeline.ProcessAsync("user-1", match.Id, CancellationToken.None);
+        }
+
+        JsonSerializer.Deserialize<AnalysisReportDto>((await AnalysisOf(match.Id))!.ReportJson!, GeminiJudgeClient.JsonOptions)!
+            .Player2.Assessment.Claims.Should().BeEquivalentTo([searched], "the searched verdict and its sources are what the page shows");
+
+        checker.CheckAsync(default!, default!, default).ReturnsForAnyArgs<IReadOnlyList<ClaimDto>>(_ => throw new HttpRequestException("search is down"));
+        var again = await RecordedAsync("JO", "PA");
+        using (var pipeline = Pipeline(claims: checker))
+        {
+            await pipeline.ProcessAsync("user-1", again.Id, CancellationToken.None);
+        }
+
+        var analysis = await AnalysisOf(again.Id);
+        analysis!.Status.Should().Be(AnalysisStatus.Ready, "the fact check is a bonus; losing it must not lose the ruling");
+        JsonSerializer.Deserialize<AnalysisReportDto>(analysis.ReportJson!, GeminiJudgeClient.JsonOptions)!
+            .Player2.Assessment.Claims.Should().BeEquivalentTo([claim]);
     }
 
     /// <summary>A files client that keeps what it was handed, so a test can say what the model was actually sent.</summary>

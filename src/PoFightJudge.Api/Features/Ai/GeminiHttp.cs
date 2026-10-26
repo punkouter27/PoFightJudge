@@ -98,6 +98,14 @@ public static class GeminiHttp
             : node;
     }
 
+    /// <summary>The content blocks a finished interaction answered with, from whichever shape it came back in (<c>steps</c> or the older <c>outputs</c>).</summary>
+    public static IEnumerable<JsonObject> OutputContents(JsonNode? root) =>
+        (root?["steps"] as JsonArray)?.OfType<JsonObject>()
+            .Where(s => s["type"]?.GetValue<string>() is null or "model_output")
+            .SelectMany(s => (s["content"] as JsonArray)?.OfType<JsonObject>() ?? [])
+        ?? (root?["outputs"] as JsonArray)?.OfType<JsonObject>()
+        ?? [];
+
     /// <summary>Strips code fences and isolates the outermost object, so a fenced or chatty answer still parses.</summary>
     public static string IsolateJsonObject(string raw)
     {

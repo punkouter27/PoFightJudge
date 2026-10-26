@@ -4,7 +4,11 @@ namespace PoFightJudge.Shared.Models;
 
 public sealed record FallacyDto(string Name, string Quote);
 
-public sealed record ClaimDto(string Claim, string Verdict, string Note);
+/// <param name="Sources">The pages a web search found for it. Null on a claim nobody searched: a report from before the fact check, or one the search failed on.</param>
+public sealed record ClaimDto(string Claim, string Verdict, string Note, IReadOnlyList<SourceDto>? Sources = null);
+
+/// <summary>One page a claim was checked against. Only ever an absolute http(s) address.</summary>
+public sealed record SourceDto(string Title, string Url);
 
 public sealed record EmotionProfileDto(int Calm, int Confident, int Frustrated, int Angry, int Anxious, int Amused);
 

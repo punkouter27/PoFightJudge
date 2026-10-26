@@ -121,6 +121,14 @@ public sealed partial class Verdict : ComponentBase, IDisposable
         : _report.Overall.Overall == Speaker.Player1 ? _report.Player2.Name : _report.Player1.Name;
 
     /// <summary>Both sides in a fixed order, so every tab lays them out the same way round.</summary>
+    /// <summary>The fact check at a glance; the word beside it says the same for anyone who cannot see the mark.</summary>
+    public static string Mark(string verdict) => verdict switch
+    {
+        "True" => "✅",
+        "False" => "❌",
+        _ => "⚠️",
+    };
+
     private IEnumerable<(Speaker Side, PlayerReportDto Report)> Sides =>
         _report is null ? [] : [(Speaker.Player1, _report.Player1), (Speaker.Player2, _report.Player2)];
 
