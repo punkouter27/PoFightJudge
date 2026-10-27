@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json.Nodes;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -11,9 +12,9 @@ namespace PoFightJudge.Unit.Ai;
 
 public class AiRegistrationTests
 {
-    private static (AiMode Mode, ServiceProvider Services) Register(string environment, string? apiKey, bool forceFakes = false)
+    private static (AiMode Mode, ServiceProvider Services) Register(string environment, string? apiKey, bool forceFakes = false, string? azure = null)
     {
-        var values = new Dictionary<string, string?>();
+        var values = new Dictionary<string, string?> { [ConfigKeys.Ai.AzureOpenAiEndpoint] = azure };
         if (apiKey is not null)
         {
             values[ConfigKeys.Ai.GeminiApiKey] = apiKey;
@@ -31,6 +32,7 @@ public class AiRegistrationTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddSingleton(TimeProvider.System);
+        services.AddSingleton(Substitute.For<Azure.Core.TokenCredential>());
         var mode = services.AddPoAi(configuration, env);
         return (mode, services.BuildServiceProvider());
     }
@@ -47,6 +49,39 @@ public class AiRegistrationTests
         production.UseFakes.Should().BeFalse("Production never runs fakes, whatever the flag says");
         production.HasGeminiKey.Should().BeFalse();
         production.Reason.Should().Contain("degraded");
+
+        // An Azure endpoint is a real provider with no key at all, and it wins over a Gemini key.
+        var (mode, services) = Register("Development", apiKey: "k", azure: "https://res.cognitiveservices.azure.com/");
+        using (services)
+        {
+            (mode.UseFakes, mode.UsesAzure).Should().Be((false, true));
+            mode.Reason.Should().Contain("res.cognitiveservices.azure.com");
+            services.GetRequiredService<IGeminiText>().Should().BeOfType<AzureOpenAiText>();
+            services.GetServices<ITtsProvider>().Should().ContainSingle().Which.Should().BeOfType<AzureTtsService>();
+            using var fast = services.GetRequiredService<IHttpClientFactory>().CreateClient(GeminiHttpClients.Fast);
+            fast.BaseAddress.Should().Be(new Uri("https://res.cognitiveservices.azure.com/openai/v1/"));
+            fast.DefaultRequestHeaders.Contains(GeminiHttp.ApiKeyHeader).Should().BeFalse("Azure is reached with the app's identity, never a key");
+        }
+
+        // Startup does not call the Gemini key missing when Azure is the provider: in Production that would be a 503 site.
+        static IConfiguration Config(string key, string value) => new ConfigurationBuilder().AddInMemoryCollection([new(key, value)]).Build();
+        PoFightJudge.Api.Features.Diagnostics.StartupSecretValidator.FindMissing(Config(ConfigKeys.Ai.AzureOpenAiEndpoint, "https://res.cognitiveservices.azure.com/"), isProduction: false).Should().BeEmpty();
+        PoFightJudge.Api.Features.Diagnostics.StartupSecretValidator.FindMissing(Config("unrelated", "x"), isProduction: false).Should().Equal(ConfigKeys.Ai.GeminiApiKey);
+
+        // Its payload: system first for the prefix cache, a reasoning deployment gets an effort and no temperature,
+        // and a Gemini schema goes out as JSON Schema.
+        var schema = new JsonObject { ["type"] = "OBJECT", ["properties"] = new JsonObject { ["line"] = new JsonObject { ["type"] = "STRING" } } };
+        var reasoning = AzureOpenAiText.BuildPayload(new GeminiTextRequest(new GeminiPrompt("sys", "user"), "gpt-5-mini", "judge.assess", schema, ThinkingLevel: "low"), stream: false);
+        reasoning["messages"]![0]!["role"]!.GetValue<string>().Should().Be("system");
+        (reasoning["reasoning_effort"]!.GetValue<string>(), reasoning.ContainsKey("temperature")).Should().Be(("low", false));
+        reasoning["response_format"]!["json_schema"]!["name"]!.GetValue<string>().Should().Be("judge_assess");
+        reasoning["response_format"]!["json_schema"]!["schema"]!["properties"]!["line"]!["type"]!.GetValue<string>().Should().Be("string");
+        var plain = AzureOpenAiText.BuildPayload(new GeminiTextRequest(new GeminiPrompt(string.Empty, "user"), "gpt-4.1-mini", "round", Temperature: 0.9, MaxOutputTokens: 300, ThinkingLevel: "low"), stream: true);
+        (plain["temperature"]!.GetValue<double>(), plain["max_completion_tokens"]!.GetValue<int>(), plain.ContainsKey("reasoning_effort")).Should().Be((0.9, 300, false));
+        plain["messages"]!.AsArray().Should().ContainSingle("an empty system half is left out");
+        plain["stream_options"]!["include_usage"]!.GetValue<bool>().Should().BeTrue();
+        AzureOpenAiText.Delta(JsonNode.Parse("""{"choices":[{"delta":{"content":"You"}}]}""") as JsonObject).Should().Be("You");
+        AzureOpenAiText.Delta(JsonNode.Parse("""{"choices":[],"usage":{"prompt_tokens":11}}""") as JsonObject).Should().BeNull("the usage chunk has no choices, and must not throw");
     }
 
     [Fact]

@@ -52,6 +52,13 @@ public static class ConfigKeys
         /// <summary>An optional shared voice for personas that carry no reference id of their own.</summary>
         public const string FishDefaultReferenceId = $"{Root}:Fish:DefaultReferenceId";
 
+        /// <summary>
+        /// The Azure OpenAI resource (e.g. <c>https://po-aiservices-shared2.cognitiveservices.azure.com/</c>). Set, it is
+        /// the AI provider and the model ids below are its deployment names; it is reached with the app's identity, so
+        /// there is no key. Empty means Gemini.
+        /// </summary>
+        public const string AzureOpenAiEndpoint = $"{Section}:AzureOpenAiEndpoint";
+
         public const string RoundModel = $"{Section}:RoundModel";
         public const string JudgeModel = $"{Section}:JudgeModel";
         public const string ProfileModel = $"{Section}:ProfileModel";

@@ -148,6 +148,7 @@ Each was a deliberate decision made while building; the commit that made it says
 | T142 | Home only | plus the client's `GetMatchesAsync` removed from `ApiClient.cs` | Home now reads one page through `GetMatchPageAsync`; nothing else called it |
 | T143 | sortable column headers on History | an Order dropdown behind Filters | the grid became cards, which have no headers to click |
 | T146 | the 2P host as a radio list (keyboard + screen reader as one choice) | a `RadzenDropDown` of the same items | the same single, keyboard-operable choice in one line instead of 210 px, which is what lets a desktop show the whole 2P setup at once |
+| T204 | Gemini as the one AI provider (SPEC §2) | Azure OpenAI on `po-aiservices-shared2` behind the same seams, chosen by `Ai:AzureOpenAiEndpoint`; Gemini stays for an empty endpoint. Also touched outside the AI slices: `StorageServiceExtensions` (shares its `TokenCredential`), `DiagEndpoints.IsFakeAi`, `GeminiClaimChecker`'s prompt wording | the Gemini account's prepaid credit ran out; the Azure resource was already paid for, and reaching it with the app identity keeps a key out of Key Vault |
 | — | face uploads decoded and re-encoded on the server with ImageSharp | the browser crops to a 512 px PNG (`js/face.js`); the server checks the PNG header and size, and decodes nothing | every ImageSharp 3.x has open advisories (three high), the fixes are 4.1.2+ only, and 4.x will not build without a paid-for licence key |
 
 ## Still outstanding

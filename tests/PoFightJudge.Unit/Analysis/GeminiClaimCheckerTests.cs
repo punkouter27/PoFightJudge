@@ -54,6 +54,28 @@ public class GeminiClaimCheckerTests
             "the searched verdict replaces the judge's, and only an http(s) link is kept");
         checkedClaims[1].Sources.Should().ContainSingle("the same page cited twice is one source").Which.Url.Should().Be("https://example.org/boil");
         checkedClaims[2].Should().BeEquivalentTo(Judged[2], "a claim the answer skipped keeps the judge's reading");
+
+        // Azure: the same prompt with its own search tool, and the Responses API's message parts read the same way.
+        var azure = JsonNode.Parse(AzureClaimChecker.BuildRequest("gpt-5-mini", "the thermostat", Judged))!;
+        azure["tools"]!.AsArray().Should().ContainSingle().Which!["type"]!.GetValue<string>().Should().Be("web_search");
+        azure["reasoning"]!["effort"]!.GetValue<string>().Should().Be("low");
+        var answered = new JsonObject
+        {
+            ["output"] = new JsonArray(
+                new JsonObject { ["type"] = "web_search_call" },
+                new JsonObject
+                {
+                    ["type"] = "message",
+                    ["content"] = new JsonArray(new JsonObject
+                    {
+                        ["type"] = "output_text",
+                        ["text"] = Line1,
+                        ["annotations"] = new JsonArray(Citation("https://example.org/eiffel", "Eiffel", 0, Line1.Length)),
+                    }),
+                }),
+        };
+        GeminiClaimChecker.Apply(Judged, AzureClaimChecker.MessageParts(answered))[0].Sources.Should().ContainSingle()
+            .Which.Url.Should().Be("https://example.org/eiffel");
     }
 
     private static JsonObject Citation(string url, string title, int start, int end) => new()

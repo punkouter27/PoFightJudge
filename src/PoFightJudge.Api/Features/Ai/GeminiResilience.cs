@@ -1,4 +1,5 @@
 using System.Net;
+using Azure.Core;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
 
@@ -30,26 +31,31 @@ public static class GeminiResilience
     public static TimeSpan AnalysisTimeout { get; } = TimeSpan.FromMinutes(10);
 
     /// <summary>The clients are always registered; without a key no header is sent and the provider answers 400/403 — which the degraded gate keeps from reaching users in Production.</summary>
-    public static IServiceCollection AddGeminiClients(this IServiceCollection services, string? apiKey)
+    /// <remarks>
+    /// With an Azure endpoint the same named clients point at the Azure OpenAI resource and carry the app identity's
+    /// token instead of a key: one set of latency classes, whichever provider answers.
+    /// </remarks>
+    public static IServiceCollection AddGeminiClients(this IServiceCollection services, string? apiKey, Uri? azureEndpoint = null)
     {
         services.AddTransient<GeminiRetryHandler>();
 
         // The pipeline owns the whole budget: the standard handler sets HttpClient.Timeout to infinite so only its
         // total-request timeout applies (a client timeout here would be overwritten, not layered).
-        Named(services, GeminiHttpClients.Fast, apiKey, timeout: null)
+        Named(services, GeminiHttpClients.Fast, apiKey, azureEndpoint, timeout: null)
             .AddGeminiPipeline(FastAttemptSeconds, FastTotalSeconds, maxRetries: 1, baseDelayMs: 400);
-        Named(services, GeminiHttpClients.Tts, apiKey, timeout: null)
+        Named(services, GeminiHttpClients.Tts, apiKey, azureEndpoint, timeout: null)
             .AddGeminiPipeline(TtsAttemptSeconds, TtsTotalSeconds, maxRetries: 2, baseDelayMs: 2000);
-        Named(services, GeminiHttpClients.Stream, apiKey, StreamTimeout);
-        Named(services, GeminiHttpClients.Analysis, apiKey, AnalysisTimeout)
+        Named(services, GeminiHttpClients.Stream, apiKey, azureEndpoint, StreamTimeout);
+        Named(services, GeminiHttpClients.Analysis, apiKey, azureEndpoint, AnalysisTimeout)
             .AddHttpMessageHandler<GeminiRetryHandler>();
         return services;
     }
 
-    private static IHttpClientBuilder Named(IServiceCollection services, string name, string? apiKey, TimeSpan? timeout) =>
-        services.AddHttpClient(name, client =>
+    private static IHttpClientBuilder Named(IServiceCollection services, string name, string? apiKey, Uri? azureEndpoint, TimeSpan? timeout)
+    {
+        var builder = services.AddHttpClient(name, client =>
             {
-                client.BaseAddress = GeminiHttp.RestBase;
+                client.BaseAddress = azureEndpoint is null ? GeminiHttp.RestBase : AzureOpenAi.RestBase(azureEndpoint);
                 if (timeout is { } clientTimeout)
                 {
                     client.Timeout = clientTimeout;
@@ -58,7 +64,7 @@ public static class GeminiResilience
                 // Several calls are in flight at once; one multiplexed HTTP/2 connection beats a handshake each.
                 client.DefaultRequestVersion = HttpVersion.Version20;
                 client.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower;
-                if (!string.IsNullOrWhiteSpace(apiKey))
+                if (azureEndpoint is null && !string.IsNullOrWhiteSpace(apiKey))
                 {
                     client.DefaultRequestHeaders.Add(GeminiHttp.ApiKeyHeader, apiKey);
                 }
@@ -69,6 +75,12 @@ public static class GeminiResilience
                 PooledConnectionLifetime = TimeSpan.FromMinutes(2),
                 EnableMultipleHttp2Connections = true,
             });
+
+        // Outermost: the token is set once per call, and it outlives any retry the handlers inside it make.
+        return azureEndpoint is null
+            ? builder
+            : builder.AddHttpMessageHandler(sp => new AzureTokenHandler(sp.GetRequiredService<TokenCredential>()));
+    }
 
     private static IHttpClientBuilder AddGeminiPipeline(this IHttpClientBuilder builder, int attemptSeconds, int totalSeconds, int maxRetries, int baseDelayMs)
     {

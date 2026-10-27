@@ -47,6 +47,9 @@ public static class StorageServiceExtensions
             })
             : new DefaultAzureCredential();
 
+        // The same identity signs the Azure OpenAI calls, so it is shared rather than built twice.
+        services.AddSingleton(credential);
+
         // Azurite rejects the audience Azure.Data.Tables asks for; pin the storage scope in that one configuration only.
         if (azurite)
         {

@@ -53,6 +53,7 @@ public sealed class DiagEndpoints : ICarterModule
     {
         ArgumentNullException.ThrowIfNull(config);
         return !env.IsProduction()
-            && (config.GetValue<bool>(Toggles.UseFakes) || string.IsNullOrWhiteSpace(config[ConfigKeys.Ai.GeminiApiKey]));
+            && (config.GetValue<bool>(Toggles.UseFakes)
+                || (string.IsNullOrWhiteSpace(config[ConfigKeys.Ai.GeminiApiKey]) && string.IsNullOrWhiteSpace(config[ConfigKeys.Ai.AzureOpenAiEndpoint])));
     }
 }

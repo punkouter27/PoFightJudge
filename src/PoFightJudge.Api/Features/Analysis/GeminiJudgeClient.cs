@@ -455,7 +455,7 @@ public sealed partial class GeminiJudgeClient(
     }
 
     /// <summary>The one line that differs between the two assessment calls: which player is being assessed.</summary>
-    private static string AssessmentTask(JudgeRequest r, bool first) =>
+    public static string AssessmentTask(JudgeRequest r, bool first) =>
         $"""
         TASK: assess {PromptText.Inline(first ? r.Player1Name : r.Player2Name, 60)} — the one labelled {(first ? "player1" : "player2")}
         in the transcript — and return that one assessment.
@@ -464,7 +464,7 @@ public sealed partial class GeminiJudgeClient(
         other player's words to them.
         """;
 
-    private static string RulingTask(JudgeRequest r, PlayerAssessmentDto p1, PlayerAssessmentDto p2)
+    public static string RulingTask(JudgeRequest r, PlayerAssessmentDto p1, PlayerAssessmentDto p2)
     {
         var sb = new StringBuilder();
         sb.AppendLine("TASK: rule on the debate. Two independent assessments of the same recording are summarised below.");
@@ -570,7 +570,13 @@ public sealed partial class GeminiJudgeClient(
             .Select(p => p["text"]?.GetValue<string>())
             .FirstOrDefault(t => !string.IsNullOrWhiteSpace(t))
             ?? throw new InvalidOperationException("Judge returned no content: " + GeminiHttp.Truncate(json, 300));
+        return ParseText<T>(text);
+    }
 
+    /// <summary>The JSON answer itself, whichever provider wrote it.</summary>
+    public static T ParseText<T>(string text)
+        where T : class
+    {
         // A hard stop mid-object is recoverable: close what is open and keep the fields that did arrive.
         return TryDeserialize<T>(text)
             ?? TryDeserialize<T>(JsonRepair.TryClose(text))

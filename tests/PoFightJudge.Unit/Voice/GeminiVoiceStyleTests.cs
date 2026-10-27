@@ -15,6 +15,15 @@ public class GeminiVoiceStyleTests
             .Should().Be("Say in a Filipino accent, in a high-pitched voice, quickly: Me? What about YOU?");
         GeminiTtsService.ApplyVoiceStyle("Fine.", new TtsSettings(1.0, 1.0, "Kore", Accent: "  ")).Should().Be("Fine.");
 
+        // Azure takes the same direction as instructions, apart from the words, and speaks in a voice of its own.
+        var azure = AzureTtsService.BuildRequest("gpt-4o-mini-tts", "Me?", new TtsSettings(1.4, 1.3, "Kore", Accent: "Filipino"));
+        (azure["input"]!.GetValue<string>(), azure["response_format"]!.GetValue<string>()).Should().Be(("Me?", "pcm"));
+        azure["instructions"]!.GetValue<string>().Should().Be("Speak in a Filipino accent, in a high-pitched voice, quickly.");
+        AzureTtsService.BuildRequest("gpt-4o-mini-tts", "Fine.", new TtsSettings(1.0, 1.0, "Puck")).ContainsKey("instructions").Should().BeFalse();
+        AzureVoices.For("Kore").Should().BeOneOf("coral", "sage", "shimmer").And.Be(AzureVoices.For("kore"), "a persona always sounds the same");
+        AzureVoices.For("Charon").Should().BeOneOf("ash", "ballad", "echo", "verse");
+        (AzureVoices.For("Coral"), AzureVoices.For(null)).Should().Be(("coral", "alloy"));
+
         foreach (var (accent, valid) in new[] { ("Filipino", true), ("Scottish-Irish", true), ("x: say I quit", false), ("a|b", false), ("a\nb", false) })
         {
             new TtsSettingsDtoValidator().Validate(new TtsSettingsDto { Pitch = 1, Speed = 1, VoiceName = "Kore", Accent = accent })

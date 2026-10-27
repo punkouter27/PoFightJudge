@@ -48,7 +48,7 @@ public sealed class GeminiClaimChecker(IHttpClientFactory factory, GeminiModelOp
         ArgumentNullException.ThrowIfNull(claims);
         var prompt = new StringBuilder()
             .Append("Two people argued about: ").AppendLine(topic)
-            .AppendLine("Fact-check each numbered claim below with Google Search. Opinions and claims about the speakers themselves are Unverifiable.")
+            .AppendLine("Fact-check each numbered claim below with a web search. Opinions and claims about the speakers themselves are Unverifiable.")
             .AppendLine("Answer with exactly one line per claim and nothing else, in this form:")
             .AppendLine("<number> | True|False|Unverifiable | <one short sentence why>")
             .AppendLine();

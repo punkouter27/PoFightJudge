@@ -31,5 +31,20 @@ public class GeminiTranscribeClientTests
         var transcript = GeminiTranscribeClient.ParseResponse(response);
 
         transcript.Words.Select(w => w.Label).Should().Equal("spk_1", "spk_2", "spk_2");
+
+        // Azure answers in segments: their words are spread across the segment, labelled per piece and shifted by
+        // where the piece starts in the recording.
+        var (text, words) = AzureTranscribeClient.ParseResponse(
+            JsonNode.Parse("""
+                {"text":"no you did","segments":[
+                  {"speaker":"A","start":0.0,"end":0.4,"text":" no"},
+                  {"speaker":"B","start":0.5,"end":1.1,"text":" you did"}]}
+                """) as JsonObject,
+            offset: 600,
+            labelPrefix: "p1_");
+        text.Should().Be("no you did");
+        words.Select(w => (w.Text, w.Label)).Should().Equal(("no", "p1_A"), ("you", "p1_B"), ("did", "p1_B"));
+        words[2].Start.Should().BeApproximately(600.8, 0.001);
+        words[2].End.Should().BeApproximately(601.1, 0.001);
     }
 }

@@ -28,6 +28,15 @@ public static partial class FightServiceExtensions
 
         services.AddSingleton<LiveClientFactory>(sp => ai.UseFakes
             ? () => new FakeLiveClient(sp.GetRequiredService<TimeProvider>())
+            : ai.UsesAzure
+            ? () => new AzureRealtimeClient(
+                ct => AzureRealtimeClient.ConnectAsync(
+                    AzureRealtimeClient.AddressFor(ai.AzureEndpoint!, sp.GetRequiredService<GeminiModelOptions>().Live),
+                    sp.GetRequiredService<Azure.Core.TokenCredential>(),
+                    ct),
+                sp.GetRequiredService<LiveOptions>(),
+                sp.GetRequiredService<GeminiModelOptions>(),
+                sp.GetRequiredService<ILogger<AzureRealtimeClient>>())
             : () => new GeminiLiveClient(
                 sp.GetRequiredService<LiveSocketConnector>(),
                 sp.GetRequiredService<LiveOptions>(),

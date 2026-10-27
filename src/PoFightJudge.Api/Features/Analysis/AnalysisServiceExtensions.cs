@@ -23,6 +23,13 @@ public static class AnalysisServiceExtensions
             services.AddSingleton<IGeminiTranscribeClient, FakeAnalysisClients.Transcriber>();
             services.AddSingleton<IGeminiJudgeClient, FakeAnalysisClients.Judge>();
         }
+        else if (ai.UsesAzure)
+        {
+            services.AddSingleton<IGeminiFilesClient, AzureRecordingFiles>();
+            services.AddSingleton<IGeminiTranscribeClient, AzureTranscribeClient>();
+            services.AddSingleton<IGeminiJudgeClient, AzureJudgeClient>();
+            services.AddSingleton<IClaimChecker, AzureClaimChecker>();
+        }
         else
         {
             services.AddSingleton<IGeminiFilesClient, GeminiFilesClient>();

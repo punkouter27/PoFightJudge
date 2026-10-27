@@ -43,6 +43,16 @@ time), on WebGPU when the browser has a GPU adapter and WASM when not. transform
 runtime's `.wasm` (jsdelivr, pinned to one build) are data, and `connect-src` names exactly those hosts. Until the
 model is loaded, or if it fails, the turn goes to the server as before.
 
+**AI provider: Azure OpenAI.** `PoFightJudge:Ai:AzureOpenAiEndpoint` points at `po-aiservices-shared2` (AI
+Foundry, resource group `PoShared`), and the model ids are its deployment names: `gpt-4.1-mini` writes the WATCH
+lines, `gpt-5-mini` judges, rewrites personas and fact-checks with web search, `gpt-4o-mini-tts` speaks,
+`gpt-4o-transcribe-diarize` transcribes, and `gpt-realtime-mini` hosts a FIGHT. There is no key: the app's
+identity (`az login` locally, the web app's managed identity in Azure) holds **Cognitive Services OpenAI User** on
+the resource. The Gemini personas' voices are mapped to the nearest OpenAI voice. Two things Gemini did that Azure
+does not: the judge reads the transcript and the measurements but not the audio, and a dropped live line
+reconnects as a new conversation. More in [docs/azure-openai.md](docs/azure-openai.md). Empty the endpoint and set
+Gemini model ids to go back to Gemini.
+
 ## Run it
 
 On a clean clone, one script does the lot — prerequisites, the dev certificate, Azurite, Seq, `az login`, build and
@@ -108,9 +118,9 @@ committed.
 one caller may spend per UTC day. Past it, every rate-limited AI route answers 429 until midnight UTC, and `/health`
 shows the caller where they stand. The count is in memory, so a restart forgives the day.
 
-`PoFightJudge:Ai:JudgeServiceTier` and `PoFightJudge:Ai:ProfileServiceTier` (both `flex`) put the fight judge and
-the persona rewrite, the two calls nobody waits on, on Gemini's discount tier. When that tier is busy the call is
-sent again at the standard price; an empty value switches the discount off.
+`PoFightJudge:Ai:JudgeServiceTier` and `PoFightJudge:Ai:ProfileServiceTier` (both `flex`) mark the fight judge
+and the persona rewrite as calls nobody waits on. On Gemini that is its discount tier (busy means a retry at the
+standard price); on Azure, which has no such tier, it means the patient ten-minute client.
 
 The three secrets (`GeminiApiKey`, `AzureAd--TenantId`, `AzureAd--ClientId`) are set in `kv-poshared2` by hand;
 `./SCRIPTS/setup.ps1` checks the names are there and never reads a value.

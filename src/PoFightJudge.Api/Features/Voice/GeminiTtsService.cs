@@ -54,8 +54,13 @@ public sealed partial class GeminiTtsService(IHttpClientFactory httpClients, Gem
     /// Turns a persona's numeric pitch (~0.7–1.5) and speed (~0.85–1.35) into the natural-language direction Gemini TTS
     /// honours. Neutral settings add no prefix so lines stay natural.
     /// </summary>
-    public static string ApplyVoiceStyle(string text, TtsSettings settings)
+    public static string ApplyVoiceStyle(string text, TtsSettings settings) =>
+        VoiceStyle(settings) is { } style ? $"Say {style}: {text}" : text;
+
+    /// <summary>The delivery direction alone ("slowly and deliberately, in a low, deep voice"), or null when neutral.</summary>
+    public static string? VoiceStyle(TtsSettings settings)
     {
+        ArgumentNullException.ThrowIfNull(settings);
         var styles = new List<string>(3);
         if (!string.IsNullOrWhiteSpace(settings.Accent))
         {
@@ -80,7 +85,7 @@ public sealed partial class GeminiTtsService(IHttpClientFactory httpClients, Gem
             styles.Add("quickly");
         }
 
-        return styles.Count == 0 ? text : $"Say {string.Join(", ", styles)}: {text}";
+        return styles.Count == 0 ? null : string.Join(", ", styles);
     }
 
     /// <summary>

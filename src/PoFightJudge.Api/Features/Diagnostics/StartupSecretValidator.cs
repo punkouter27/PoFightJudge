@@ -56,7 +56,10 @@ public sealed partial class StartupSecretValidator(
     public static IReadOnlyList<string> FindMissing(IConfiguration configuration, bool isProduction)
     {
         IEnumerable<string> keys = isProduction ? [.. RequiredKeys, .. ProductionOnlyKeys] : RequiredKeys;
-        return [.. keys.Where(k => string.IsNullOrWhiteSpace(configuration[k]))];
+
+        // Azure OpenAI is reached with the app's identity: with its endpoint set, there is no AI key to be missing.
+        var azure = !string.IsNullOrWhiteSpace(configuration[ConfigKeys.Ai.AzureOpenAiEndpoint]);
+        return [.. keys.Where(k => string.IsNullOrWhiteSpace(configuration[k]) && !(azure && string.Equals(k, ConfigKeys.Ai.GeminiApiKey, StringComparison.Ordinal)))];
     }
 
     [LoggerMessage(EventId = 2000, Level = LogLevel.Information, Message = "Startup configuration validation passed")]

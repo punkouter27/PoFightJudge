@@ -36,6 +36,10 @@ public static class VoiceServiceExtensions
         {
             services.AddSingleton<ITranscriptionService, FakeTranscription>();
         }
+        else if (mode.UsesAzure)
+        {
+            services.AddSingleton<ITranscriptionService, AzureTranscriptionService>();
+        }
         else
         {
             services.AddSingleton<ITranscriptionService, GeminiTranscriptionService>();
