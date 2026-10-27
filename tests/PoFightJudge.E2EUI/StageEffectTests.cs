@@ -77,6 +77,38 @@ public class StageEffectTests(AppFixture app)
     }
 
     /// <summary>
+    /// Every button answers a press with a tap and, on a phone, a buzz — and with neither when sound is off.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_button_press_taps_and_buzzes_unless_sound_is_off()
+    {
+        var (context, page, errors) = await app.OpenAsync(AppFixture.Desktop);
+        await using var _ = context;
+
+        var heard = await page.EvaluateAsync<string[]>(
+            """
+            () => {
+              const heard = [];
+              const play = PoSfx.play;
+              PoSfx.play = (name, ...rest) => { heard.push(name); return play(name, ...rest); };
+              navigator.vibrate = ms => { heard.push('buzz:' + ms); return true; };
+              const button = document.createElement('button');
+              document.body.appendChild(button);
+              button.click();
+              PoSfx.setMuted(true);
+              button.click();
+              PoSfx.setMuted(false);
+              PoSfx.play = play;
+              button.remove();
+              return heard;
+            }
+            """);
+
+        heard.Should().Equal("tap", "buzz:8");
+        errors.Should().BeEmpty();
+    }
+
+    /// <summary>
     /// A loser's card cracks before it breaks, and its pieces land on the floor and bounce rather than falling out of
     /// the bottom of the page: a second in, there is still glass lying along the bottom edge.
     /// </summary>

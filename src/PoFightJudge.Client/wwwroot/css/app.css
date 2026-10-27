@@ -465,6 +465,19 @@ body { background: transparent; }
 #blazor-error-ui a { color: inherit; }
 
 /* ── Motion: one switch turns it all off ── */
+/* A button catches the light as the pointer comes onto it: a sheen sweeps across once, over its own colour. */
+.rz-button {
+  background-image: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.22) 50%, transparent 60%);
+  background-size: 250% 100%;
+  background-position: 150% 0;
+  background-repeat: no-repeat;
+}
+
+.rz-button:hover:not(:disabled) {
+  background-position: -50% 0;
+  transition: background-position 0.6s var(--po-ease);
+}
+
 /* A stamp landing on a line (PoFx): the line takes the hit, down and back. */
 .fx-thud { animation: po-thud 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
 

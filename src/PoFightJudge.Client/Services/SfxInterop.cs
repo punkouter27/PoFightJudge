@@ -87,12 +87,15 @@ public static class Sfx
     /// <summary>A round ringing in on the watch stage: the bell carried across from one side to the other.</summary>
     public const string RoundBell = "bell-sweep";
 
+    /// <summary>A button pressed, anywhere. Played by PoSfx itself on every click, not from .NET.</summary>
+    public const string Tap = "tap";
+
     /// <summary>Every name above, for the test that checks the browser knows them all.</summary>
     public static IReadOnlyList<string> All { get; } =
     [
         Bell, BellThree, Slap, Gavel, GavelThree, Tick, Whoosh,
         Intro, Probe, Ruling, Fanfare, Clipping, Cue, Count, Glitch, Riser, Drumroll, Slam, Shatter, Crowd, Stamp, LevelUp,
-        Slosh, Heartbeat, RoundBell,
+        Slosh, Heartbeat, RoundBell, Tap,
     ];
 }
 

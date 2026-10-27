@@ -291,6 +291,8 @@ window.PoSfx = (function () {
     "gavel": function (at) { gavel(at, 0.7); },
     "gavel3": function (at) { gavel(at, 0.6); gavel(at + 0.22, 0.6); gavel(at + 0.44, 0.75); },
     "tick": function (at) { tone(at, { type: "sine", freq: 1400, duration: 0.03, gain: 0.09 }); },
+    // A finger on a button: quieter and shorter than a tick, a click of the glass rather than a confirmation.
+    "tap": function (at) { hit(at, { freq: 3800, duration: 0.012, gain: 0.08, q: 2 }); },
     "whoosh": function (at) { hit(at, { freq: 300, sweepTo: 3400, duration: 0.38, gain: 0.35, q: 2.4 }); },
     "stinger-intro": function (at) { motif(at, [392, 523.3, 659.3], "square", 0.16, 0.09, 0.2); },
     "stinger-probe": function (at) { motif(at, [587.3, 440], "triangle", 0.2, 0.11, 0.24); },
@@ -483,6 +485,25 @@ window.PoSfx = (function () {
       }
     }
   }
+
+  // Every button answers a press: a tap, and on a phone a buzz under the finger. Both go with the sound switch —
+  // somebody who has silenced the app has not asked for it to start vibrating instead. Listened for on the way
+  // down, so a handler that stops the click does not also stop the tap.
+  document.addEventListener("click", function (e) {
+    const target = e.target && e.target.closest ? e.target.closest("button, [role=button], [role=tab], [role=switch], .rz-button") : null;
+    if (muted || !target) {
+      return;
+    }
+
+    window.PoSfx.play("tap");
+    try {
+      if (typeof navigator.vibrate === "function") {
+        navigator.vibrate(8);
+      }
+    } catch (err) {
+      // A browser that will not buzz has still tapped.
+    }
+  }, true);
 
   return {
     /** Wakes the context on a user gesture, so the first real sound is not swallowed by the autoplay policy. */
