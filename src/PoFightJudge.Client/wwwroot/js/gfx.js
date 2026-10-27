@@ -1025,6 +1025,243 @@ void main() {
     entry.reading = 1 - entry.reading;
   }
 
+  // ── The swarm, on WebGPU ──
+  // The same two flocks, stepped by a compute shader instead of transform feedback, so there can be twice as many:
+  // the steering is the GLSL above, line for line. WebGPU has no point size, so each one is drawn as an instanced
+  // quad faded to a soft disc. Everything here is asynchronous (an adapter, then a device), so mount() answers true
+  // at once, and anything that fails on the way — no adapter, no device, a shader that will not compile, a device
+  // lost later — takes the canvas down and mounts the WebGL2 swarm in its place.
+  const GPU_EACH = 25000;
+
+  const WGSL_COMMON = `
+struct U { home: vec4f, c1: vec4f, c2: vec4f, time: f32, dt: f32, aspect: f32, size: f32, each: f32, height: f32, pad0: f32, pad1: f32 }
+@group(0) @binding(0) var<uniform> u: U;
+fn hash(p: vec2f) -> f32 { return fract(sin(dot(p, vec2f(127.1, 311.7))) * 43758.5453123); }
+fn noise(p: vec2f) -> f32 {
+  let i = floor(p);
+  let f = fract(p);
+  let w = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2f(1.0, 0.0)), w.x), mix(hash(i + vec2f(0.0, 1.0)), hash(i + vec2f(1.0, 1.0)), w.x), w.y);
+}`;
+
+  const WGSL_STEP = WGSL_COMMON + `
+@group(0) @binding(1) var<storage, read_write> ps: array<vec4f>;
+@compute @workgroup_size(64)
+fn step(@builtin(global_invocation_id) id: vec3u) {
+  let i = id.x;
+  if (i >= arrayLength(&ps)) { return; }
+  let first = f32(i) < u.each;
+  var p = ps[i].xy;
+  var v = ps[i].zw;
+  let home = select(u.home.zw, u.home.xy, first);
+  let rival = select(u.home.xy, u.home.zw, first);
+  let toHome = home - p;
+  let d = length(toHome);
+  let dir = toHome / max(d, 0.001);
+  var steer = dir * min(d * 1.5, 1.0) * 1.2;
+  steer += vec2f(-dir.y, dir.x) * select(-1.0, 1.0, first) * smoothstep(0.0, 0.35, d);
+  let away = p - rival;
+  let r = length(away);
+  steer += away / max(r, 0.001) * (1.0 - smoothstep(0.0, 0.45, r)) * 1.4;
+  let e = 0.02;
+  let q = p * 2.2 + vec2f(u.time * 0.06, select(9.0, 0.0, first));
+  let curl = vec2f(noise(q + vec2f(0.0, e)) - noise(q - vec2f(0.0, e)), noise(q - vec2f(e, 0.0)) - noise(q + vec2f(e, 0.0))) / (2.0 * e);
+  v += (steer + curl * 0.35) * u.dt;
+  v *= 1.0 - 1.1 * u.dt;
+  let speed = length(v);
+  if (speed > 0.9) { v *= 0.9 / speed; }
+  p += v * u.dt;
+  p = clamp(p, vec2f(-u.aspect * 1.1, -1.1), vec2f(u.aspect * 1.1, 1.1));
+  ps[i] = vec4f(p, v);
+}`;
+
+  const WGSL_DRAW = WGSL_COMMON + `
+@group(0) @binding(1) var<storage, read> ps: array<vec4f>;
+struct Out { @builtin(position) pos: vec4f, @location(0) corner: vec2f, @location(1) colour: vec3f, @location(2) glow: f32 }
+@vertex
+fn vs(@builtin(vertex_index) k: u32, @builtin(instance_index) i: u32) -> Out {
+  var corners = array<vec2f, 6>(vec2f(-1.0, -1.0), vec2f(1.0, -1.0), vec2f(-1.0, 1.0), vec2f(-1.0, 1.0), vec2f(1.0, -1.0), vec2f(1.0, 1.0));
+  let part = ps[i];
+  let speed = length(part.zw);
+  let c = corners[k];
+  let across = u.size * (0.8 + speed * 2.2);
+  var o: Out;
+  o.pos = vec4f(vec2f(part.x / u.aspect, part.y) + c * across / vec2f(u.height * u.aspect, u.height), 0.0, 1.0);
+  o.corner = c;
+  o.colour = select(u.c2.rgb, u.c1.rgb, f32(i) < u.each);
+  o.glow = 0.3 + speed * 1.6;
+  return o;
+}
+@fragment
+fn fs(v: Out) -> @location(0) vec4f {
+  // Half the WebGL2 swarm's 0.32: twice as many of them add up to the same glow, not twice as bright.
+  let a = (1.0 - smoothstep(0.0, 1.0, length(v.corner))) * v.glow * 0.16;
+  return vec4f(v.colour * a, a);
+}`;
+
+  const gpuMounts = new Map();
+
+  function mountGpu(selector, host, settings) {
+    const canvas = document.createElement("canvas");
+    canvas.className = "po-gfx";
+    canvas.setAttribute("aria-hidden", "true");
+    canvas.style.cssText = "position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:0;";
+    const entry = {
+      host: host, canvas: canvas, start: performance.now(), lastStep: 0, raf: 0, device: null, cancelled: false, ready: false,
+      tokens: ["--po-p1", "--po-p2", "--po-danger"],
+    };
+    readColours(entry);
+    host.appendChild(canvas);
+    resize(entry);
+    if (typeof ResizeObserver === "function") {
+      entry.observer = new ResizeObserver(function () { resize(entry); });
+      entry.observer.observe(host);
+    }
+
+    // Not this browser, or not this GPU: the WebGL2 swarm, quietly, as if this had never been tried.
+    entry.fail = function () {
+      if (!entry.cancelled) {
+        unmountGpu(selector);
+        mount(selector, "swarm", Object.assign({}, settings, { gpu: false }));
+      }
+    };
+
+    gpuMounts.set(selector, entry);
+    watchTheme();
+    startGpu(entry).catch(entry.fail);
+    return true;
+  }
+
+  async function startGpu(entry) {
+    const adapter = await navigator.gpu.requestAdapter({ powerPreference: "low-power" });
+    if (!adapter) {
+      throw new Error("no adapter");
+    }
+
+    const device = await adapter.requestDevice();
+    if (entry.cancelled) {
+      device.destroy();
+      return;
+    }
+
+    entry.device = device;
+    device.lost.then(function () { entry.fail(); });
+    const context = entry.canvas.getContext("webgpu");
+    const format = navigator.gpu.getPreferredCanvasFormat();
+    context.configure({ device: device, format: format, alphaMode: "premultiplied" });
+
+    const stepModule = device.createShaderModule({ code: WGSL_STEP });
+    const drawModule = device.createShaderModule({ code: WGSL_DRAW });
+    for (const module of [stepModule, drawModule]) {
+      const info = await module.getCompilationInfo();
+      if (info.messages.some(function (m) { return m.type === "error"; })) {
+        throw new Error("shader");
+      }
+    }
+
+    if (entry.cancelled) {
+      return;
+    }
+
+    // Four floats a particle — position and velocity; which flock is its index — each flock in a cloud round home.
+    const count = GPU_EACH * 2;
+    const seed = new Float32Array(count * 4);
+    const start = homes(0, Math.max(entry.canvas.width / Math.max(entry.canvas.height, 1), 0.5));
+    for (let i = 0; i < count; i++) {
+      const flock = i < GPU_EACH ? 0 : 1;
+      const angle = Math.random() * Math.PI * 2;
+      const radius = Math.sqrt(Math.random()) * 0.2;
+      seed[i * 4] = start[flock * 2] + Math.cos(angle) * radius;
+      seed[i * 4 + 1] = start[flock * 2 + 1] + Math.sin(angle) * radius;
+    }
+
+    const particles = device.createBuffer({ size: seed.byteLength, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+    device.queue.writeBuffer(particles, 0, seed);
+    const uniforms = device.createBuffer({ size: 80, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+    const step = device.createComputePipeline({ layout: "auto", compute: { module: stepModule, entryPoint: "step" } });
+    const additive = { srcFactor: "one", dstFactor: "one" };
+    const draw = device.createRenderPipeline({
+      layout: "auto",
+      vertex: { module: drawModule, entryPoint: "vs" },
+      fragment: { module: drawModule, entryPoint: "fs", targets: [{ format: format, blend: { color: additive, alpha: additive } }] },
+      primitive: { topology: "triangle-list" },
+    });
+    const group = function (pipeline) {
+      return device.createBindGroup({
+        layout: pipeline.getBindGroupLayout(0),
+        entries: [{ binding: 0, resource: { buffer: uniforms } }, { binding: 1, resource: { buffer: particles } }],
+      });
+    };
+    const stepGroup = group(step);
+    const drawGroup = group(draw);
+    const data = new Float32Array(20);
+
+    function frame(now) {
+      if (entry.cancelled) {
+        return;
+      }
+
+      if (!document.hidden) {
+        const dt = entry.lastStep ? Math.min((now - entry.lastStep) / 1000, 1 / 30) : 1 / 60;
+        entry.lastStep = now;
+        const t = (now - entry.start) / 1000;
+        const aspect = entry.canvas.width / Math.max(entry.canvas.height, 1);
+        data.set(homes(t, aspect), 0);
+        data.set(entry.c1, 4);
+        data.set(entry.c2, 8);
+        data[12] = t;
+        data[13] = dt;
+        data[14] = aspect;
+        data[15] = Math.max(2, entry.canvas.height / 300);
+        data[16] = GPU_EACH;
+        data[17] = entry.canvas.height;
+        device.queue.writeBuffer(uniforms, 0, data);
+
+        const encoder = device.createCommandEncoder();
+        const compute = encoder.beginComputePass();
+        compute.setPipeline(step);
+        compute.setBindGroup(0, stepGroup);
+        compute.dispatchWorkgroups(Math.ceil(count / 64));
+        compute.end();
+        const pass = encoder.beginRenderPass({
+          colorAttachments: [{ view: context.getCurrentTexture().createView(), clearValue: { r: 0, g: 0, b: 0, a: 0 }, loadOp: "clear", storeOp: "store" }],
+        });
+        pass.setPipeline(draw);
+        pass.setBindGroup(0, drawGroup);
+        pass.draw(6, count);
+        pass.end();
+        device.queue.submit([encoder.finish()]);
+      }
+
+      entry.raf = requestAnimationFrame(frame);
+    }
+
+    entry.ready = true;
+    entry.raf = requestAnimationFrame(frame);
+  }
+
+  function unmountGpu(selector) {
+    const entry = gpuMounts.get(selector);
+    if (!entry) {
+      return;
+    }
+
+    gpuMounts.delete(selector);
+    entry.cancelled = true;
+    cancelAnimationFrame(entry.raf);
+    if (entry.observer) {
+      entry.observer.disconnect();
+    }
+
+    if (entry.canvas.parentNode) {
+      entry.canvas.parentNode.removeChild(entry.canvas);
+    }
+
+    if (entry.device) {
+      entry.device.destroy();
+    }
+  }
+
   function readColours(mount) {
     mount.c1 = tokenColour(mount.tokens[0], [0.25, 0.66, 0.96]);
     mount.c2 = tokenColour(mount.tokens[1], [1.0, 0.31, 0.55]);
@@ -1040,6 +1277,7 @@ void main() {
     watchingTheme = true;
     new MutationObserver(function () {
       mounts.forEach(readColours);
+      gpuMounts.forEach(readColours);
     }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   }
 
@@ -1179,7 +1417,7 @@ void main() {
   }
 
   function mount(selector, shader, options) {
-    if (reducedMotion() || mounts.has(selector)) {
+    if (reducedMotion() || mounts.has(selector) || gpuMounts.has(selector)) {
       return false;
     }
 
@@ -1190,6 +1428,10 @@ void main() {
     }
 
     const settings = options || {};
+    if (shader === "swarm" && settings.gpu !== false && navigator.gpu) {
+      return mountGpu(selector, host, settings);
+    }
+
     let gl = null;
     const canvas = document.createElement("canvas");
     canvas.className = "po-gfx";
@@ -1293,6 +1535,12 @@ void main() {
   return {
     probe: probe,
 
+    /** What a mount is drawing with once it has settled: "webgpu", "webgl2", or null for nothing mounted there. */
+    tier: function (selector) {
+      const gpu = gpuMounts.get(selector);
+      return gpu ? (gpu.ready ? "webgpu" : null) : mounts.has(selector) ? "webgl2" : null;
+    },
+
     /**
      * A design token as a CSS colour string, resolved by this theme. Exposed because PoParticles needs the same
      * answer and there is no sense in two probes: light-dark() can only be unpicked by asking the browser.
@@ -1313,6 +1561,7 @@ void main() {
 
     unmount: function (selector) {
       try {
+        unmountGpu(selector);
         unmount(selector);
       } catch (e) {
         // Nothing left to take down.

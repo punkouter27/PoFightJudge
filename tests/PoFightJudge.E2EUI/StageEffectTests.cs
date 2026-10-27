@@ -32,7 +32,8 @@ public class StageEffectTests(AppFixture app)
               document.body.appendChild(host);
               const drawn = [];
               for (const shader of ['stage', 'backdrop', 'grain', 'fluid', 'rays', 'swarm']) {
-                if (PoGfx.mount('#gfx-probe', shader)) { drawn.push(shader); }
+                // WebGL2 only: the swarm's WebGPU tier is the next test's, and would hide a GLSL swarm that fails.
+                if (PoGfx.mount('#gfx-probe', shader, { gpu: false })) { drawn.push(shader); }
                 PoGfx.unmount('#gfx-probe');
               }
               host.remove();
@@ -41,6 +42,38 @@ public class StageEffectTests(AppFixture app)
             """);
 
         mounted.Should().Equal(["stage", "backdrop", "grain", "fluid", "rays", "swarm"], "every shader must compile and link, or it draws nothing at all");
+        errors.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// The swarm runs on WebGPU's compute shaders where the browser has an adapter, and where it has none — or the
+    /// device will not come up — it falls back to the WebGL2 swarm without a word in the console.
+    /// </summary>
+    [SkippableFact]
+    public async Task The_swarm_runs_on_webgpu_where_there_is_one_and_webgl2_where_there_is_not()
+    {
+        var (context, page, errors) = await app.OpenAsync(AppFixture.Desktop);
+        await using var _ = context;
+        Skip.IfNot(await page.EvaluateAsync<bool>("() => PoGfx.probe().webgl2"), "this browser has no WebGL2");
+
+        var result = await page.EvaluateAsync<string[]>(
+            """
+            async () => {
+              const adapter = navigator.gpu ? await navigator.gpu.requestAdapter().catch(() => null) : null;
+              const host = document.createElement('div');
+              host.id = 'swarm-probe';
+              host.style.cssText = 'position:fixed;left:0;top:0;width:300px;height:200px;';
+              document.body.appendChild(host);
+              PoGfx.mount('#swarm-probe', 'swarm');
+              await new Promise(r => setTimeout(r, 1500));
+              const tier = PoGfx.tier('#swarm-probe');
+              PoGfx.unmount('#swarm-probe');
+              host.remove();
+              return [adapter ? 'webgpu' : 'webgl2', tier];
+            }
+            """);
+
+        result[1].Should().Be(result[0]);
         errors.Should().BeEmpty();
     }
 
