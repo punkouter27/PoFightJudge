@@ -25,3 +25,30 @@
   .podium-link:nth-child(2) { order: 1; }
   .podium-link:nth-child(3) { order: 3; }
 }
+
+/* The card drops onto the board: the top three fall in under gravity and bounce where they land — third first,
+   then second, then the champion — and the standings follow a row at a time. The easing is the physics: it
+   accelerates down, hits, and gives back a little less height on each bounce. */
+.podium-link { animation: po-drop 0.9s var(--po-bounce) both; }
+
+.podium-link:nth-child(3) { animation-delay: 0.1s; }
+
+.podium-link:nth-child(2) { animation-delay: 0.35s; }
+
+.podium-link:nth-child(1) { animation-delay: 0.6s; }
+
+::deep .board tbody tr { animation: po-drop-row 0.6s var(--po-bounce) both; }
+
+/* Staggered where the browser can count siblings; where it cannot, the rows land together. */
+::deep .board tbody tr { animation-delay: calc(min(sibling-index(), 12) * 45ms + 0.6s); }
+
+@keyframes po-drop {
+  from { transform: translateY(-110vh) rotate(-3deg); }
+  to { transform: none; }
+}
+
+@keyframes po-drop-row {
+  from { opacity: 0; transform: translateY(-1.5rem); }
+  20% { opacity: 1; }
+  to { opacity: 1; transform: none; }
+}

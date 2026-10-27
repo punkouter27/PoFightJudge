@@ -74,6 +74,8 @@
   --po-ease: cubic-bezier(0.22, 1, 0.36, 1);
   /* A damped spring: past the mark, back, and settled. For things that are poured or dropped rather than slid. */
   --po-spring: linear(0, 0.45 12%, 0.92 24%, 1.12 34%, 1.06 46%, 0.98 58%, 1.01 72%, 1);
+  /* Falling and bouncing: accelerates down, lands, and each bounce gives back less height than the last. */
+  --po-bounce: linear(0, 0.06 10%, 0.25 20%, 0.56 30%, 1 40%, 0.9 50%, 0.87 55%, 0.9 60%, 1 70%, 0.97 78%, 1 86%, 0.995 93%, 1);
   --po-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 
   /* ── Safe area ──
