@@ -363,9 +363,10 @@ window.PoSfx = (function () {
         tone(at + 0.3 + i * 0.04, { type: "sine", freq: 2637 + i * 220, duration: 0.18, gain: 0.04 });
       }
     },
-    // A rubber stamp coming down on paper: a short thunk, the knock of the handle, and the paper itself.
-    "stamp": function (at) {
-      tone(at, { type: "sine", freq: 150, sweepTo: 55, duration: 0.14, gain: 0.55 });
+    // A rubber stamp coming down on paper: a short thunk, the knock of the handle, and the paper itself. `value`
+    // pitches the thunk, so each fallacy lands with its own note.
+    "stamp": function (at, value) {
+      tone(at, { type: "sine", freq: 115 + value * 75, sweepTo: 55, duration: 0.14, gain: 0.55 });
       hit(at, { freq: 700, duration: 0.06, gain: 0.5, filter: "lowpass" });
       hit(at + 0.012, { freq: 4500, duration: 0.09, gain: 0.12, filter: "highpass" });
     },

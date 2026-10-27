@@ -63,6 +63,29 @@ window.PoFx = (function () {
     }
   }
 
+  // The line a stamp lands on takes the hit: a short jolt, re-triggered the same way burst() re-triggers a slap.
+  function thud(el) {
+    if (!el) {
+      return;
+    }
+
+    el.classList.remove("fx-thud");
+    void el.offsetWidth;
+    el.classList.add("fx-thud");
+    window.setTimeout(function () { el.classList.remove("fx-thud"); }, 400);
+  }
+
+  // Each fallacy lands at its own pitch, so a second "strawman" sounds like the first and not like an ad hominem:
+  // the name hashed to 0–1, which the stamp voice turns into a pitch.
+  function pitchOf(name) {
+    let hash = 7;
+    for (let i = 0; i < name.length; i++) {
+      hash = (hash * 31 + name.charCodeAt(i)) % 1009;
+    }
+
+    return hash / 1008;
+  }
+
   // Stamps that drop onto the page the first time they are seen. Armed now (up off the page, waiting); stamped as
   // they come into view — a tab opened, a list scrolled to — one after another when several arrive together, each
   // with its thunk. A browser with no IntersectionObserver, or somebody who asked for less motion, gets them as they
@@ -91,8 +114,9 @@ window.PoFx = (function () {
         window.setTimeout(function () {
           el.classList.remove("armed");
           el.classList.add("stamped");
+          thud(el.parentElement);
           if (window.PoSfx) {
-            window.PoSfx.play("stamp");
+            window.PoSfx.play("stamp", pitchOf(el.getAttribute("aria-label") || ""));
           }
         }, order++ * 180);
       });

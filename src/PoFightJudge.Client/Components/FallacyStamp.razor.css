@@ -40,6 +40,29 @@
   animation: ink-bleed 0.9s ease-out both;
 }
 
+/* The spatter: droplets thrown out past the edge of the bleed as it lands, flung outward and soaked in. */
+.fallacy-stamp.stamped::before {
+  content: "";
+  position: absolute;
+  inset: -14px -22px;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 6% 30%, var(--po-warning) 0 2px, transparent 3px),
+    radial-gradient(circle at 94% 22%, var(--po-warning) 0 3px, transparent 4px),
+    radial-gradient(circle at 88% 86%, var(--po-warning) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 14% 80%, var(--po-warning) 0 2.5px, transparent 3.5px),
+    radial-gradient(circle at 52% 4%, var(--po-warning) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 60% 98%, var(--po-warning) 0 2px, transparent 3px);
+  animation: ink-spatter 0.7s ease-out both;
+}
+
+@keyframes ink-spatter {
+  from { opacity: 0; transform: scale(0.3); }
+  15% { opacity: 1; }
+  to { opacity: 0.45; transform: scale(1); }
+}
+
 @keyframes stamp-down {
   from { opacity: 0; transform: translateY(-1.2rem) scale(2.6) rotate(-18deg); }
   30% { opacity: 1; }

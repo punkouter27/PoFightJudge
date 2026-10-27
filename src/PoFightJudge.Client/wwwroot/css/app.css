@@ -452,6 +452,15 @@ body { background: transparent; }
 #blazor-error-ui a { color: inherit; }
 
 /* ── Motion: one switch turns it all off ── */
+/* A stamp landing on a line (PoFx): the line takes the hit, down and back. */
+.fx-thud { animation: po-thud 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+
+@keyframes po-thud {
+  0%, 100% { transform: none; }
+  20% { transform: translateY(3px) rotate(-0.4deg); }
+  45% { transform: translateY(-1px) rotate(0.2deg); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   :root {
     --po-dur-fast: 0ms;
