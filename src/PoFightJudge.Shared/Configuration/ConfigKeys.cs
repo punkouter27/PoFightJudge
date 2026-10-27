@@ -69,6 +69,9 @@ public static class ConfigKeys
         public const string JudgeThinkingLevel = $"{Section}:JudgeThinkingLevel";
         public const string JudgeServiceTier = $"{Section}:JudgeServiceTier";
 
+        /// <summary>The tier a persona rewrite asks for; nobody is waiting on one, so it defaults to the discount.</summary>
+        public const string ProfileServiceTier = $"{Section}:ProfileServiceTier";
+
         /// <summary>
         /// Prompt plus output tokens one caller may spend per UTC day before AI routes answer 429. Zero or absent
         /// switches the allowance off.

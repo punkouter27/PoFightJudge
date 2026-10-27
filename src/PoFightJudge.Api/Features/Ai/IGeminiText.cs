@@ -11,7 +11,8 @@ public readonly record struct GeminiPrompt(string System, string User);
 
 /// <summary>
 /// One text-generation call. <paramref name="Operation"/> names the latency/usage bucket ("round", "judge",
-/// "profile"…); a <paramref name="ResponseSchema"/> switches the model to structured JSON output.
+/// "profile"…); a <paramref name="ResponseSchema"/> switches the model to structured JSON output. A
+/// <paramref name="ServiceTier"/> ("flex") is for work nobody is waiting on: it is slower and cheaper.
 /// </summary>
 public sealed record GeminiTextRequest(
     GeminiPrompt Prompt,
@@ -20,7 +21,8 @@ public sealed record GeminiTextRequest(
     JsonNode? ResponseSchema = null,
     double Temperature = 0.9,
     int MaxOutputTokens = 1024,
-    string? ThinkingLevel = null);
+    string? ThinkingLevel = null,
+    string? ServiceTier = null);
 
 /// <summary>
 /// The Gemini text transport: one call in, text out — JSON text when the request carries a schema. Prompt building

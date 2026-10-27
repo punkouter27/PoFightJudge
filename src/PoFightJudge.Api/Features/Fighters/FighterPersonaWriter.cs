@@ -90,7 +90,8 @@ public sealed partial class FighterPersonaWriter(
                     ProfileGenerator.Schema,
                     Temperature: 0.7,
                     MaxOutputTokens: ProfileGenerator.MaxOutputTokens,
-                    ThinkingLevel: "low");
+                    ThinkingLevel: "low",
+                    ServiceTier: models.ProfileServiceTier);
                 draft = ProfileGenerator.Parse(await gemini.GenerateAsync(request, ct), fighter.Role);
                 if (ProfileGenerator.IsComplete(draft))
                 {

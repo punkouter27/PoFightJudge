@@ -18,7 +18,8 @@ public sealed record GeminiModelOptions(
     string TurnTranscribe,
     string Voice,
     string JudgeThinkingLevel,
-    string JudgeServiceTier)
+    string JudgeServiceTier,
+    string ProfileServiceTier)
 {
     public static GeminiModelOptions Defaults { get; } = new(
         Round: "gemini-3.1-flash-lite",
@@ -33,7 +34,8 @@ public sealed record GeminiModelOptions(
         TurnTranscribe: "gemini-3.1-flash-lite",
         Voice: "Puck",
         JudgeThinkingLevel: "low",
-        JudgeServiceTier: "flex");
+        JudgeServiceTier: "flex",
+        ProfileServiceTier: "flex");
 
     public static GeminiModelOptions FromConfiguration(IConfiguration configuration) => new(
         Round: Pick(configuration, ConfigKeys.Ai.RoundModel, Defaults.Round),
@@ -45,7 +47,8 @@ public sealed record GeminiModelOptions(
         TurnTranscribe: Pick(configuration, ConfigKeys.Ai.TurnTranscribeModel, Defaults.TurnTranscribe),
         Voice: Pick(configuration, ConfigKeys.Ai.Voice, Defaults.Voice),
         JudgeThinkingLevel: Pick(configuration, ConfigKeys.Ai.JudgeThinkingLevel, Defaults.JudgeThinkingLevel),
-        JudgeServiceTier: Pick(configuration, ConfigKeys.Ai.JudgeServiceTier, Defaults.JudgeServiceTier));
+        JudgeServiceTier: Pick(configuration, ConfigKeys.Ai.JudgeServiceTier, Defaults.JudgeServiceTier),
+        ProfileServiceTier: Pick(configuration, ConfigKeys.Ai.ProfileServiceTier, Defaults.ProfileServiceTier));
 
     private static string Pick(IConfiguration configuration, string key, string fallback) =>
         configuration[key]?.Trim() is { Length: > 0 } configured ? configured : fallback;

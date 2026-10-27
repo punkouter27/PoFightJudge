@@ -101,6 +101,10 @@ committed.
 one caller may spend per UTC day. Past it, every rate-limited AI route answers 429 until midnight UTC, and `/health`
 shows the caller where they stand. The count is in memory, so a restart forgives the day.
 
+`PoFightJudge:Ai:JudgeServiceTier` and `PoFightJudge:Ai:ProfileServiceTier` (both `flex`) put the fight judge and
+the persona rewrite, the two calls nobody waits on, on Gemini's discount tier. When that tier is busy the call is
+sent again at the standard price; an empty value switches the discount off.
+
 The three secrets (`GeminiApiKey`, `AzureAd--TenantId`, `AzureAd--ClientId`) are set in `kv-poshared2` by hand;
 `./SCRIPTS/setup.ps1` checks the names are there and never reads a value.
 

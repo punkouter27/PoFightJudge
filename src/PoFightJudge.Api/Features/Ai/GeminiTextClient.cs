@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -18,8 +19,25 @@ public sealed partial class GeminiTextClient(IHttpClientFactory httpClients, AiL
 
     public async Task<string> GenerateAsync(GeminiTextRequest request, CancellationToken ct = default)
     {
+        // A tiered call is one nobody is waiting on, and the discount tier routinely outlasts the fast client's
+        // eight-second attempt; the analysis client is the patient one, for the standard-price retry too.
+        var client = request.ServiceTier is null ? GeminiHttpClients.Fast : GeminiHttpClients.Analysis;
+        try
+        {
+            return await SendAsync(request, client, ct);
+        }
+        catch (HttpRequestException ex) when (request.ServiceTier is not null && ex.StatusCode is HttpStatusCode.ServiceUnavailable)
+        {
+            // The discount tier is a price, not capacity: busy is its answer for as long as it is busy (the judge
+            // learned this on 2026-09-07). Work that was worth doing is worth paying the standard price for.
+            return await SendAsync(request with { ServiceTier = null }, client, ct);
+        }
+    }
+
+    private async Task<string> SendAsync(GeminiTextRequest request, string clientName, CancellationToken ct)
+    {
         using var message = Message(request, stream: false);
-        var client = httpClients.CreateClient(GeminiHttpClients.Fast);
+        var client = httpClients.CreateClient(clientName);
 
         var started = Stopwatch.GetTimestamp();
         using var response = await client.SendAsync(message, ct);
@@ -138,6 +156,11 @@ public sealed partial class GeminiTextClient(IHttpClientFactory httpClients, AiL
             },
             ["generationConfig"] = generationConfig,
         };
+        if (request.ServiceTier is { Length: > 0 } tier)
+        {
+            payload["service_tier"] = tier;
+        }
+
         if (!string.IsNullOrEmpty(request.Prompt.System))
         {
             payload["systemInstruction"] = new JsonObject
