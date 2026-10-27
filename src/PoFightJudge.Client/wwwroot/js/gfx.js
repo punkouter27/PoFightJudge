@@ -1093,13 +1093,6 @@ void main() {
         // Eased rather than taken raw: the level is sampled at whatever rate the bus updates it, and a glow that
         // steps between two values reads as a fault.
         mount.smoothed += (levelOf(mount) - mount.smoothed) * 0.18;
-        // Handed to the page's CSS too, so the card of whoever is talking glows with them — only when it has moved
-        // enough to see, because a style write is a style recalculation.
-        if (mount.level && Math.abs(mount.smoothed - mount.published) > 0.02) {
-          mount.published = mount.smoothed;
-          mount.host.style.setProperty("--po-level", mount.smoothed.toFixed(2));
-        }
-
         if (mount.fluid) {
           stepFluid(mount, now);
           return;
@@ -1234,7 +1227,6 @@ void main() {
       mix: 0.5,
       heat: 0,
       smoothed: 0,
-      published: 0,
       focus: [0.5, 0.5],
       shockAt: 0,
       c1: [0.25, 0.66, 0.96],
@@ -1275,7 +1267,6 @@ void main() {
 
     mounts.delete(selector);
     entry.host.style.removeProperty("--po-heat");
-    entry.host.style.removeProperty("--po-level");
     if (entry.observer) {
       entry.observer.disconnect();
     }

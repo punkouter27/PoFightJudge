@@ -45,37 +45,6 @@ public class StageEffectTests(AppFixture app)
     }
 
     /// <summary>
-    /// The live shader hands the voice it is breathing with to the page's CSS as <c>--po-level</c>, so the card of
-    /// whoever is talking can glow with them. Fed here by a stand-in host bus.
-    /// </summary>
-    [SkippableFact]
-    public async Task A_live_shader_publishes_the_voice_level_to_the_page()
-    {
-        var (context, page, errors) = await app.OpenAsync(AppFixture.Desktop);
-        await using var _ = context;
-        Skip.IfNot(await page.EvaluateAsync<bool>("() => PoGfx.probe().webgl2"), "this browser has no WebGL2");
-
-        var level = await page.EvaluateAsync<double>(
-            """
-            async () => {
-              window.PoLive = { hostLevel: () => 0.8 };
-              const host = document.createElement('div');
-              host.id = 'gfx-level';
-              host.style.cssText = 'position:fixed;left:0;top:0;width:200px;height:120px;';
-              document.body.appendChild(host);
-              PoGfx.mount('#gfx-level', 'backdrop', { level: 'live' });
-              await new Promise(r => setTimeout(r, 600));
-              const value = parseFloat(host.style.getPropertyValue('--po-level'));
-              PoGfx.unmount('#gfx-level');
-              return value;
-            }
-            """);
-
-        level.Should().BeGreaterThan(0.5, "a voice at 0.8 eases up toward it within half a second");
-        errors.Should().BeEmpty();
-    }
-
-    /// <summary>
     /// A loser's card cracks before it breaks, and its pieces land on the floor and bounce rather than falling out of
     /// the bottom of the page: a second in, there is still glass lying along the bottom edge.
     /// </summary>

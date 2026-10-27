@@ -27,8 +27,8 @@
   transform: scale(1.03);
   /* Tinted with their own colour rather than filled in: a solid panel would put out the glass behind it. */
   background: color-mix(in srgb, currentColor 14%, var(--po-glass));
-  /* The aura breathes with the room: PoGfx publishes the live level on the stage as --po-level, 0 to 1. */
-  box-shadow: 0 0 0 2px currentColor, 0 0 calc(var(--po-level, 0) * 48px) calc(var(--po-level, 0) * 10px) currentColor;
+  /* The aura breathes with the room: live-audio.js publishes the microphone as --po-mic-level, 0 to 1. */
+  box-shadow: 0 0 0 2px currentColor, 0 0 calc(var(--po-mic-level, 0) * 48px) calc(var(--po-mic-level, 0) * 10px) currentColor;
   transition: transform var(--po-dur-slow) ease, filter var(--po-dur-slow) ease, box-shadow 90ms linear;
 }
 
@@ -52,5 +52,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .side { transition: none; }
-  .side--speaking { transform: none; }
+  .side--speaking { transform: none; box-shadow: 0 0 0 2px currentColor; }
 }
