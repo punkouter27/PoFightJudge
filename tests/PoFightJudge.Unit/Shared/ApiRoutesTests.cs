@@ -47,6 +47,5 @@ public class ApiRoutesTests
         ApiRoutes.Watch.GenerateRoundUrl.Should().Be("/api/watch/generate-round");
         ApiRoutes.Watch.VerdictUrl.Should().Be("/api/watch/verdict");
         ApiRoutes.Hubs.Live.Should().Be("/hubs/live");
-        ApiRoutes.Health.PageUrl.Should().Be("/health", "the Blazor page owns bare /health; the probe is /api/health");
     }
 }

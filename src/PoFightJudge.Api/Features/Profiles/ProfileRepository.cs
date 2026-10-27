@@ -12,8 +12,6 @@ public interface IProfileRepository
 
     Task<IReadOnlyList<Profile>> GetAllAsync(CancellationToken ct = default);
 
-    Task<IReadOnlyList<Profile>> GetByRoleAsync(ProfileRole role, CancellationToken ct = default);
-
     Task UpsertAsync(Profile profile, CancellationToken ct = default);
 
     Task DeleteAsync(ProfileId id, CancellationToken ct = default);
@@ -38,9 +36,6 @@ public sealed class ProfileRepository(TableServiceClient tables) : IProfileRepos
 
     public Task<IReadOnlyList<Profile>> GetAllAsync(CancellationToken ct = default) =>
         QueryAsync(TableClient.CreateQueryFilter($"PartitionKey eq {ProfileTableEntity.Partition}"), ct);
-
-    public Task<IReadOnlyList<Profile>> GetByRoleAsync(ProfileRole role, CancellationToken ct = default) =>
-        QueryAsync(TableClient.CreateQueryFilter($"PartitionKey eq {ProfileTableEntity.Partition} and Role eq {role.ToString()}"), ct);
 
     public Task UpsertAsync(Profile profile, CancellationToken ct = default) =>
         StorageBootstrap.WithTableAsync(tables, TableName, token => Table.UpsertEntityAsync(profile.ToEntity(), TableUpdateMode.Replace, token), ct);

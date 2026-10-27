@@ -51,9 +51,6 @@ public class ProfileRepositoryTests(AzuriteFixture azurite)
         var all = await sut.GetAllAsync();
         all.Select(p => p.Initials).Should().Contain(["RH1", "RW1"]);
 
-        var wives = await sut.GetByRoleAsync(ProfileRole.Wife);
-        wives.Select(p => p.Initials).Should().Contain("RW1").And.NotContain("RH1");
-
         await sut.UpsertAsync(Persona("RH1", ProfileRole.Husband, likes: "tea"));
         (await sut.GetByIdAsync(ProfileId.From("RH1")))!.Likes.Should().Be("tea", "upsert replaces the row");
 

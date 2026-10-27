@@ -26,9 +26,6 @@ public sealed class InMemoryProfileRepository : IProfileRepository
     public Task<IReadOnlyList<Profile>> GetAllAsync(CancellationToken ct = default) =>
         Task.FromResult<IReadOnlyList<Profile>>([.. _rows.Values.OrderBy(p => p.Initials, StringComparer.Ordinal)]);
 
-    public Task<IReadOnlyList<Profile>> GetByRoleAsync(ProfileRole role, CancellationToken ct = default) =>
-        Task.FromResult<IReadOnlyList<Profile>>([.. _rows.Values.Where(p => p.Role == role).OrderBy(p => p.Initials, StringComparer.Ordinal)]);
-
     public Task UpsertAsync(Profile profile, CancellationToken ct = default)
     {
         _rows[profile.Initials] = profile;

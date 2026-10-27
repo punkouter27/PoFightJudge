@@ -35,9 +35,6 @@ public sealed record WatchRound(
 /// </summary>
 public sealed class WatchMatch
 {
-    /// <summary>Per-speaker round cap. Defined in Shared, because the play screen counts the rounds the same way.</summary>
-    public const int MaxRoundsPerMatch = WatchTurns.RoundsPerSide;
-
     /// <summary>
     /// The seven-line ceiling a slap allows. Without this allowance every slapped match failed at the verdict, and
     /// "retry" could never succeed because it rebuilt the same seven-line payload.

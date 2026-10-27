@@ -60,8 +60,6 @@ public interface IApiClient
     Task<IReadOnlyList<FighterDto>> GetFightersAsync(CancellationToken ct = default);
 
     /// <summary>One fighter, or null when this tag is new.</summary>
-    Task<FighterDto?> GetFighterAsync(FighterId tag, CancellationToken ct = default);
-
     /// <summary>Everyone who has argued, each with their record. What the roster page is made of.</summary>
     Task<IReadOnlyList<FighterStatsDto>> GetRosterAsync(CancellationToken ct = default);
 
@@ -339,19 +337,6 @@ public sealed class ApiClient(IHttpClientFactory clients) : IApiClient
         catch (HttpRequestException)
         {
             return [];
-        }
-    }
-
-    public async Task<FighterDto?> GetFighterAsync(FighterId tag, CancellationToken ct = default)
-    {
-        try
-        {
-            using var response = await http.GetAsync(Relative(ApiRoutes.Fighters.ByTag(tag)), ct);
-            return response.IsSuccessStatusCode ? await response.Content.ReadFromJsonAsync<FighterDto>(ct) : null;
-        }
-        catch (HttpRequestException)
-        {
-            return null;
         }
     }
 

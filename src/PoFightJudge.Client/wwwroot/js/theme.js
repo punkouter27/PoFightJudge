@@ -52,7 +52,6 @@ window.PoTheme.chrome(document.documentElement.getAttribute('data-theme'));
 // on in Settings, and off whatever the setting when the system asks for less motion. Read from localStorage, like
 // the theme, so the first mount already knows. Every drawn-effect entry point asks this one question.
 window.PoMotion = {
-  KEY: 'po-effects',
   still: function () {
     try {
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;

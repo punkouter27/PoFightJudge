@@ -32,9 +32,6 @@ public sealed class Recording(Stream content, long length) : IAsyncDisposable
 /// </remarks>
 public static class RecordingSource
 {
-    /// <summary>What a second of 16 kHz mono PCM16 costs, used to size the decode buffer.</summary>
-    public const int BytesPerSecondAt16k = DebateOrchestrator.PlayerSampleRate * 2;
-
     public static async Task<Recording> OpenAsync(IAudioBlobStore blobs, string blobName, int sampleRate, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(blobs);

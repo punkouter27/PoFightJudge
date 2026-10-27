@@ -33,10 +33,6 @@ public sealed class FighterEndpoints : ICarterModule
 
         fighters.MapGet(ApiRoutes.Fighters.RosterSegment, RosterAsync).Produces<IReadOnlyList<FighterStatsDto>>();
 
-        fighters.MapGet(ApiRoutes.Fighters.ByTagSegment, GetAsync)
-            .Produces<FighterDto>()
-            .Produces(StatusCodes.Status404NotFound);
-
         fighters.MapGet(ApiRoutes.Fighters.ProfileSegment, ProfileAsync)
             .Produces<FighterProfileDto>()
             .Produces(StatusCodes.Status404NotFound);
@@ -241,7 +237,4 @@ public sealed class FighterEndpoints : ICarterModule
         var roster = await fighters.ListAsync(ct);
         return [.. roster.Select(f => f.ToDto())];
     }
-
-    private static async Task<IResult> GetAsync(FighterId tag, IFighterRepository fighters, CancellationToken ct) =>
-        await fighters.GetAsync(tag, ct) is { } fighter ? Results.Ok(fighter.ToDto()) : Results.NotFound();
 }

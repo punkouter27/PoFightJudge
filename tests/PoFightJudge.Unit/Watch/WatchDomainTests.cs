@@ -28,7 +28,6 @@ public class WatchMatchTests
     [Fact]
     public void A_match_carries_six_lines_or_seven_when_a_slap_added_one_and_is_complete_only_when_both_sides_have_had_their_rounds()
     {
-        WatchMatch.MaxRoundsPerMatch.Should().Be(3);
         WatchMatch.MaxLinesPerMatch.Should().Be(7, "a slap inserts one extra reaction, and every slapped match failed at the verdict without the allowance");
 
         Complete(6).Rounds.Should().HaveCount(6);
