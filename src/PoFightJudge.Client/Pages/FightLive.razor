@@ -25,7 +25,7 @@
         }
         else
         {
-            <div class="stage @(_table ? "table" : null)">
+            <div class="stage @(_table ? "table" : null)" style="--po-lean: @_floor.Share.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture)">
                 @if (_table)
                 {
                     <RadzenButton Text="Leave table mode" Icon="close_fullscreen" ButtonStyle="ButtonStyle.Base" Variant="Variant.Flat"

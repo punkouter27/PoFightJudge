@@ -211,5 +211,24 @@ window.PoFx = (function () {
     }
   });
 
+  // Glass catches the light: the panel under the pointer is told where it is, as a percentage across it, and a
+  // highlight in app.css follows. One listener for the whole page; the panel it has left is put back.
+  let glinting = null;
+
+  document.addEventListener("pointermove", function (e) {
+    const glass = e.target && e.target.closest ? e.target.closest(".po-glass") : null;
+    if (glinting && glinting !== glass) {
+      glinting.style.removeProperty("--po-glint-x");
+      glinting.style.removeProperty("--po-glint-y");
+    }
+
+    glinting = glass;
+    if (glass) {
+      const box = glass.getBoundingClientRect();
+      glass.style.setProperty("--po-glint-x", Math.round((e.clientX - box.left) / box.width * 100) + "%");
+      glass.style.setProperty("--po-glint-y", Math.round((e.clientY - box.top) / box.height * 100) + "%");
+    }
+  }, { passive: true });
+
   return { burst: burst, scrollBottom: scrollBottom, reveal: reveal, table: table, stamps: stamps, holo: holo };
 })();

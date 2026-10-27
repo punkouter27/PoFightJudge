@@ -45,6 +45,38 @@ public class StageEffectTests(AppFixture app)
     }
 
     /// <summary>
+    /// Glass catches the light where the pointer is: the panel under it is told where, as a percentage across it,
+    /// and the one it has left is put back.
+    /// </summary>
+    [SkippableFact]
+    public async Task Glass_catches_the_light_under_the_pointer()
+    {
+        var (context, page, errors) = await app.OpenAsync(AppFixture.Desktop);
+        await using var _ = context;
+
+        await page.EvaluateAsync(
+            """
+            () => {
+              const make = (id, left) => {
+                const el = document.createElement('div');
+                el.id = id; el.className = 'po-glass';
+                el.style.cssText = `position:fixed;left:${left}px;top:0;width:200px;height:100px;z-index:9999`;
+                document.body.appendChild(el);
+              };
+              make('glass-a', 0); make('glass-b', 300);
+            }
+            """);
+
+        await page.Mouse.MoveAsync(150, 25);
+        (await page.EvaluateAsync<string>("() => document.getElementById('glass-a').style.getPropertyValue('--po-glint-x')")).Should().Be("75%");
+
+        await page.Mouse.MoveAsync(350, 50);
+        (await page.EvaluateAsync<string>("() => document.getElementById('glass-a').style.getPropertyValue('--po-glint-x')")).Should().BeEmpty("the light has moved on");
+        (await page.EvaluateAsync<string>("() => document.getElementById('glass-b').style.getPropertyValue('--po-glint-y')")).Should().Be("50%");
+        errors.Should().BeEmpty();
+    }
+
+    /// <summary>
     /// A loser's card cracks before it breaks, and its pieces land on the floor and bounce rather than falling out of
     /// the bottom of the page: a second in, there is still glass lying along the bottom edge.
     /// </summary>
