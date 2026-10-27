@@ -85,7 +85,13 @@ public sealed class DebateSession(DebateOptions options, MatchId matchId, DateTi
     public const int MaxQuestionText = 1_000;
     public const int MaxVerdictText = 8_000;
 
+    /// <summary>A host that flags every sentence has stopped hosting; past this the calls are refused.</summary>
+    public const int MaxFlags = 12;
+
+    private const int MaxFallacyName = 40;
+
     private readonly List<TurnDto> _turns = [];
+    private readonly List<LiveFlagDto> _flags = [];
     private readonly HashSet<NudgeKind> _nudged = [];
     private DateTimeOffset _lastSpeech = startedAt;
     private DateTimeOffset _turnStartedAt = startedAt;
@@ -294,6 +300,24 @@ public sealed class DebateSession(DebateOptions options, MatchId matchId, DateTi
         return Outcome.Ok;
     }
 
+    /// <summary>The host calls a fallacy as it happens. Only while they argue or answer, and only so many times.</summary>
+    public Outcome FlagFallacy(PlayerId player, string fallacy, string quote, DateTimeOffset now) => Locked(() =>
+    {
+        MoveOnFromIntro(now);
+        if (Phase is not (SessionPhase.Debate or SessionPhase.Probe))
+        {
+            return Outcome.Fail($"Cannot flag a fallacy during {Phase}.");
+        }
+
+        if (_flags.Count >= MaxFlags)
+        {
+            return Outcome.Fail("Enough fallacies called; let them argue.");
+        }
+
+        _flags.Add(new LiveFlagDto(player.ToSpeaker(), Clean(fallacy, MaxFallacyName, "Fallacy"), Clean(quote, MaxShortText, string.Empty)));
+        return Outcome.Ok;
+    });
+
     public Outcome DeliverVerdict(VerdictCall verdict, DateTimeOffset now) => Locked(() => DeliverVerdictCore(verdict, now));
 
     private Outcome DeliverVerdictCore(VerdictCall verdict, DateTimeOffset now)
@@ -427,7 +451,8 @@ public sealed class DebateSession(DebateOptions options, MatchId matchId, DateTi
         Verdict is null ? null : new VerdictDto(Verdict.WinnerLogic.ToSpeaker(), Verdict.WinnerCorrect.ToSpeaker(), Verdict.Overall.ToSpeaker(), Verdict.Reasons),
         Persona,
         (int)(now - StartedAt).TotalSeconds,
-        setup?.Player1Stance));
+        setup?.Player1Stance,
+        _flags.Count == 0 ? null : [.. _flags]));
 
     /// <summary>
     /// Every entry point takes this. The hub thread reports speech, the registry's ticker reads the clocks, the

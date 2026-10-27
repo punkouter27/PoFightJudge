@@ -60,4 +60,10 @@ public sealed record DebateSnapshotDto(
     int SessionElapsedSeconds = 0,
 
     /// <summary>Whether fighter one is for the topic or against it (fighter two is the opposite); null without sides.</summary>
-    Stance? Player1Stance = null);
+    Stance? Player1Stance = null,
+
+    /// <summary>The fallacies the host has called so far, oldest first; null before the first.</summary>
+    IReadOnlyList<LiveFlagDto>? Flags = null);
+
+/// <summary>A fallacy the host called out loud during the fight: who, which one, and the words it was in.</summary>
+public sealed record LiveFlagDto(Speaker Who, string Fallacy, string Quote);

@@ -535,6 +535,9 @@ public sealed partial class DebateOrchestrator : IAsyncDisposable
             ToolDeclarations.AskProbe => Session.TryResolvePlayer(Arg("player"), out var questioned)
                 ? Session.AskProbe(questioned, Arg("question"), now)
                 : Outcome.Fail("Unknown player; use 'player1' or 'player2'."),
+            ToolDeclarations.FlagFallacy => Session.TryResolvePlayer(Arg("player"), out var flagged)
+                ? Session.FlagFallacy(flagged, Arg("fallacy"), Arg("quote"), now)
+                : Outcome.Fail("Unknown player; use 'player1' or 'player2'."),
             ToolDeclarations.DeliverVerdict => DeliverVerdict(Arg("winner_logic"), Arg("winner_correct"), Arg("overall"), ArgList("reasons"), now),
             _ => Outcome.Fail($"Unknown tool {call.Name}."),
         };

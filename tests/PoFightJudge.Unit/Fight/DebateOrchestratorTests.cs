@@ -159,6 +159,19 @@ public sealed class DebateOrchestratorTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task A_fallacy_the_host_calls_reaches_the_room_on_the_next_snapshot()
+    {
+        await DebatingAsync();
+
+        await EmitAsync(
+            Call(ToolDeclarations.FlagFallacy, new { player = "player2", fallacy = "Strawman", quote = "so you want us to freeze" }),
+            () => _sink.Latest?.Flags?.Count == 1);
+
+        _sink.Latest!.Flags![0].Should().Be(new LiveFlagDto(Speaker.Player2, "Strawman", "so you want us to freeze"));
+        ToolDeclarations.FunctionDeclarations().Select(d => d!["name"]!.GetValue<string>()).Should().Contain(ToolDeclarations.FlagFallacy);
+    }
+
+    [Fact]
     public async Task A_line_that_keeps_dropping_is_given_up_on_and_the_show_is_wrapped_up()
     {
         var orchestrator = await StartedAsync();

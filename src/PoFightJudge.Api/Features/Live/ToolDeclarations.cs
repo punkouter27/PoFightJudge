@@ -14,6 +14,7 @@ public static class ToolDeclarations
     public const string EndDebate = "end_debate";
     public const string AskProbe = "ask_probe";
     public const string DeliverVerdict = "deliver_verdict";
+    public const string FlagFallacy = "flag_fallacy";
 
     /// <summary>The only two values any player argument may take: there is nobody else in the room.</summary>
     private static readonly string[] Players = ["player1", "player2"];
@@ -39,6 +40,10 @@ public static class ToolDeclarations
             ("winner_correct", OneOf("Who was more factually correct.", Players)),
             ("overall", OneOf("The overall winner.", Players)),
             ("reasons", StrArray("Exactly three short reasons for the ruling.", "One short reason", min: 3, max: 3))),
+        Declare(FlagFallacy, "Call the moment one of them commits a clear logical fallacy, right before you name it aloud.",
+            ("player", OneOf("Who committed it.", Players)),
+            ("fallacy", Str("Its common name, e.g. Strawman, Ad hominem, Whataboutism.")),
+            ("quote", Str("Their words it was in, a few at most."))),
     ];
 
     private static JsonObject Str(string description) => new() { ["type"] = "STRING", ["description"] = description };

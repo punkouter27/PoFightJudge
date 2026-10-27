@@ -165,3 +165,9 @@
   right: max(var(--po-space-2), var(--po-safe-r));
   z-index: 5;
 }
+
+/* The fallacy the host just called, between the meters and the captions. */
+.live-flag {
+  margin: 0;
+  font-size: var(--po-text-sm);
+}

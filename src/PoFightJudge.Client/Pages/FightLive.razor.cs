@@ -55,6 +55,9 @@ public sealed partial class FightLive : ComponentBase, ILiveFightListener, IAsyn
     private FighterDto? _oneRecord;
     private FighterDto? _twoRecord;
     private DebateSnapshotDto? _snapshot;
+
+    /// <summary>The last fallacy the host called, stamped over the captions until the next one.</summary>
+    private LiveFlagDto? _flag;
     private bool _listening;
     private bool _hostSpeaking;
     private bool _reconnecting;
@@ -221,7 +224,13 @@ public sealed partial class FightLive : ComponentBase, ILiveFightListener, IAsyn
     public void OnSnapshot(DebateSnapshotDto snapshot) => Dispatch(async () =>
     {
         var first = _snapshot is null;
+        var flag = NewFlag(_snapshot, snapshot);
         _snapshot = snapshot;
+        if (flag is not null)
+        {
+            _flag = flag;
+            await Sound.PlayAsync(Sfx.Stamp);
+        }
 
         // The tags are only known once the first snapshot lands, so their records are read then and not before.
         if (first)
@@ -243,6 +252,10 @@ public sealed partial class FightLive : ComponentBase, ILiveFightListener, IAsyn
             _loud.Tick(snapshot.Speaking, _hostSpeaking, heard.Loud);
         }
     });
+
+    /// <summary>The fallacy the host has just called, when this snapshot carries one the last did not.</summary>
+    public static LiveFlagDto? NewFlag(DebateSnapshotDto? before, DebateSnapshotDto now) =>
+        (now.Flags?.Count ?? 0) > (before?.Flags?.Count ?? 0) ? now.Flags![^1] : null;
 
     /// <summary>What <c>PoLive.voiced</c> answers.</summary>
     private sealed record Heard(double Voiced, double Loud);

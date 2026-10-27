@@ -38,6 +38,29 @@ public class DebateSessionTests
     }
 
     [Fact]
+    public void A_fallacy_is_called_only_while_they_are_arguing_or_being_questioned_and_the_calls_are_capped()
+    {
+        var session = NewSession(Pair);
+        session.FlagFallacy(PlayerId.Player1, "Strawman", "so you want us to freeze", At(1)).IsSuccess.Should().BeFalse("nobody has argued yet");
+
+        session = Debating();
+        session.FlagFallacy(PlayerId.Player2, "  Ad hominem ", "you would say that", At(20)).IsSuccess.Should().BeTrue();
+        session.Snapshot(At(20)).Flags.Should().ContainSingle()
+            .Which.Should().Be(new LiveFlagDto(Speaker.Player2, "Ad hominem", "you would say that"));
+
+        for (var i = 0; i < DebateSession.MaxFlags; i++)
+        {
+            session.FlagFallacy(PlayerId.Player1, "Whataboutism", "what about you", At(30 + i));
+        }
+
+        session.Snapshot(At(60)).Flags.Should().HaveCount(DebateSession.MaxFlags, "a host that flags every sentence has stopped hosting");
+
+        session.EndDebate(At(70));
+        session.DeliverVerdict(new VerdictCall(PlayerId.Player1, PlayerId.Player1, PlayerId.Player1, ["a", "b", "c"]), At(80));
+        session.FlagFallacy(PlayerId.Player1, "Strawman", "x", At(81)).IsSuccess.Should().BeFalse("the ruling is in");
+    }
+
+    [Fact]
     public void A_show_walks_from_the_introduction_to_the_ruling_refusing_steps_out_of_order_and_recording_every_turn()
     {
         var session = NewSession(Pair);

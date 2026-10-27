@@ -63,6 +63,14 @@
                     <TaleOfTheTape Player1="@Player1" Player2="@Player2" One="@_oneStats" Two="@_twoStats" HeadToHead="@_series" OnSkip="@SkipTape" />
                 }
 
+                @if (_flag is { } flag)
+                {
+                    <p class="live-flag" role="status" @key="@(_snapshot?.Flags?.Count)">
+                        <FallacyStamp Stamp="@flag.Fallacy" /><strong>@flag.Fallacy</strong>
+                        · @(flag.Who == Speaker.Player1 ? Player1 : Player2)@(flag.Quote.Length > 0 ? $" — \"{flag.Quote}\"" : null)
+                    </p>
+                }
+
                 <CaptionFeed Log="@_captions" Player1Name="@Player1" Player2Name="@Player2" HostName="@HostName" />
             </div>
         }

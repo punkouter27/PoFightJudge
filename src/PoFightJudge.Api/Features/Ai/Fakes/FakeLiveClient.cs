@@ -38,6 +38,7 @@ public sealed class FakeLiveClient(TimeProvider clock) : IGeminiLiveClient
         ("(rehearsal host) Welcome, both of you. Let us hear it.", ToolDeclarations.SetPlayers, new { topic = "", player1 = "", player2 = "" }),
         ("(rehearsal host) You first. Thirty seconds.", ToolDeclarations.StartTurn, new { player = "player1" }),
         ("(rehearsal host) Right, your turn.", ToolDeclarations.StartTurn, new { player = "player2" }),
+        ("(rehearsal host) Whataboutism. Carry on.", ToolDeclarations.FlagFallacy, new { player = "player2", fallacy = "Whataboutism", quote = "what about you, though" }),
         ("(rehearsal host) That is enough arguing. Questions.", ToolDeclarations.EndDebate, null),
         ("(rehearsal host) Where is your evidence for that?", ToolDeclarations.AskProbe, new { player = "player1", question = "Where is your evidence for that?" }),
         ("(rehearsal host) And you said the opposite a minute ago.", ToolDeclarations.AskProbe, new { player = "player2", question = "Did you not say the opposite a minute ago?" }),

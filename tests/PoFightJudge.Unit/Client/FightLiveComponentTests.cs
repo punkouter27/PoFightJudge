@@ -76,4 +76,17 @@ public class RiserTests
     [InlineData(SessionPhase.Debate, int.MaxValue, 180, false)]
     public void A_riser_marks_half_a_minute_and_ten_seconds_left(SessionPhase phase, int before, int now, bool due) =>
         PoFightJudge.Client.Pages.FightLive.RiserDue(phase, before, now).Should().Be(due);
+
+    [Fact]
+    public void A_fallacy_is_stamped_once_when_the_host_calls_it_and_not_again_on_every_snapshot_after()
+    {
+        var strawman = new LiveFlagDto(Speaker.Player2, "Strawman", "so you want us to freeze");
+        var quiet = new DebateSnapshotDto(MatchId.New(), SessionPhase.Debate, "t", "AB", "CD", Speaker.Player1, 10, 170, null);
+        var called = quiet with { Flags = [strawman] };
+
+        PoFightJudge.Client.Pages.FightLive.NewFlag(quiet, quiet).Should().BeNull();
+        PoFightJudge.Client.Pages.FightLive.NewFlag(quiet, called).Should().Be(strawman);
+        PoFightJudge.Client.Pages.FightLive.NewFlag(called, called with { DebateElapsedSeconds = 11 }).Should().BeNull("the clock ticking is not a new call");
+        PoFightJudge.Client.Pages.FightLive.NewFlag(null, called).Should().Be(strawman, "a page that joins late still shows the latest one");
+    }
 }
