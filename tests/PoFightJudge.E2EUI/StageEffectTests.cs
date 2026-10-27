@@ -42,20 +42,9 @@ public class StageEffectTests(AppFixture app)
             """);
 
         mounted.Should().Equal(["stage", "backdrop", "grain", "fluid", "rays", "swarm"], "every shader must compile and link, or it draws nothing at all");
-        errors.Should().BeEmpty();
-    }
 
-    /// <summary>
-    /// The swarm runs on WebGPU's compute shaders where the browser has an adapter, and where it has none — or the
-    /// device will not come up — it falls back to the WebGL2 swarm without a word in the console.
-    /// </summary>
-    [SkippableFact]
-    public async Task The_swarm_runs_on_webgpu_where_there_is_one_and_webgl2_where_there_is_not()
-    {
-        var (context, page, errors) = await app.OpenAsync(AppFixture.Desktop);
-        await using var _ = context;
-        Skip.IfNot(await page.EvaluateAsync<bool>("() => PoGfx.probe().webgl2"), "this browser has no WebGL2");
-
+        // The swarm runs on WebGPU's compute shaders where the browser has an adapter, and where it has none — or the
+        // device will not come up — it falls back to the WebGL2 swarm without a word in the console.
         var result = await page.EvaluateAsync<string[]>(
             """
             async () => {
@@ -186,44 +175,46 @@ public class StageEffectTests(AppFixture app)
     /// Nothing is drawn until somebody turns stage effects on, and somebody who asked the whole system for less motion
     /// is not given the loudest thing in it even when the switch is on.
     /// </summary>
-    [SkippableTheory]
-    [InlineData(false, false)]
-    [InlineData(true, true)]
-    public async Task Effects_off_or_reduced_motion_mounts_nothing(bool switchedOn, bool reducedMotion)
+    [SkippableFact]
+    public async Task Effects_off_or_reduced_motion_mounts_nothing()
     {
         Skip.If(app.Browser is null, app.Unavailable);
-        var context = await app.Browser!.NewContextAsync(new BrowserNewContextOptions
+        foreach (var switchedOn in new[] { false, true })
         {
-            ViewportSize = AppFixture.Desktop,
-            ReducedMotion = reducedMotion ? ReducedMotion.Reduce : ReducedMotion.NoPreference,
-        });
-        await using var _ = context;
-        if (switchedOn)
-        {
-            await context.AddInitScriptAsync("try { localStorage.setItem('po-effects', 'on'); } catch (e) { }");
-        }
-
-        var page = await context.NewPageAsync();
-        await page.GotoAsync(app.BaseUrl + "/login", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
-        await page.WaitForFunctionAsync("() => !!window.PoGfx", null, new() { Timeout = 30_000 });
-
-        var mounted = await page.EvaluateAsync<bool>(
-            """
-            () => {
-              const host = document.createElement('div');
-              host.id = 'gfx-probe';
-              host.style.cssText = 'position:fixed;left:0;top:0;width:200px;height:120px;';
-              document.body.appendChild(host);
-              const drawn = PoGfx.mount('#gfx-probe', 'stage');
-              const thrown = PoParticles.burst('#gfx-probe', 'confetti');
-              PoGfx.unmount('#gfx-probe');
-              PoParticles.clear('#gfx-probe');
-              host.remove();
-              return drawn || thrown;
+            // Switched on is only ever tried with reduced motion asked for: on and full motion is the effects working.
+            var context = await app.Browser!.NewContextAsync(new BrowserNewContextOptions
+            {
+                ViewportSize = AppFixture.Desktop,
+                ReducedMotion = switchedOn ? ReducedMotion.Reduce : ReducedMotion.NoPreference,
+            });
+            await using var _ = context;
+            if (switchedOn)
+            {
+                await context.AddInitScriptAsync("try { localStorage.setItem('po-effects', 'on'); } catch (e) { }");
             }
-            """);
 
-        mounted.Should().BeFalse(switchedOn ? "reduced motion outranks the switch" : "stage effects are off by default");
+            var page = await context.NewPageAsync();
+            await page.GotoAsync(app.BaseUrl + "/login", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+            await page.WaitForFunctionAsync("() => !!window.PoGfx", null, new() { Timeout = 30_000 });
+
+            var mounted = await page.EvaluateAsync<bool>(
+                """
+                () => {
+                  const host = document.createElement('div');
+                  host.id = 'gfx-probe';
+                  host.style.cssText = 'position:fixed;left:0;top:0;width:200px;height:120px;';
+                  document.body.appendChild(host);
+                  const drawn = PoGfx.mount('#gfx-probe', 'stage');
+                  const thrown = PoParticles.burst('#gfx-probe', 'confetti');
+                  PoGfx.unmount('#gfx-probe');
+                  PoParticles.clear('#gfx-probe');
+                  host.remove();
+                  return drawn || thrown;
+                }
+                """);
+
+            mounted.Should().BeFalse(switchedOn ? "reduced motion outranks the switch" : "stage effects are off by default");
+        }
     }
 
     /// <summary>

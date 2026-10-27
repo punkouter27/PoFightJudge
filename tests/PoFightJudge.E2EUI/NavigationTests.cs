@@ -34,19 +34,20 @@ public class NavigationTests(AppFixture app)
     }
 
     /// <summary>The logo is the way home, on a desktop and on a phone, which has no menu button to look for.</summary>
-    [SkippableTheory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task The_logo_leads_home_from_anywhere(bool phone)
+    [SkippableFact]
+    public async Task The_logo_leads_home_from_anywhere()
     {
-        var (context, page, errors) = await app.OpenAsync(phone ? AppFixture.Mobile : AppFixture.Desktop, "/profiles");
-        await using var _ = context;
+        foreach (var viewport in new[] { AppFixture.Desktop, AppFixture.Mobile })
+        {
+            var (context, page, errors) = await app.OpenAsync(viewport, "/profiles");
+            await using var _ = context;
 
-        await page.Locator("article.profile, .po-empty, h1").First.WaitForAsync(new() { Timeout = 30_000 });
-        (await page.GetByRole(AriaRole.Button, new() { Name = "Menu" }).CountAsync()).Should().Be(0, "there is no drawer to open");
-        await page.Locator("header.topbar a.brand").ClickAsync();
-        await page.WaitForFunctionAsync("() => location.pathname === '/'", null, new() { Timeout = 15_000 });
-        (await page.Locator("article.channel").CountAsync()).Should().Be(5, "every destination is a card on Home");
-        errors.Should().BeEmpty();
+            await page.Locator("article.profile, .po-empty, h1").First.WaitForAsync(new() { Timeout = 30_000 });
+            (await page.GetByRole(AriaRole.Button, new() { Name = "Menu" }).CountAsync()).Should().Be(0, "there is no drawer to open");
+            await page.Locator("header.topbar a.brand").ClickAsync();
+            await page.WaitForFunctionAsync("() => location.pathname === '/'", null, new() { Timeout = 15_000 });
+            (await page.Locator("article.channel").CountAsync()).Should().Be(5, "every destination is a card on Home");
+            errors.Should().BeEmpty();
+        }
     }
 }

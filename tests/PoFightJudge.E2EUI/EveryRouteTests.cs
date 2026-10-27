@@ -50,6 +50,15 @@ public class EveryRouteTests(AppFixture app)
     /// </summary>
     private static IEnumerable<string> Routes => [.. Screens, .. Lists];
 
+    /// <summary>
+    /// WCAG 2.2 SC 2.5.8 (AA): everything pressable on these clears 24 × 24 CSS px on a phone. Measured, not read off
+    /// a stylesheet: Radzen sizes its buttons from <c>--rz-button-size-*</c> in a sheet <c>&lt;RadzenTheme&gt;</c>
+    /// injects after app.css, so app.css's 44 px claim once lost and the session buttons measured 36×36.
+    /// </summary>
+    private static readonly string[] PressRoutes = ["/", "/cpu", "/2p", "/profiles", "/fighters", "/history"];
+
+    private const int MinimumTarget = 24;
+
     [SkippableFact]
     public async Task Every_route_behaves_on_a_phone_and_on_a_desktop()
     {
@@ -81,6 +90,12 @@ public class EveryRouteTests(AppFixture app)
                             .filter(e => !e.classList.contains('po-sr-only') && e.scrollWidth > e.clientWidth + 2 && e.clientWidth > 0 && getComputedStyle(e).overflowX !== 'auto' && getComputedStyle(e).overflowX !== 'scroll')
                             .slice(0, 3)
                             .map(e => e.tagName + '.' + String(e.className || '').split(' ').filter(c => !c.startsWith('b-')).join('.')),
+                        small: [...document.querySelectorAll('button, a[href], [role=button]')]
+                            .filter(e => !e.closest('.brand'))
+                            .map(e => ({ e, r: e.getBoundingClientRect() }))
+                            .filter(x => x.r.width > 0 && x.r.height > 0 && (x.r.width < " + MinimumTarget + " || x.r.height < " + MinimumTarget + @"))
+                            .map(x => (x.e.innerText || x.e.getAttribute('aria-label') || x.e.className || '?').trim().split('\n')[0].slice(0, 24)
+                                + ' ' + Math.round(x.r.width) + 'x' + Math.round(x.r.height)),
                     })");
                 var measured = JsonSerializer.Deserialize<Measurements>(json, JsonSerializerOptions.Web)!;
 
@@ -112,6 +127,11 @@ public class EveryRouteTests(AppFixture app)
                 }
 
                 problems.AddRange(measured.Sideways.Select(s => $"{where}: {s} overflows its own box"));
+                if (holdToTheViewport && PressRoutes.Contains(route, StringComparer.Ordinal))
+                {
+                    problems.AddRange(measured.Small.Select(s => $"{where}: {s} is under {MinimumTarget}px to press"));
+                }
+
                 problems.AddRange(errors.Take(2).Select(e => $"{where}: {e}"));
             }
         }
@@ -133,6 +153,8 @@ public class EveryRouteTests(AppFixture app)
         public int[] Headings { get; set; } = [];
 
         public string[] Sideways { get; set; } = [];
+
+        public string[] Small { get; set; } = [];
     }
 
     /// <summary>A cast, a fighter and both kinds of argument, so no page under test is looking at an empty state.</summary>
