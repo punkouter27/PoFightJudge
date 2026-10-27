@@ -59,6 +59,9 @@ configuration and is answered where it is asked. `/api/features` tells the clien
   `:root[data-theme]` pinning the explicit choice; the same test refuses the block and a fourth breakpoint, and
   `PaletteContrastTests` checks contrast in both themes.
 - **Never weaken a test to make it pass.** A failing test is reported as failing.
+- **The tiers are capped:** Unit 100, Integration 50, E2EAPI 25, E2EUI 25, counted in cases (a fact, or one
+  theory row). `InfraTests.Every_test_tier_stays_under_its_cap` counts them from source. A new test makes room by
+  folding cases that make the same decision into one fact with a case table, not by dropping an assertion.
 - **Ask first** for: any `az` write (Key Vault, app registration, deployment, role assignment), creating the GitHub
   repository or its OIDC credential, every `git push` other than a `commit and sync`, deleting everybody's matches or profiles, moving off the F1
   plan or changing a model tier, and adding a NuGet package that is not already in `Directory.Packages.props`.
