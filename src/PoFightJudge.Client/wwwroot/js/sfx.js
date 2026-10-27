@@ -415,6 +415,13 @@ window.PoSfx = (function () {
       hit(at + 0.16, { freq: 1100, sweepTo: 320, duration: 0.26, gain: 0.22, q: 3 });
       tone(at + 0.05, { type: "sine", freq: 340, sweepTo: 120, duration: 0.2, gain: 0.25 });
     },
+    // A heart, lub-dub: two low sine thumps a fifth of a second apart, the second softer, with a soft knock on each.
+    "heartbeat": function (at) {
+      [[0, 0.8], [0.2, 0.55]].forEach(function (beat) {
+        tone(at + beat[0], { type: "sine", freq: 70, sweepTo: 42, duration: 0.16, gain: beat[1], attack: 0.006 });
+        hit(at + beat[0], { freq: 180, duration: 0.05, gain: beat[1] * 0.4, filter: "lowpass" });
+      });
+    },
     // The clock running out: under three seconds of endless climb, with a tick at the top to say it is done.
     "riser": function (at) {
       shepard(at, 2.6, 0.13);

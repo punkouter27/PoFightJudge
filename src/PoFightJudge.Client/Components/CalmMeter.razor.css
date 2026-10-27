@@ -7,7 +7,7 @@
   border-radius: var(--po-radius-md);
 }
 
-.who { font-size: var(--po-text-sm); transition: color var(--po-dur-slow) var(--po-ease); }
+.who { display: inline-block; font-size: var(--po-text-sm); transition: color var(--po-dur-slow) var(--po-ease); }
 
 .who.p2 { text-align: right; }
 
@@ -16,3 +16,20 @@
 .temper--warm { color: var(--po-accent); }
 
 .temper--heated { color: var(--po-danger); font-weight: 700; }
+
+/* Heated beats like a heart, lub-dub, the way the stinger sounds when somebody gets there. */
+.temper--heated { animation: po-heartbeat 1.1s ease-out infinite; }
+
+.who.p1.temper--heated { transform-origin: left center; }
+
+.who.p2.temper--heated { transform-origin: right center; }
+
+@keyframes po-heartbeat {
+  0%, 40%, 100% { transform: scale(1); }
+  10% { transform: scale(1.12); }
+  25% { transform: scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .temper--heated { animation: none; }
+}

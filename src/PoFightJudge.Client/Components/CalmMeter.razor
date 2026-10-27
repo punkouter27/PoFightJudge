@@ -1,5 +1,6 @@
 @* How hot each of them is running: the share of their own talking that was loud. Fed by a second FloorClock that
    counts loud seconds the way the first counts voiced ones. *@
+@inject IServiceProvider Services
 <section class="calm po-glass" aria-label="How heated it is">
     <span class="who p1 @Class(Temper1)" role="status">@Player1 · @Label(Temper1)</span>
     <span class="po-eyebrow">Temperature</span>
@@ -43,6 +44,25 @@
 
         var share = loudSeconds / talkSeconds;
         return share >= HeatedShare ? Temper.Heated : share >= WarmShare ? Temper.Warm : Temper.Calm;
+    }
+
+    private Temper _was1;
+
+    private Temper _was2;
+
+    /// <summary>
+    /// A heartbeat from somebody's side of the stage the moment they run hotter. A stinger, never a bed: the
+    /// microphone is open, and a score under the room would be in the recording the judge reads.
+    /// </summary>
+    protected override async Task OnParametersSetAsync()
+    {
+        var (one, two) = (Temper1, Temper2);
+        var rose = one > _was1 ? AudioInterop.PanFor(husband: true) : two > _was2 ? AudioInterop.PanFor(husband: false) : (double?)null;
+        (_was1, _was2) = (one, two);
+        if (rose is { } pan && Services.GetService(typeof(SfxInterop)) is SfxInterop sfx)
+        {
+            await sfx.PlayOverAtAsync(Sfx.Heartbeat, duckSeconds: 0.5, pan);
+        }
     }
 
     private static string Class(Temper temper) => temper switch
