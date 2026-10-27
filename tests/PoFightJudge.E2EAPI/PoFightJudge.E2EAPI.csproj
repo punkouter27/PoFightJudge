@@ -5,6 +5,5 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
-    <PackageReference Include="Xunit.SkippableFact" />
   </ItemGroup>
 </Project>
