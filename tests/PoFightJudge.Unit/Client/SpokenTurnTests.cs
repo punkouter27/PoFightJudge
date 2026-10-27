@@ -9,7 +9,7 @@ namespace PoFightJudge.Unit.Client;
 public class SpokenTurnTests
 {
     [Fact]
-    public void Pause_detection_rules()
+    public void A_long_enough_pause_ends_the_turn_and_only_words_are_sent()
     {
         // Two seconds of quiet after speaking ends the turn
         WatchPlay.PauseEndsTurn(heardSomething: true, quietFor: TimeSpan.FromSeconds(2))
@@ -22,16 +22,12 @@ public class SpokenTurnTests
         // Silence before a word is spoken never ends the turn
         WatchPlay.PauseEndsTurn(heardSomething: false, quietFor: TimeSpan.FromMinutes(5))
             .Should().BeFalse("the microphone opens with the turn, so somebody still gathering themselves would be cut off at once");
+
+        WatchPlay.WorthSending("That is not what I said.").Should().BeTrue();
+        WatchPlay.WorthSending("  and you know it  ").Should().BeTrue();
+        WatchPlay.WorthSending("").Should().BeFalse();
+        WatchPlay.WorthSending("   ").Should().BeFalse();
+        WatchPlay.WorthSending(null).Should().BeFalse();
     }
 
-    [Theory]
-    [InlineData("That is not what I said.", true)]
-    [InlineData("  and you know it  ", true)]
-    [InlineData("", false)]
-    [InlineData("   ", false)]
-    [InlineData(null, false)]
-    public void Transcript_validation_rules(string? heard, bool expected)
-    {
-        WatchPlay.WorthSending(heard).Should().Be(expected);
-    }
 }

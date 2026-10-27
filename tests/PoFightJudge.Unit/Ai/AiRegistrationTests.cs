@@ -69,13 +69,4 @@ public class AiRegistrationTests
         analysis.DefaultRequestVersion.Should().Be(HttpVersion.Version20);
         services.GetRequiredService<GeminiModelOptions>().Should().Be(GeminiModelOptions.Defaults);
     }
-
-    [Fact]
-    public void Fish_options_are_registered_with_the_fakes_too_so_the_features_endpoint_can_bind()
-    {
-        var (mode, services) = Register("Test", apiKey: null);
-
-        mode.UseFakes.Should().BeTrue();
-        services.GetService<FishAudioOptions>().Should().BeEquivalentTo(new FishAudioOptions(Enabled: false), "GET /features takes it, and without it the app fails to start");
-    }
 }

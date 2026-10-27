@@ -8,16 +8,19 @@ namespace PoFightJudge.Unit.Client;
 /// </summary>
 public class MicErrorTests
 {
-    [Theory]
-    [InlineData("NotAllowedError", "Allow it for this site")]
-    [InlineData("NotFoundError", "No microphone was found")]
-    [InlineData("NotReadableError", "Something else is holding the microphone")]
-    [InlineData("AbortError", "would not start")]
-    [InlineData("AudioLoadError", "Reload the page")]
-    [InlineData("SomethingNew", "(SomethingNew)")]
-    public void Each_failure_says_what_to_do_about_it(string error, string advice)
+    [Fact]
+    public void Each_failure_says_what_to_do_about_it()
     {
-        MicError.Describe(error).Should().Contain(advice);
+        foreach (var (error, advice) in new[]
+        {
+            ("NotAllowedError", "Allow it for this site"), ("NotFoundError", "No microphone was found"),
+            ("NotReadableError", "Something else is holding the microphone"), ("AbortError", "would not start"),
+            ("AudioLoadError", "Reload the page"), ("SomethingNew", "(SomethingNew)"),
+        })
+        {
+            MicError.Describe(error).Should().Contain(advice);
+        }
+
         MicError.Describe("AbortError").Should().NotContain("(AbortError)", "nobody can act on the browser's own name for it");
     }
 }

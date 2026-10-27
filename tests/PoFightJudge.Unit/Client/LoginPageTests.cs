@@ -34,20 +34,18 @@ public class LoginPageTests : BunitContext
     }
 
     [Fact]
-    public void With_the_guest_door_shut_the_page_says_how_to_open_it()
+    public async Task The_guest_door_says_how_to_open_it_when_shut_and_in_development_returns_to_a_safe_url_only()
     {
         _api.GetFeaturesAsync(Arg.Any<CancellationToken>()).Returns(new FeatureFlagsDto(false, false, true, FishVoices: false));
 
-        var cut = Render<Login>();
+        var shut = Render<Login>();
 
-        cut.WaitForAssertion(() => cut.Markup.Should().Contain("The guest door is off"));
-        cut.Markup.Should().NotContain("Continue as Guest").And.Contain("Sign in with Microsoft", "Microsoft does not depend on the guest flag");
-    }
+        await shut.WaitForAssertionAsync(() => shut.Markup.Should().Contain("The guest door is off"));
+        shut.Markup.Should().NotContain("Continue as Guest").And.Contain("Sign in with Microsoft", "Microsoft does not depend on the guest flag");
 
-    [Fact]
-    public async Task In_development_both_doors_are_open_and_the_guest_door_returns_to_a_safe_url_only()
-    {
+        // The door opens: the gate is read again, as Program.cs reads it before a page is rendered.
         _api.GetFeaturesAsync(Arg.Any<CancellationToken>()).Returns(new FeatureFlagsDto(false, true, true, FishVoices: false));
+        await Services.GetRequiredService<FeatureGate>().LoadAsync();
         _api.GuestSignInAsync(Arg.Any<CancellationToken>()).Returns(new AuthMeDto(true, "GUEST-1", "GUEST-1", "DevGuest"));
         var nav = Services.GetRequiredService<BunitNavigationManager>();
 

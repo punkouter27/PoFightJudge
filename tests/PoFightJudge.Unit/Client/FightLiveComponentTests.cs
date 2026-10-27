@@ -66,16 +66,19 @@ public class FightLiveComponentTests : BunitContext
 /// </summary>
 public class RiserTests
 {
-    [Theory]
-    [InlineData(SessionPhase.Debate, 31, 30, true)]
-    [InlineData(SessionPhase.Debate, 30, 29, false)]
-    [InlineData(SessionPhase.Debate, 11, 10, true)]
-    [InlineData(SessionPhase.Debate, 12, 9, true)]
-    [InlineData(SessionPhase.Debate, 1, 0, false)]
-    [InlineData(SessionPhase.Probe, 31, 30, false)]
-    [InlineData(SessionPhase.Debate, int.MaxValue, 180, false)]
-    public void A_riser_marks_half_a_minute_and_ten_seconds_left(SessionPhase phase, int before, int now, bool due) =>
-        PoFightJudge.Client.Pages.FightLive.RiserDue(phase, before, now).Should().Be(due);
+    [Fact]
+    public void A_riser_marks_half_a_minute_and_ten_seconds_left()
+    {
+        foreach (var (phase, before, now, due) in new[]
+        {
+            (SessionPhase.Debate, 31, 30, true), (SessionPhase.Debate, 30, 29, false), (SessionPhase.Debate, 11, 10, true),
+            (SessionPhase.Debate, 12, 9, true), (SessionPhase.Debate, 1, 0, false), (SessionPhase.Probe, 31, 30, false),
+            (SessionPhase.Debate, int.MaxValue, 180, false),
+        })
+        {
+            PoFightJudge.Client.Pages.FightLive.RiserDue(phase, before, now).Should().Be(due, $"{phase} {before} to {now}");
+        }
+    }
 
     [Fact]
     public void A_fallacy_is_stamped_once_when_the_host_calls_it_and_not_again_on_every_snapshot_after()

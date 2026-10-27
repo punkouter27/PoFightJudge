@@ -10,11 +10,12 @@ public class VerdictRevealTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 19, 21, 0, 0, TimeSpan.Zero);
 
-    [Theory]
-    [InlineData(0, true)]
-    [InlineData(14, true)]
-    [InlineData(16, false)]
-    [InlineData(60 * 24, false)]
-    public void Only_a_fresh_ruling_is_staged(int minutesOld, bool staged) =>
-        Verdict.Staged(Now.AddMinutes(-minutesOld), Now).Should().Be(staged);
+    [Fact]
+    public void Only_a_fresh_ruling_is_staged()
+    {
+        foreach (var (minutesOld, staged) in new[] { (0, true), (14, true), (16, false), (60 * 24, false) })
+        {
+            Verdict.Staged(Now.AddMinutes(-minutesOld), Now).Should().Be(staged, $"{minutesOld} minutes old");
+        }
+    }
 }

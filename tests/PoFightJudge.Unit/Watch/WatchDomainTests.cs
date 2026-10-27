@@ -56,21 +56,22 @@ public class WatchMatchTests
 
 public class WatchRulesTests
 {
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void Every_line_carries_a_point_the_judge_can_weigh_keeps_its_closing_cue_and_against_a_person_answers_them_first(bool opponentIsHuman)
+    [Fact]
+    public void Every_line_carries_a_point_the_judge_can_weigh_keeps_its_closing_cue_and_against_a_person_answers_them_first()
     {
-        var rules = WatchRules.LineRulesFor(opponentIsHuman);
-
-        rules.Should().Contain("ONE CONCRETE POINT", "the judge scores on evidence and rebuttal; two sides trading only insults came back a draw in two of four real matches");
-        rules.Should().NotContain("No stage directions,", "the output contract asks for a closing stage cue, and the rules must not forbid what the contract demands");
-
-        if (opponentIsHuman)
+        foreach (var opponentIsHuman in new[] { false, true })
         {
-            // The human rules put the player's words first and allow deflection only out loud.
-            rules.Should().Contain("ANSWER THEIR LAST LINE", "the player said those words out loud and is waiting to hear them engaged");
-            rules.Should().Contain("never by ignoring it", "refusing to answer is legitimate; silently changing the subject is the failure mode");
+            var rules = WatchRules.LineRulesFor(opponentIsHuman);
+
+            rules.Should().Contain("ONE CONCRETE POINT", "the judge scores on evidence and rebuttal; two sides trading only insults came back a draw in two of four real matches");
+            rules.Should().NotContain("No stage directions,", "the output contract asks for a closing stage cue, and the rules must not forbid what the contract demands");
+
+            if (opponentIsHuman)
+            {
+                // The human rules put the player's words first and allow deflection only out loud.
+                rules.Should().Contain("ANSWER THEIR LAST LINE", "the player said those words out loud and is waiting to hear them engaged");
+                rules.Should().Contain("never by ignoring it", "refusing to answer is legitimate; silently changing the subject is the failure mode");
+            }
         }
     }
 }

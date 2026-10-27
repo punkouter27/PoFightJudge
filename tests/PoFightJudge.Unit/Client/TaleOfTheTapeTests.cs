@@ -15,13 +15,14 @@ public class TaleOfTheTapeTests : BunitContext
         JSInterop.Mode = JSRuntimeMode.Loose;
     }
 
-    [Theory]
-    [InlineData(0, 0, 0, "First time these two have met.")]
-    [InlineData(4, 3, 1, "AL leads the series 3–1.")]
-    [InlineData(4, 1, 3, "SM leads the series 3–1.")]
-    [InlineData(5, 2, 2, "Level at 2–2, with 1 drawn.")]
-    public void The_series_is_one_line(int meetings, int wins, int losses, string expected) =>
-        TaleOfTheTape.Series(Meeting(meetings, wins, losses), "AL", "SM").Should().Be(expected);
+    [Fact]
+    public void The_series_is_one_line()
+    {
+        TaleOfTheTape.Series(Meeting(0, 0, 0), "AL", "SM").Should().Be("First time these two have met.");
+        TaleOfTheTape.Series(Meeting(4, 3, 1), "AL", "SM").Should().Be("AL leads the series 3–1.");
+        TaleOfTheTape.Series(Meeting(4, 1, 3), "AL", "SM").Should().Be("SM leads the series 3–1.");
+        TaleOfTheTape.Series(Meeting(5, 2, 2), "AL", "SM").Should().Be("Level at 2–2, with 1 drawn.");
+    }
 
     [Fact]
     public void Somebody_new_is_said_to_be_new_rather_than_shown_as_a_row_of_zeroes()

@@ -11,26 +11,32 @@ namespace PoFightJudge.Unit.Auth;
 /// </summary>
 public class AuthSchemeTests
 {
-    [Theory]
-    [InlineData("/api/matches", "Bearer abc.def.ghi", null, true)]
-    [InlineData(ApiRoutes.Hubs.Live, null, "abc.def.ghi", true)]
-    [InlineData("/api/matches", null, "abc.def.ghi", false)]
-    [InlineData("/api/matches", null, null, false)]
-    [InlineData("/api/matches", "Basic dXNlcjpwYXNz", null, false)]
-    public void A_microsoft_token_goes_to_entra_and_everything_else_to_the_guest_door(string path, string? authorization, string? accessToken, bool entra)
+    [Fact]
+    public void A_microsoft_token_goes_to_entra_and_everything_else_to_the_guest_door()
     {
-        var http = new DefaultHttpContext();
-        http.Request.Path = path;
-        if (authorization is not null)
+        foreach (var (path, authorization, accessToken, entra) in new (string, string?, string?, bool)[]
         {
-            http.Request.Headers.Authorization = authorization;
-        }
-
-        if (accessToken is not null)
+            ("/api/matches", "Bearer abc.def.ghi", null, true),
+            (ApiRoutes.Hubs.Live, null, "abc.def.ghi", true),
+            ("/api/matches", null, "abc.def.ghi", false),
+            ("/api/matches", null, null, false),
+            ("/api/matches", "Basic dXNlcjpwYXNz", null, false),
+        })
         {
-            http.Request.QueryString = new QueryString($"?access_token={accessToken}");
-        }
+            var http = new DefaultHttpContext();
+            http.Request.Path = path;
+            if (authorization is not null)
+            {
+                http.Request.Headers.Authorization = authorization;
+            }
 
-        AuthServiceExtensions.SchemeFor(http).Should().Be(entra ? JwtBearerDefaults.AuthenticationScheme : FakeAuthOptions.DefaultScheme);
+            if (accessToken is not null)
+            {
+                http.Request.QueryString = new QueryString($"?access_token={accessToken}");
+            }
+
+            AuthServiceExtensions.SchemeFor(http).Should()
+                .Be(entra ? JwtBearerDefaults.AuthenticationScheme : FakeAuthOptions.DefaultScheme, $"{path} {authorization} {accessToken}");
+        }
     }
 }

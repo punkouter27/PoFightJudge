@@ -13,7 +13,7 @@ public class EloRatingsTests
         new(tag, "u", match ?? MatchId.New(), MatchMode.Fight, Start.AddDays(day), "the thermostat", opponent, won, draw, 50, StyleSnapshot.Empty);
 
     [Fact]
-    public void A_bout_moves_both_sides_by_the_same_amount_once_and_a_draw_between_equals_or_a_bout_with_yourself_moves_nothing()
+    public void A_bout_moves_both_sides_once_by_more_for_an_upset_in_the_order_argued_and_a_draw_or_a_bout_with_yourself_moves_nothing()
     {
         var ratings = EloRatings.Compute([Row("AL", "SM", 1, won: true)]);
         ratings["AL"].Should().Be(EloRatings.Start + 16);
@@ -30,13 +30,9 @@ public class EloRatingsTests
         draw["SM"].Should().Be(EloRatings.Start);
 
         EloRatings.Compute([Row("AL", "al", 1, won: true)]).Should().BeEmpty("somebody argued against themselves is not a bout");
-    }
 
-    [Fact]
-    public void Beating_somebody_rated_higher_is_worth_more_and_the_order_is_the_order_they_argued_in()
-    {
         // SM beats JO three times, so SM is up and JO is down. Then two newcomers: AL beats SM, KY beats JO.
-        var ratings = EloRatings.Compute(
+        var upsets = EloRatings.Compute(
         [
             Row("SM", "JO", 1, won: true),
             Row("SM", "JO", 2, won: true),
@@ -45,7 +41,7 @@ public class EloRatingsTests
             Row("KY", "JO", 4, won: true),
         ]);
 
-        (ratings["AL"] - EloRatings.Start).Should().BeGreaterThan(ratings["KY"] - EloRatings.Start);
+        (upsets["AL"] - EloRatings.Start).Should().BeGreaterThan(upsets["KY"] - EloRatings.Start);
 
         // Not the order the rows were read in.
         List<FighterResultDto> rows = [Row("AL", "SM", 1, won: true), Row("AL", "SM", 2, won: false), Row("SM", "JO", 3, won: true)];

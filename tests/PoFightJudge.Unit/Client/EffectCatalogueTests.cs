@@ -13,7 +13,7 @@ public partial class EffectCatalogueTests
         File.ReadAllText(Path.Combine(DesignRulesTests.ClientRoot, "wwwroot", "js", file));
 
     [Fact]
-    public void Every_sound_named_in_csharp_has_a_voice_in_the_browser_and_no_more()
+    public void Every_sound_and_shader_named_in_csharp_is_one_the_browser_has_and_no_more()
     {
         var script = Js("sfx.js");
         var voices = script[script.IndexOf("const VOICES = {", StringComparison.Ordinal)..];
@@ -21,13 +21,9 @@ public partial class EffectCatalogueTests
 
         CatalogueKey().Matches(voices).Select(m => m.Groups["name"].Value)
             .Should().BeEquivalentTo(Sfx.All);
-    }
 
-    [Fact]
-    public void Every_shader_named_in_csharp_is_one_the_browser_can_draw_and_no_more()
-    {
-        var script = Js("gfx.js");
-        var shaders = script[script.IndexOf("const SHADERS = {", StringComparison.Ordinal)..];
+        var gfx = Js("gfx.js");
+        var shaders = gfx[gfx.IndexOf("const SHADERS = {", StringComparison.Ordinal)..];
         shaders = shaders[..shaders.IndexOf('}', StringComparison.Ordinal)];
 
         ShaderKey().Matches(shaders).Select(m => m.Groups["name"].Value)

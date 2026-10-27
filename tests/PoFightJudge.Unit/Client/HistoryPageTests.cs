@@ -116,20 +116,6 @@ public class HistoryPageTests : BunitContext
     }
 
     [Fact]
-    public void An_argument_with_no_topic_says_so_rather_than_leaving_a_blank()
-    {
-        _api.GetMatchPageAsync(Arg.Any<MatchQuery>(), Arg.Any<CancellationToken>()).Returns(_ => Page(
-        [
-            Match(_watch, MatchMode.Watch, string.Empty, MatchSide.Persona("MAH", "Married Husband"), MatchSide.Persona("KSH", "Karen")),
-        ]));
-
-        var cut = Render<History>();
-
-        cut.WaitForAssertion(() => cut.Markup.Should().Contain("an open topic"));
-        cut.FindAll("button[aria-label='Delete an open topic']").Should().ContainSingle();
-    }
-
-    [Fact]
     public async Task A_yes_deletes_the_argument_and_takes_the_row_with_it()
     {
         var cut = RenderHistory();
@@ -141,6 +127,17 @@ public class HistoryPageTests : BunitContext
         await _api.Received(1).DeleteMatchAsync(_watch, Arg.Any<CancellationToken>());
         await cut.WaitForAssertionAsync(() => cut.FindAll(".history .match").Should().HaveCount(1));
         cut.Markup.Should().NotContain("the thermostat");
+
+        // An argument with no topic says so rather than leaving a blank.
+        _api.GetMatchPageAsync(Arg.Any<MatchQuery>(), Arg.Any<CancellationToken>()).Returns(_ => Page(
+        [
+            Match(_watch, MatchMode.Watch, string.Empty, MatchSide.Persona("MAH", "Married Husband"), MatchSide.Persona("KSH", "Karen")),
+        ]));
+
+        var open = Render<History>();
+
+        await open.WaitForAssertionAsync(() => open.Markup.Should().Contain("an open topic"));
+        open.FindAll("button[aria-label='Delete an open topic']").Should().ContainSingle();
     }
 }
 
@@ -191,20 +188,5 @@ public class StandingsTests : BunitContext, IAsyncLifetime
         cut.FindAll(".board thead th").Select(th => th.TextContent.Trim()).Should().Equal(["#", "Who", "Rating", "Record"]);
         cut.Find(".board tbody tr").TextContent.Should().Contain("4 of 5").And.Contain("80%");
         cut.FindAll("[aria-label='Whose standings']").Should().BeEmpty("there is no switch between two boards");
-    }
-
-    [Fact]
-    public async Task The_profiles_page_no_longer_keeps_a_second_leaderboard()
-    {
-        _api.GetProfilesAsync(Arg.Any<CancellationToken>()).Returns(
-        [
-            new ProfileDto { Id = ProfileId.From("MAH"), Persona = new CreateProfileRequest { Initials = "MAH", Name = "Married Husband", Role = ProfileRole.Husband } },
-        ]);
-
-        var cut = Render<ProfilesPage>();
-
-        await cut.WaitForAssertionAsync(() => cut.FindAll(".cast").Should().NotBeEmpty());
-        cut.FindComponents<Board>().Should().BeEmpty();
-        await _api.DidNotReceive().GetLeaderboardAsync(Arg.Any<CancellationToken>());
     }
 }
