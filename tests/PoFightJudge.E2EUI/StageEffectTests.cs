@@ -76,6 +76,47 @@ public class StageEffectTests(AppFixture app)
     }
 
     /// <summary>
+    /// A loser's card cracks before it breaks, and its pieces land on the floor and bounce rather than falling out of
+    /// the bottom of the page: a second in, there is still glass lying along the bottom edge.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_shattered_card_cracks_first_and_its_shards_land_on_the_floor()
+    {
+        var (context, page, errors) = await app.OpenAsync(AppFixture.Desktop);
+        await using var _ = context;
+
+        var lit = await page.EvaluateAsync<int[]>(
+            """
+            async () => {
+              const host = document.createElement('div');
+              host.id = 'shatter-probe';
+              host.style.cssText = 'position:fixed;left:0;top:0;width:400px;height:300px;';
+              host.innerHTML = '<div class="card" style="position:absolute;left:100px;top:40px;width:200px;height:120px"></div>';
+              document.body.appendChild(host);
+              PoParticles.burst('#shatter-probe', 'shatter', '.card');
+              const count = (y0, y1) => {
+                const c = host.querySelector('canvas');
+                const d = c.getContext('2d').getImageData(0, Math.floor(c.height * y0), c.width, Math.ceil(c.height * (y1 - y0))).data;
+                let n = 0; for (let i = 3; i < d.length; i += 4) { if (d[i] > 0) n++; } return n;
+              };
+              await new Promise(r => setTimeout(r, 120));
+              const cracks = count(0.13, 0.53);
+              const below = count(0.6, 1);
+              await new Promise(r => setTimeout(r, 1400));
+              const floor = count(0.9, 1);
+              PoParticles.clear('#shatter-probe');
+              host.remove();
+              return [cracks, below, floor];
+            }
+            """);
+
+        lit[0].Should().BeGreaterThan(0, "the cracks are drawn across the card first");
+        lit[1].Should().Be(0, "nothing has broken off yet");
+        lit[2].Should().BeGreaterThan(50, "the shards come to rest on the floor rather than leaving the page");
+        errors.Should().BeEmpty();
+    }
+
+    /// <summary>
     /// Nothing is drawn until somebody turns stage effects on, and somebody who asked the whole system for less motion
     /// is not given the loudest thing in it even when the switch is on.
     /// </summary>

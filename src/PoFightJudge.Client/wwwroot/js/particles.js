@@ -153,6 +153,26 @@ window.PoParticles = (function () {
     const tint = [colour("--po-surface-2", "#1c2230"), colour("--po-border-strong", "#525c73"), colour("--po-danger", "#ff5a5a"), "#ffffff"];
     const hitX = rect.x + rect.w * 0.7;
     const hitY = rect.y + rect.h * 0.3;
+    // The cracks first: jagged lines run out from the point of impact across the card, and hold for the moment
+    // before it gives. Each is a polyline that wanders a little off its heading, and stops at the card's edge.
+    for (let i = 0; i < 9; i++) {
+      const heading = (i / 9) * Math.PI * 2 + Math.random() * 0.5;
+      const points = [hitX, hitY];
+      let x = hitX;
+      let y = hitY;
+      while (x > rect.x && x < rect.x + rect.w && y > rect.y && y < rect.y + rect.h) {
+        const a = heading + (Math.random() - 0.5) * 0.9;
+        x += Math.cos(a) * 12 * size.dpr;
+        y += Math.sin(a) * 12 * size.dpr;
+        points.push(Math.min(Math.max(x, rect.x), rect.x + rect.w), Math.min(Math.max(y, rect.y), rect.y + rect.h));
+      }
+
+      spawn(stage, {
+        x: 0, y: 0, vx: 0, vy: 0, life: 0.34, age: 0, size: 1.5 * size.dpr,
+        spin: 0, angle: 0, drag: 0, gravity: 0, colour: "#ffffff", shape: "crack", corners: points,
+      });
+    }
+
     for (let i = 0; i < 70; i++) {
       const x = rect.x + Math.random() * rect.w;
       const y = rect.y + Math.random() * rect.h;
@@ -170,13 +190,15 @@ window.PoParticles = (function () {
         x: x, y: y,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed - 220 * size.dpr,
-        life: 1.2 + Math.random(),
-        age: 0,
+        // A negative age is a delay: the shards wait out the cracks, then go. Long enough to settle on the floor.
+        life: 2 + Math.random(),
+        age: -0.3,
         size: radius,
         spin: (Math.random() - 0.5) * 16,
         angle: Math.random() * Math.PI * 2,
         drag: 0.8,
         gravity: 1,
+        bounce: 0.35,
         colour: pick(tint),
         shape: "shard",
         corners: corners,
@@ -292,6 +314,11 @@ window.PoParticles = (function () {
         continue;
       }
 
+      if (p.age < 0) {
+        alive.push(p);
+        continue;
+      }
+
       if (p.shape === "ribbon") {
         stepRibbon(p, seconds, size);
         ctx.globalAlpha = Math.min(1, (1 - p.age / p.life) * 3);
@@ -321,6 +348,14 @@ window.PoParticles = (function () {
       p.y += p.vy * seconds;
       p.angle += p.spin * seconds;
 
+      // The floor: whatever bounces lands on the bottom edge, loses most of its speed, and comes to rest there.
+      if (p.bounce && p.y > size.height - p.size * 0.5) {
+        p.y = size.height - p.size * 0.5;
+        p.vy = Math.abs(p.vy) < 60 * size.dpr ? 0 : -p.vy * p.bounce;
+        p.vx *= 0.7;
+        p.spin *= 0.6;
+      }
+
       // Fading out over the last third rather than the whole life: a particle that starts dimming immediately
       // reads as a rendering fault rather than a spark.
       const remaining = 1 - p.age / p.life;
@@ -332,6 +367,16 @@ window.PoParticles = (function () {
         ctx.rotate(p.angle);
         ctx.fillRect(-p.size, -p.size * 0.4, p.size * 2, p.size * 0.8);
         ctx.restore();
+      } else if (p.shape === "crack") {
+        ctx.strokeStyle = p.colour;
+        ctx.lineWidth = p.size;
+        ctx.beginPath();
+        ctx.moveTo(p.corners[0], p.corners[1]);
+        for (let k = 2; k < p.corners.length; k += 2) {
+          ctx.lineTo(p.corners[k], p.corners[k + 1]);
+        }
+
+        ctx.stroke();
       } else if (p.shape === "shard") {
         ctx.save();
         ctx.translate(p.x, p.y);

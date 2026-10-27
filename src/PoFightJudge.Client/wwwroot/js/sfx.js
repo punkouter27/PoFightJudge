@@ -343,10 +343,12 @@ window.PoSfx = (function () {
       hit(at, { freq: 900, duration: 0.12, gain: 0.8, filter: "lowpass" });
       hit(at, { freq: 2400, duration: 0.03, gain: 0.45, q: 1.2 });
     },
-    // Something breaking like glass: the break itself, then the pieces landing — nine pings at random, each one
-    // high, short and gone, in the same room.
+    // Something breaking like glass: a sharp crack as it splits, the break itself as it gives (when PoParticles lets
+    // the shards go), then the pieces landing — nine pings at random, each one high, short and gone, in the same room.
     "shatter": function (at) {
       out = roomy();
+      hit(at, { freq: 4200, duration: 0.04, gain: 0.45, q: 3 });
+      at += 0.3;
       hit(at, { freq: 3200, duration: 0.25, gain: 0.5, filter: "highpass" });
       for (let i = 0; i < 9; i++) {
         const t = at + 0.02 + Math.random() * 0.5;
