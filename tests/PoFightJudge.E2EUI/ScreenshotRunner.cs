@@ -195,6 +195,10 @@ public sealed class ScreenshotRunner(AppFixture app, ITestOutputHelper output)
             await page.WaitForTimeoutAsync(300);
             await page.SetViewportSizeAsync(AppFixture.Desktop.Width, AppFixture.Desktop.Height);
 
+            // The rehearsal host calls one fallacy after the second turn; the stamp sits over the captions.
+            await page.Locator("p.live-flag").WaitForAsync(new() { Timeout = 60_000 });
+            await ShootAsync(page, folder, "fight-flag", "/fight/{id}", errors);
+
             // A fresh ruling is revealed: the drumroll, the name landing on the beat, then the settled page.
             await page.Locator("section.ruling").WaitForAsync(new() { Timeout = 180_000 });
             await page.WaitForTimeoutAsync(700);
