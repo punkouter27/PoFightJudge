@@ -1,7 +1,7 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using PoFightJudge.Client.Components;
 using NSubstitute;
+using PoFightJudge.Client.Components;
 using PoFightJudge.Client.Services;
 using PoFightJudge.Shared.Models;
 
