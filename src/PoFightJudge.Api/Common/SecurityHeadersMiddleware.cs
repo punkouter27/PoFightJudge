@@ -11,7 +11,10 @@ public sealed class SecurityHeadersMiddleware(RequestDelegate next)
         "script-src 'self' 'wasm-unsafe-eval'; " +
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
         "font-src 'self' https://fonts.gstatic.com; " +
-        "connect-src 'self' ws: wss: https://login.microsoftonline.com; " +
+        // The browser transcriber's data, when somebody turns it on: the model from Hugging Face (which redirects to
+        // its CDN) and the ONNX runtime's .wasm, pinned to the one build the vendored script was made against.
+        "connect-src 'self' ws: wss: https://login.microsoftonline.com https://huggingface.co https://*.hf.co " +
+        "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.31.0-dev.20260914-8d85527a0/; " +
         "img-src 'self' data: blob:; " +
         // Highlight clips and round audio are fetched through the authenticated API and handed to <audio> as data/blob
         // URLs, because in Production a bare src would carry no bearer token.

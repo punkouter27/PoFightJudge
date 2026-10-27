@@ -100,6 +100,10 @@ public sealed partial class WatchPlay : IAsyncDisposable
 
     [Inject] private MicInterop Mic { get; set; } = default!;
 
+    [Inject] private AsrInterop Asr { get; set; } = default!;
+
+    [Inject] private Preferences Prefs { get; set; } = default!;
+
     [Inject] private TimeProvider Clock { get; set; } = default!;
 
     [Inject] private NavigationManager Nav { get; set; } = default!;
@@ -139,6 +143,13 @@ public sealed partial class WatchPlay : IAsyncDisposable
         // The click that started this match is the gesture the audio context needs; taking it now means the first
         // bell rings on time rather than being swallowed by the autoplay policy.
         await Sound.ArmAsync(_leaving.Token);
+
+        // A person in a seat will speak, so the browser's transcriber starts loading now rather than on their turn.
+        await Prefs.InitializeAsync();
+        if (Prefs.OnDeviceAsr && CanRecord && (Simulation.Husband?.IsHuman == true || Simulation.Wife?.IsHuman == true))
+        {
+            await Asr.WarmAsync(_leaving.Token);
+        }
 
         await LoadCastAsync();
         await RunAsync();

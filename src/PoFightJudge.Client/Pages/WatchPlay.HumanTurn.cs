@@ -172,10 +172,15 @@ public sealed partial class WatchPlay
                 return;
             }
 
-            var heard = await Api.TranscribeAsync(new TranscribeRequest(clip.Wav), _leaving.Token);
-            _isFake |= heard.IsFake;
+            // The browser's own Whisper first, when it is switched on and loaded; the server whenever it is not.
+            var said = Prefs.OnDeviceAsr ? await Asr.TranscribeAsync(_leaving.Token) : null;
+            if (said is null)
+            {
+                var heard = await Api.TranscribeAsync(new TranscribeRequest(clip.Wav), _leaving.Token);
+                _isFake |= heard.IsFake;
+                said = heard.Text.Trim();
+            }
 
-            var said = heard.Text.Trim();
             if (!WorthSending(said))
             {
                 // A legitimate outcome, not an error: the transcriber heard the clip and there were no words in it.

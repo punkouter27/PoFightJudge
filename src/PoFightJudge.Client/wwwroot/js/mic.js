@@ -23,6 +23,9 @@ window.PoMic = (function () {
   /** The turn so far: 100 ms frames of little-endian Int16 at RATE, in the order they were spoken. */
   let frames = [];
 
+  /** The last turn stop() handed back, kept for the browser's own transcriber (asr.js) to read. */
+  let last = [];
+
   // The meter runs off a second tap on the same source, so the page can show that the microphone is working while
   // somebody is still deciding what to say.
   let analyser = null;
@@ -272,6 +275,7 @@ window.PoMic = (function () {
 
     const captured = frames;
     frames = [];
+    last = captured;
     const state = ctx ? ctx.state : "closed";
     release();
 
@@ -290,6 +294,7 @@ window.PoMic = (function () {
 
   function cancel() {
     frames = [];
+    last = [];
     release();
   }
 
@@ -344,5 +349,21 @@ window.PoMic = (function () {
     return window.btoa(binary);
   }
 
-  return { start: start, stop: stop, cancel: cancel, level: level, devices: devices };
+  // The last turn as Float32 in [-1, 1) at RATE, which is what Whisper reads. A fresh array each time: the caller
+  // transfers it to a worker.
+  function turnSamples() {
+    let length = 0;
+    last.forEach(function (bytes) { length += bytes.byteLength >> 1; });
+    const out = new Float32Array(length);
+    let at = 0;
+    last.forEach(function (bytes) {
+      const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+      for (let i = 0; i + 1 < bytes.byteLength; i += 2) {
+        out[at++] = view.getInt16(i, true) / 32768;
+      }
+    });
+    return out;
+  }
+
+  return { start: start, stop: stop, cancel: cancel, level: level, devices: devices, samples: turnSamples };
 })();

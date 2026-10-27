@@ -36,6 +36,13 @@ A merge of [PoMarriedLife](https://github.com/punkouter26/PoMarriedLife) and
 
 Governance: [AGENTS.md](AGENTS.md) is how it is worked on.
 
+**On-device transcription.** The Settings panel's **On-device transcription** switch (off by default) transcribes a
+spoken 1P turn in the browser with Whisper (`Xenova/whisper-tiny.en`, q8, a 41 MB download cached after the first
+time), on WebGPU when the browser has a GPU adapter and WASM when not. transformers.js 4.3.1 is vendored under
+`wwwroot/lib/transformers` because the CSP runs same-origin scripts only. The model (Hugging Face) and the ONNX
+runtime's `.wasm` (jsdelivr, pinned to one build) are data, and `connect-src` names exactly those hosts. Until the
+model is loaded, or if it fails, the turn goes to the server as before.
+
 ## Run it
 
 On a clean clone, one script does the lot — prerequisites, the dev certificate, Azurite, Seq, `az login`, build and

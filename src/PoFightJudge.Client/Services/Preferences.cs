@@ -16,6 +16,7 @@ public sealed class Preferences(ILocalStorageService storage)
     public const string EffectsKey = "po-effects";
     public const string HeatKey = "po-heat";
     public const string HostKey = "po-host";
+    public const string AsrKey = "po-asr";
     public const string On = "on";
     public const string Off = "off";
 
@@ -29,6 +30,9 @@ public sealed class Preferences(ILocalStorageService storage)
 
     /// <summary>Who hosts a 2P fight set up on this device.</summary>
     public HostPersonaId Host { get; private set; } = HostPersonaId.Referee;
+
+    /// <summary>Whether a spoken WATCH turn is transcribed in the browser. Off: it downloads a ~40 MB model once.</summary>
+    public bool OnDeviceAsr { get; private set; }
 
     /// <summary>Loads once, however many components ask; a page awaits it before reading a choice.</summary>
     public Task InitializeAsync() => _loaded ??= LoadAsync();
@@ -51,11 +55,18 @@ public sealed class Preferences(ILocalStorageService storage)
         return WriteAsync(HostKey, host.ToString());
     }
 
+    public Task SetOnDeviceAsrAsync(bool on)
+    {
+        OnDeviceAsr = on;
+        return WriteAsync(AsrKey, on ? On : Off);
+    }
+
     private async Task LoadAsync()
     {
         Effects = string.Equals(await ReadAsync(EffectsKey), On, StringComparison.Ordinal);
         Heat = Enum.TryParse<TopicField.Heat>(await ReadAsync(HeatKey), out var heat) ? heat : Heat;
         Host = Enum.TryParse<HostPersonaId>(await ReadAsync(HostKey), out var host) ? host : Host;
+        OnDeviceAsr = string.Equals(await ReadAsync(AsrKey), On, StringComparison.Ordinal);
     }
 
     private async Task<string?> ReadAsync(string key)

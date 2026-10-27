@@ -40,6 +40,11 @@
                 <RadzenSwitch Value="@Prefs.Effects" ValueChanged="@((bool on) => Prefs.SetEffectsAsync(on))" Name="effects"
                               InputAttributes="@(new Dictionary<string, object> { ["aria-label"] = "Stage effects" })" />
             </div>
+            <div class="setting" title="Your spoken 1P turns are transcribed on this device. Downloads a 41 MB model once.">
+                <span class="po-eyebrow">On-device transcription</span>
+                <RadzenSwitch Value="@Prefs.OnDeviceAsr" ValueChanged="@((bool on) => Prefs.SetOnDeviceAsrAsync(on))" Name="asr"
+                              InputAttributes="@(new Dictionary<string, object> { ["aria-label"] = "On-device transcription" })" />
+            </div>
             <div class="setting">
                 <span class="po-eyebrow">Spin heat</span>
                 <RadzenSelectBar TValue="TopicField.Heat" Value="@Prefs.Heat" ValueChanged="@((TopicField.Heat h) => Prefs.SetHeatAsync(h))"
