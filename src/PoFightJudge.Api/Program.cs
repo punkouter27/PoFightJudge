@@ -174,6 +174,7 @@ try
     builder.Services.AddOpenApi();
     builder.Services.AddProblemDetails();
     builder.Services.AddExceptionHandler<BadRequestExceptionHandler>();
+    builder.Services.AddExceptionHandler<PoFightJudge.Api.Features.Diagnostics.AiUnavailableExceptionHandler>();
     builder.Services.Configure<JsonOptions>(o => o.SerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase);
 
     var app = builder.Build();

@@ -86,5 +86,21 @@ public class AiBudgetTests
         _clock.Advance(TimeSpan.FromHours(2));
 
         tracker.TokensToday("alice").Should().Be(0, "a new day starts from nothing");
+
+        // Google's own allowance ran out (the account's prepaid credit): the room is told that, not "an error occurred".
+        var broke = Request("alice", aiRoute: true);
+        using var written = new MemoryStream();
+        broke.Response.Body = written;
+        var handled = await new AiUnavailableExceptionHandler(Microsoft.Extensions.Logging.Abstractions.NullLogger<AiUnavailableExceptionHandler>.Instance)
+            .TryHandleAsync(broke, new HttpRequestException("Gemini round failed: 402", null, System.Net.HttpStatusCode.PaymentRequired), CancellationToken.None);
+        handled.Should().BeTrue();
+        broke.Response.StatusCode.Should().Be(StatusCodes.Status503ServiceUnavailable);
+        using var body = new StreamReader(broke.Response.Body);
+        body.BaseStream.Position = 0;
+        (await body.ReadToEndAsync()).Should().Contain("out of credit");
+
+        (await new AiUnavailableExceptionHandler(Microsoft.Extensions.Logging.Abstractions.NullLogger<AiUnavailableExceptionHandler>.Instance)
+            .TryHandleAsync(Request("alice", aiRoute: true), new HttpRequestException("boom", null, System.Net.HttpStatusCode.InternalServerError), CancellationToken.None))
+            .Should().BeFalse("any other failure is still a 500, and still ours to look at");
     }
 }
