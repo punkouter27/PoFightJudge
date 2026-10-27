@@ -2,7 +2,7 @@ using PoFightJudge.Api.Features.Records;
 using PoFightJudge.Shared.Identifiers;
 using PoFightJudge.Shared.Models;
 
-namespace PoFightJudge.Unit.Fighters;
+namespace PoFightJudge.Unit.Records;
 
 /// <summary>
 /// A profile's stats are its games: a pre-made persona's from the watches it was argued in, a person's from the

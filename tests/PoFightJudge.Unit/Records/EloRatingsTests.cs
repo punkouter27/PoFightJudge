@@ -2,7 +2,7 @@ using PoFightJudge.Api.Features.Records;
 using PoFightJudge.Shared.Identifiers;
 using PoFightJudge.Shared.Models;
 
-namespace PoFightJudge.Unit.Fighters;
+namespace PoFightJudge.Unit.Records;
 
 /// <summary>A rating replayed from the result rows on every read, so a deleted fight takes its points with it.</summary>
 public class EloRatingsTests

@@ -8,7 +8,7 @@ using PoFightJudge.Api.Features.Diagnostics;
 using PoFightJudge.Api.Features.Watch;
 using PoFightJudge.Shared.Configuration;
 
-namespace PoFightJudge.Unit.Ai;
+namespace PoFightJudge.Unit.Diagnostics;
 
 /// <summary>A daily token allowance per caller, so one runaway guest cannot spend the month's Gemini bill.</summary>
 public class AiBudgetTests

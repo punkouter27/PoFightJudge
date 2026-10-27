@@ -1,7 +1,7 @@
 using PoFightJudge.Api.Features.Records;
 using PoFightJudge.Shared.Models;
 
-namespace PoFightJudge.Unit.Fighters;
+namespace PoFightJudge.Unit.Records;
 
 /// <summary>
 /// One leaderboard: the people who argued at the microphone and the cast that argues on its own, ranked together by

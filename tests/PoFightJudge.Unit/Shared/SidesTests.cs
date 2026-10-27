@@ -5,7 +5,7 @@ using PoFightJudge.Api.Features.Watch;
 using PoFightJudge.Shared.Identifiers;
 using PoFightJudge.Shared.Models;
 
-namespace PoFightJudge.Unit.Fight;
+namespace PoFightJudge.Unit.Shared;
 
 /// <summary>
 /// Before the first word, everybody knows who is for the topic and who is against it: the two sides always oppose,
