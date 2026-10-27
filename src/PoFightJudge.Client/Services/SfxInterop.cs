@@ -78,11 +78,15 @@ public static class Sfx
     /// <summary>Up a tier on the ladder: a quick climb with a shimmer over it.</summary>
     public const string LevelUp = "levelup";
 
+    /// <summary>The lead changing sides on the momentum bar: water sloshing across, a falling gulp.</summary>
+    public const string Slosh = "slosh";
+
     /// <summary>Every name above, for the test that checks the browser knows them all.</summary>
     public static IReadOnlyList<string> All { get; } =
     [
         Bell, BellThree, Slap, Gavel, GavelThree, Tick, Whoosh,
         Intro, Probe, Ruling, Fanfare, Clipping, Cue, Count, Glitch, Riser, Drumroll, Slam, Shatter, Crowd, Stamp, LevelUp,
+        Slosh,
     ];
 }
 

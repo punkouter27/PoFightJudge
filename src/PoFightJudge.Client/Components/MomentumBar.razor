@@ -1,4 +1,5 @@
 @using System.Globalization
+@inject IServiceProvider Services
 @* Who has done the talking so far: a tug-of-war between the two colours, the knot where the room is split. *@
 <section class="momentum po-glass" aria-label="Share of the room so far" style="--share: @Share.ToString("0.000", CultureInfo.InvariantCulture)">
     <span class="name p1 po-display">@Player1 <span class="po-num">@One%</span></span>
@@ -18,4 +19,22 @@
     [Parameter] public double Share { get; set; } = 0.5;
 
     private int One => (int)Math.Round(Math.Clamp(Share, 0, 1) * 100);
+
+    /// <summary>How far past even a share has to be before it is a lead: the room jitters around the middle.</summary>
+    private const double DeadZone = 0.03;
+
+    /// <summary>Who is ahead: +1 fighter one, −1 fighter two, 0 nobody yet.</summary>
+    private int _leader;
+
+    /// <summary>The liquid sloshes across when the lead changes sides — once per change, not per snapshot.</summary>
+    protected override async Task OnParametersSetAsync()
+    {
+        var leader = Share > 0.5 + DeadZone ? 1 : Share < 0.5 - DeadZone ? -1 : _leader;
+        var flipped = _leader != 0 && leader != _leader;
+        _leader = leader;
+        if (flipped)
+        {
+            await Services.CueAsync(Sfx.Slosh);
+        }
+    }
 }

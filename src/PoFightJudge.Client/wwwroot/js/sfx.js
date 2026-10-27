@@ -409,6 +409,12 @@ window.PoSfx = (function () {
       tone(at + 0.6, { type: "sine", freq: 1800, sweepTo: 2600, duration: 0.25, gain: 0.05, attack: 0.03 });
       tone(at + 0.85, { type: "sine", freq: 2600, sweepTo: 2100, duration: 0.35, gain: 0.05, attack: 0.01 });
     },
+    // Water sloshing across: a band of noise swept low to high and back, and a gulp that falls under it.
+    "slosh": function (at) {
+      hit(at, { freq: 380, sweepTo: 1200, duration: 0.22, gain: 0.3, q: 3 });
+      hit(at + 0.16, { freq: 1100, sweepTo: 320, duration: 0.26, gain: 0.22, q: 3 });
+      tone(at + 0.05, { type: "sine", freq: 340, sweepTo: 120, duration: 0.2, gain: 0.25 });
+    },
     // The clock running out: under three seconds of endless climb, with a tick at the top to say it is done.
     "riser": function (at) {
       shepard(at, 2.6, 0.13);

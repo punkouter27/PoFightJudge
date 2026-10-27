@@ -28,8 +28,12 @@
   inset: 0 auto 0 0;
   width: calc(var(--share, 0.5) * 100%);
   border-radius: var(--po-radius-pill);
-  background: var(--po-p1);
-  transition: width var(--po-dur-slow) var(--po-ease);
+  /* Liquid: a sheen that drifts through the fill, so it reads as something poured rather than painted. */
+  background:
+    linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.28) 45%, transparent 60%) 0 0 / 220% 100%,
+    var(--po-p1);
+  animation: po-sheen 3.2s linear infinite;
+  transition: width 0.9s var(--po-spring);
 }
 
 .knot {
@@ -42,5 +46,18 @@
   background: var(--po-accent);
   box-shadow: 0 0 0 3px var(--po-bg), 0 0 14px var(--po-accent);
   transform: translate(-50%, -50%);
-  transition: left var(--po-dur-slow) var(--po-ease);
+  transition: left 0.9s var(--po-spring);
+  animation: po-meniscus 1.6s ease-in-out infinite;
+}
+
+@keyframes po-sheen { to { background-position: -220% 0, 0 0; } }
+
+/* The knot is the meniscus between the two: it never quite holds still. */
+@keyframes po-meniscus {
+  0%, 100% { transform: translate(-50%, -50%) scale(1, 1); }
+  50% { transform: translate(-50%, -50%) scale(0.86, 1.14); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pull, .knot { animation: none; transition: none; }
 }

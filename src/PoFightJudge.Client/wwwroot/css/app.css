@@ -72,6 +72,8 @@
   --po-dur-base: 220ms;
   --po-dur-slow: 420ms;
   --po-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  /* A damped spring: past the mark, back, and settled. For things that are poured or dropped rather than slid. */
+  --po-spring: linear(0, 0.45 12%, 0.92 24%, 1.12 34%, 1.06 46%, 0.98 58%, 1.01 72%, 1);
   --po-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 
   /* ── Safe area ──
