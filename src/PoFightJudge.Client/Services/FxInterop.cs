@@ -12,6 +12,9 @@ public sealed class FxInterop(IJSRuntime js)
 
     public const string Stamps = "PoFx.stamps";
 
+    /// <summary>A round ringing in: a dissolve wipes across the stage (<c>.stage.fx-round</c>).</summary>
+    public const string Round = "round";
+
     /// <summary>
     /// Arms every element matching <paramref name="selector"/> to stamp down onto the page the first time it is seen.
     /// Best-effort like the rest: a browser that will not simply shows them where they are.

@@ -84,12 +84,15 @@ public static class Sfx
     /// <summary>Somebody running hotter on the calm meter: two thumps of a heart, lub-dub, low and close.</summary>
     public const string Heartbeat = "heartbeat";
 
+    /// <summary>A round ringing in on the watch stage: the bell carried across from one side to the other.</summary>
+    public const string RoundBell = "bell-sweep";
+
     /// <summary>Every name above, for the test that checks the browser knows them all.</summary>
     public static IReadOnlyList<string> All { get; } =
     [
         Bell, BellThree, Slap, Gavel, GavelThree, Tick, Whoosh,
         Intro, Probe, Ruling, Fanfare, Clipping, Cue, Count, Glitch, Riser, Drumroll, Slam, Shatter, Crowd, Stamp, LevelUp,
-        Slosh, Heartbeat,
+        Slosh, Heartbeat, RoundBell,
     ];
 }
 

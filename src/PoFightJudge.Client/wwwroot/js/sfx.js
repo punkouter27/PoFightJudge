@@ -423,6 +423,20 @@ window.PoSfx = (function () {
         hit(at + beat[0], { freq: 180, duration: 0.05, gain: beat[1] * 0.4, filter: "lowpass" });
       });
     },
+    // A round ringing in, carried across the stage: the bell starts on one side and is swept to the other while it
+    // rings. A stereo panner rather than the HRTF one, because this one moves.
+    "bell-sweep": function (at) {
+      if (typeof ctx.createStereoPanner === "function") {
+        const pan = ctx.createStereoPanner();
+        pan.pan.setValueAtTime(-0.9, at);
+        pan.pan.linearRampToValueAtTime(0.9, at + 1.1);
+        pan.connect(out || master);
+        out = pan;
+      }
+
+      bell(at, 0.5);
+      bell(at + 0.18, 0.3);
+    },
     // The clock running out: under three seconds of endless climb, with a tick at the top to say it is done.
     "riser": function (at) {
       shepard(at, 2.6, 0.13);

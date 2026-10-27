@@ -153,6 +153,22 @@ public sealed class WatchPlayTests : BunitContext, IAsyncLifetime
     }
 
     [Fact(Timeout = 60_000)]
+    public async Task Each_round_rings_in_with_a_bell_across_the_stage_and_a_wipe_over_it()
+    {
+        _simulation.Set(Matthew, Kimberly, "the thermostat", Stance.For);
+
+        var cut = Render<WatchPlay>();
+        await RunToTheEndAsync(cut, _clock);
+        await cut.WaitForAssertionAsync(() => cut.FindAll("section.verdict").Should().HaveCount(1), TimeSpan.FromSeconds(10));
+
+        string[] Called(string identifier) =>
+            [.. JSInterop.Invocations.Where(i => string.Equals(i.Identifier, identifier, StringComparison.Ordinal)).Select(i => (string)i.Arguments[0]!)];
+
+        Called(SfxInterop.Play).Count(n => string.Equals(n, Sfx.RoundBell, StringComparison.Ordinal)).Should().Be(WatchTurns.RoundsPerSide);
+        Called(FxInterop.Burst).Count(n => string.Equals(n, FxInterop.Round, StringComparison.Ordinal)).Should().Be(WatchTurns.RoundsPerSide);
+    }
+
+    [Fact(Timeout = 60_000)]
     public async Task The_persons_turn_stops_the_loop_until_they_have_said_something()
     {
         _simulation.Set(Matthew, Person, null);

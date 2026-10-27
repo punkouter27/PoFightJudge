@@ -260,7 +260,8 @@ public sealed partial class WatchPlay : IAsyncDisposable
         }
 
         _bellsRung = round;
-        await Sound.PlayAsync(Sfx.Bell, ct: ct);
+        await Fx.BurstAsync(FxInterop.Round, ct);
+        await Sound.PlayAsync(Sfx.RoundBell, ct: ct);
     }
 
     /// <summary>Asks for one line, shows it, and speaks it. False when it could not be generated.</summary>
