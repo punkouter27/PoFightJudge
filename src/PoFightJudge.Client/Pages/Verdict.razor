@@ -102,23 +102,26 @@
                             </RadzenTabsItem>
                         }
 
-                        <RadzenTabsItem Text="How they argued">
-                            <div class="side-by-side">
-                                @foreach (var (side, report) in Sides)
-                                {
-                                    <div class="column">
-                                        <h3>@report.Name</h3>
-                                        <TraitScores Assessment="@report.Assessment" />
-                                        <p class="po-muted why">@report.Assessment.CefrJustification</p>
-                                        <h4>How the mood moved</h4>
-                                        <EmotionChart Assessment="@report.Assessment" />
-                                    </div>
-                                }
-                            </div>
-                        </RadzenTabsItem>
+                        @if (Prefs.Detailed)
+                        {
+                            <RadzenTabsItem Text="How they argued">
+                                <div class="side-by-side">
+                                    @foreach (var (side, report) in Sides)
+                                    {
+                                        <div class="column">
+                                            <h3>@report.Name</h3>
+                                            <TraitScores Assessment="@report.Assessment" />
+                                            <p class="po-muted why">@report.Assessment.CefrJustification</p>
+                                            <h4>How the mood moved</h4>
+                                            <EmotionChart Assessment="@report.Assessment" />
+                                        </div>
+                                    }
+                                </div>
+                            </RadzenTabsItem>
+                        }
 
                         <RadzenTabsItem Text="What they claimed">
-                            <div class="side-by-side">
+                            <div class="side-by-side claimed">
                                 @foreach (var (side, report) in Sides)
                                 {
                                     <div class="column">
@@ -164,26 +167,29 @@
                             </div>
                         </RadzenTabsItem>
 
-                        <RadzenTabsItem Text="How they talked">
-                            <div class="side-by-side">
-                                @foreach (var (side, report) in Sides)
-                                {
-                                    <div class="column">
-                                        <h3>@report.Name</h3>
-                                        @foreach (var group in Enum.GetValues<StatGroup>())
-                                        {
-                                            <h4>@GroupName(group)</h4>
-                                            <div class="stats">
-                                                @foreach (var stat in StatFormat.Describe(report.Metrics).Where(s => s.Group == group))
-                                                {
-                                                    <StatTile Stat="@stat" />
-                                                }
-                                            </div>
-                                        }
-                                    </div>
-                                }
-                            </div>
-                        </RadzenTabsItem>
+                        @if (Prefs.Detailed)
+                        {
+                            <RadzenTabsItem Text="How they talked">
+                                <div class="side-by-side">
+                                    @foreach (var (side, report) in Sides)
+                                    {
+                                        <div class="column">
+                                            <h3>@report.Name</h3>
+                                            @foreach (var group in Enum.GetValues<StatGroup>())
+                                            {
+                                                <h4>@GroupName(group)</h4>
+                                                <div class="stats">
+                                                    @foreach (var stat in StatFormat.Describe(report.Metrics).Where(s => s.Group == group))
+                                                    {
+                                                        <StatTile Stat="@stat" />
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </RadzenTabsItem>
+                        }
 
                         <RadzenTabsItem Text="What to do about it">
                             <div class="side-by-side">

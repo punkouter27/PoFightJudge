@@ -40,6 +40,11 @@
                 <RadzenSwitch Value="@Prefs.Effects" ValueChanged="@((bool on) => Prefs.SetEffectsAsync(on))" Name="effects"
                               InputAttributes="@(new Dictionary<string, object> { ["aria-label"] = "Stage effects" })" />
             </div>
+            <div class="setting" title="The verdict's trait scores, mood chart and thirty measurements of how each of you talked.">
+                <span class="po-eyebrow">Detailed analysis</span>
+                <RadzenSwitch Value="@Prefs.Detailed" ValueChanged="@((bool on) => Prefs.SetDetailedAsync(on))" Name="detail"
+                              InputAttributes="@(new Dictionary<string, object> { ["aria-label"] = "Detailed analysis" })" />
+            </div>
             <div class="setting" title="Your spoken 1P turns are transcribed on this device. Downloads a 41 MB model once.">
                 <span class="po-eyebrow">On-device transcription</span>
                 <RadzenSwitch Value="@Prefs.OnDeviceAsr" ValueChanged="@((bool on) => Prefs.SetOnDeviceAsrAsync(on))" Name="asr"

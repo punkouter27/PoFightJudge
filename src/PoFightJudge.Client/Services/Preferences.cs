@@ -17,6 +17,7 @@ public sealed class Preferences(ILocalStorageService storage)
     public const string HeatKey = "po-heat";
     public const string HostKey = "po-host";
     public const string AsrKey = "po-asr";
+    public const string DetailKey = "po-detail";
     public const string On = "on";
     public const string Off = "off";
 
@@ -33,6 +34,12 @@ public sealed class Preferences(ILocalStorageService storage)
 
     /// <summary>Whether a spoken WATCH turn is transcribed in the browser. Off: it downloads a ~40 MB model once.</summary>
     public bool OnDeviceAsr { get; private set; }
+
+    /// <summary>The verdict's traits, mood chart and thirty measurements. Off: the ruling, the claims and the advice are the verdict.</summary>
+    public bool Detailed { get; private set; }
+
+    /// <summary>Raised on every change, so a page already showing a choice can redraw without a reload.</summary>
+    public event EventHandler? Changed;
 
     /// <summary>Loads once, however many components ask; a page awaits it before reading a choice.</summary>
     public Task InitializeAsync() => _loaded ??= LoadAsync();
@@ -61,12 +68,19 @@ public sealed class Preferences(ILocalStorageService storage)
         return WriteAsync(AsrKey, on ? On : Off);
     }
 
+    public Task SetDetailedAsync(bool on)
+    {
+        Detailed = on;
+        return WriteAsync(DetailKey, on ? On : Off);
+    }
+
     private async Task LoadAsync()
     {
         Effects = string.Equals(await ReadAsync(EffectsKey), On, StringComparison.Ordinal);
         Heat = Enum.TryParse<TopicField.Heat>(await ReadAsync(HeatKey), out var heat) ? heat : Heat;
         Host = Enum.TryParse<HostPersonaId>(await ReadAsync(HostKey), out var host) ? host : Host;
         OnDeviceAsr = string.Equals(await ReadAsync(AsrKey), On, StringComparison.Ordinal);
+        Detailed = string.Equals(await ReadAsync(DetailKey), On, StringComparison.Ordinal);
     }
 
     private async Task<string?> ReadAsync(string key)
@@ -83,6 +97,7 @@ public sealed class Preferences(ILocalStorageService storage)
 
     private async Task WriteAsync(string key, string value)
     {
+        Changed?.Invoke(this, EventArgs.Empty);
         try
         {
             await storage.SetItemAsStringAsync(key, value);

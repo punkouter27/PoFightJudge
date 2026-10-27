@@ -59,9 +59,21 @@ public class FightFlowTests(AppFixture app)
         await page.Locator("section.ruling").WaitForAsync(new() { Timeout = RulingTimeout });
         (await page.Locator("section.ruling").InnerTextAsync()).Should().ContainEquivalentOf("took it");
         (await page.Locator("article.player").CountAsync()).Should().Be(2, "both of them are reported on");
-        (await page.Locator(".trait").CountAsync()).Should().Be(20, "ten judged traits each");
-        (await page.Locator(".stat").CountAsync()).Should().BeGreaterThan(40, "every measured number reaches the page");
         (await page.Locator(".tips li").CountAsync()).Should().Be(6, "three pieces of advice each");
+        (await page.Locator(".detail .rz-tabview-nav li").CountAsync()).Should().Be(3, "the traits and the measurements wait behind a setting");
+        (await page.Locator(".trait, .stat").CountAsync()).Should().Be(0);
+
+        // Detailed analysis, switched on in Settings, reaches the page that is already open.
+        await page.GetByRole(AriaRole.Button, new() { Name = "Settings" }).ClickAsync();
+        await page.Locator(".po-settings .setting:has-text('Detailed analysis') .rz-switch").ClickAsync();
+        await page.Keyboard.PressAsync("Escape");
+        // A tab added after the first render draws its content when it is opened, which is when anybody reads it.
+        await page.Locator(".detail .rz-tabview-nav li", new() { HasText = "How they argued" }).ClickAsync();
+        await page.Locator(".trait").First.WaitForAsync(new() { Timeout = 10_000 });
+        (await page.Locator(".trait").CountAsync()).Should().Be(20, "ten judged traits each");
+        await page.Locator(".detail .rz-tabview-nav li", new() { HasText = "How they talked" }).ClickAsync();
+        await page.Locator(".stat").First.WaitForAsync(new() { Timeout = 10_000 });
+        (await page.Locator(".stat").CountAsync()).Should().BeGreaterThan(40, "every measured number reaches the page");
         await ShootAsync(page, "verdict");
 
         // The card writes itself from the fight: both tags are on it, each with the one debate they have just had. The

@@ -221,7 +221,7 @@ public sealed class ScreenshotRunner(AppFixture app, ITestOutputHelper output)
                   const rule = [...document.styleSheets].flatMap(s => { try { return [...s.cssRules]; } catch { return []; } })
                     .find(r => r.selectorText && r.selectorText.startsWith('.fallacy-stamp['));
                   const scope = rule.selectorText.match(/\[(b-[a-z0-9]+)\]/)[1];
-                  const column = document.querySelectorAll('.side-by-side')[1].querySelector('.column');
+                  const column = document.querySelector('.side-by-side.claimed .column');
                   const list = document.createElement('ul');
                   list.innerHTML = '<li><span class="fallacy-stamp" ' + scope + '>FALLACY</span><strong>Appeal to volume</strong> — "I said it louder, so it is true"</li>';
                   column.appendChild(list);

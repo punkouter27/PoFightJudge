@@ -104,7 +104,10 @@ other through `Shared` contracts and repositories, not through each other's serv
   in JS — and `EffectCatalogueTests` holds the pairs together, because a name the browser does not know is silence
   rather than an error; `StageEffectTests` compiles every shader and plays every voice in a real browser.
 - The optional choices live in the Settings panel, not on the setup screens: `Preferences` (client, LocalStorage)
-  holds stage effects (off), spin heat (Medium) and the 2P host (the Referee), each defaulting to the simplest app.
+  holds stage effects (off), spin heat (Medium), the 2P host (the Referee), on-device transcription (off) and
+  detailed analysis (off), each defaulting to the simplest app. With detailed analysis off the verdict is three tabs
+  (the fight, the claims, the advice); on, it adds the traits and mood chart and the thirty measurements. A change
+  raises `Preferences.Changed`, so an open verdict redraws without a reload.
 - `ScreenshotRunner` with `SEED=1` plays a watch and a fight on the fakes and photographs the moments the effects
   live in (the tape, the glitch, the heat, table mode, the verdict's reveal, shatter, story image, rematch, the
   podium). A CSS effect too quick to catch is frozen part-way; a canvas is whatever frame it lands on.

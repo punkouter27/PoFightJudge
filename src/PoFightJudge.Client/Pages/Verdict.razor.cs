@@ -92,6 +92,8 @@ public sealed partial class Verdict : ComponentBase, IDisposable
 
     [Inject] private IServiceProvider Services { get; set; } = default!;
 
+    [Inject] private Preferences Prefs { get; set; } = default!;
+
     private string Title => _report is null ? "Reading it back" : _report.Topic is { Length: > 0 } topic ? topic : "The ruling";
 
     private string Lead => _report is null
@@ -141,6 +143,9 @@ public sealed partial class Verdict : ComponentBase, IDisposable
 
     protected override async Task OnInitializedAsync()
     {
+        await Prefs.InitializeAsync();
+        Prefs.Changed += OnPreferencesChanged;
+
         if (!MatchId.TryParse(MatchIdText, null, out var id))
         {
             _problem = "That is not a fight.";
@@ -592,8 +597,16 @@ public sealed partial class Verdict : ComponentBase, IDisposable
         }
     }
 
+    /// <summary>Detailed analysis was switched while the verdict is open: the tabs change, so the first is shown.</summary>
+    private void OnPreferencesChanged(object? sender, EventArgs e)
+    {
+        _tab = 0;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
     public void Dispose()
     {
+        Prefs.Changed -= OnPreferencesChanged;
         _leaving.Cancel();
         _skip?.Dispose();
         _leaving.Dispose();
