@@ -1,5 +1,4 @@
 using System.Net;
-using Azure.Core;
 using Microsoft.Extensions.Http.Resilience;
 using Polly;
 
@@ -79,7 +78,7 @@ public static class GeminiResilience
         // Outermost: the token is set once per call, and it outlives any retry the handlers inside it make.
         return azureEndpoint is null
             ? builder
-            : builder.AddHttpMessageHandler(sp => new AzureTokenHandler(sp.GetRequiredService<TokenCredential>()));
+            : builder.AddHttpMessageHandler(sp => new AzureTokenHandler(sp.GetRequiredService<AzureOpenAiToken>()));
     }
 
     private static IHttpClientBuilder AddGeminiPipeline(this IHttpClientBuilder builder, int attemptSeconds, int totalSeconds, int maxRetries, int baseDelayMs)

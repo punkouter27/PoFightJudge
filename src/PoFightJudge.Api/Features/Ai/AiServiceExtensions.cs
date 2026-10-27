@@ -46,6 +46,7 @@ public static class AiServiceExtensions
         services.AddSingleton(GeminiModelOptions.FromConfiguration(configuration));
         services.AddSingleton<AiLatencyTracker>();
         services.AddGeminiClients(apiKey, mode.UsesAzure ? azure : null);
+        services.AddSingleton<AzureOpenAiToken>();
 
         if (useFakes)
         {

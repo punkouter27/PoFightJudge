@@ -38,7 +38,7 @@ public class AiRegistrationTests
     }
 
     [Fact]
-    public void Fakes_run_only_outside_production_when_there_is_no_key_or_the_flag_forces_them()
+    public async Task Fakes_run_only_outside_production_when_there_is_no_key_or_the_flag_forces_them()
     {
         Register("Development", apiKey: null).Mode.UseFakes.Should().BeTrue("no key in Development means the fakes");
         Register("Development", apiKey: "k").Mode.UseFakes.Should().BeFalse();
@@ -62,6 +62,17 @@ public class AiRegistrationTests
             fast.BaseAddress.Should().Be(new Uri("https://res.cognitiveservices.azure.com/openai/v1/"));
             fast.DefaultRequestHeaders.Contains(GeminiHttp.ApiKeyHeader).Should().BeFalse("Azure is reached with the app's identity, never a key");
         }
+
+        // The token is fetched once and kept until five minutes before it expires: locally each fetch is an az CLI call.
+        var clock = new Microsoft.Extensions.Time.Testing.FakeTimeProvider(new DateTimeOffset(2026, 10, 27, 12, 0, 0, TimeSpan.Zero));
+        var credential = Substitute.For<Azure.Core.TokenCredential>();
+        credential.GetTokenAsync(default, default).ReturnsForAnyArgs(_ => new Azure.Core.AccessToken("t", clock.GetUtcNow().AddHours(1)));
+        var cache = new AzureOpenAiToken(credential, clock, Microsoft.Extensions.Logging.Abstractions.NullLogger<AzureOpenAiToken>.Instance);
+        (await cache.GetAsync(CancellationToken.None), await cache.GetAsync(CancellationToken.None)).Should().Be(("t", "t"));
+        await credential.ReceivedWithAnyArgs(1).GetTokenAsync(default, default);
+        clock.Advance(TimeSpan.FromMinutes(56));
+        await cache.GetAsync(CancellationToken.None);
+        await credential.ReceivedWithAnyArgs(2).GetTokenAsync(default, default);
 
         // Startup does not call the Gemini key missing when Azure is the provider: in Production that would be a 503 site.
         static IConfiguration Config(string key, string value) => new ConfigurationBuilder().AddInMemoryCollection([new(key, value)]).Build();

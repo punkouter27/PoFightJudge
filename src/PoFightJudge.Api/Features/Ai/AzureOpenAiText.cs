@@ -72,14 +72,45 @@ public static class AzureOpenAi
     }
 }
 
+/// <summary>
+/// The app identity's token for the Azure OpenAI resource, kept until five minutes before it expires. The
+/// credential does not do this itself for <c>az login</c>: every request asked the CLI again, about 1.2 s each
+/// (measured 2026-10-27), which a streamed round line and every transcribed turn paid on top of the model.
+/// </summary>
+public sealed partial class AzureOpenAiToken(TokenCredential credential, TimeProvider clock, ILogger<AzureOpenAiToken> logger)
+{
+    private static readonly TimeSpan RefreshAhead = TimeSpan.FromMinutes(5);
+
+    private volatile Held? _held;
+
+    public async ValueTask<string> GetAsync(CancellationToken ct)
+    {
+        // Two callers that both find it stale both fetch one; the second simply wins, which costs one CLI call.
+        if (_held is { } held && held.ExpiresOn - RefreshAhead > clock.GetUtcNow())
+        {
+            return held.Token;
+        }
+
+        var started = Stopwatch.GetTimestamp();
+        var token = await credential.GetTokenAsync(new TokenRequestContext([AzureOpenAi.Scope]), ct);
+        _held = new Held(token.Token, token.ExpiresOn);
+        var elapsed = Stopwatch.GetElapsedTime(started);
+        LogFetched(logger, elapsed.TotalMilliseconds, token.ExpiresOn);
+        return token.Token;
+    }
+
+    [LoggerMessage(EventId = 1014, Level = LogLevel.Information, Message = "Azure OpenAI token fetched in {ElapsedMs:F0}ms, good until {ExpiresOn:u}")]
+    private static partial void LogFetched(ILogger logger, double elapsedMs, DateTimeOffset expiresOn);
+
+    private sealed record Held(string Token, DateTimeOffset ExpiresOn);
+}
+
 /// <summary>Puts the app identity's bearer token on every request to the Azure OpenAI resource.</summary>
-public sealed class AzureTokenHandler(TokenCredential credential) : DelegatingHandler
+public sealed class AzureTokenHandler(AzureOpenAiToken token) : DelegatingHandler
 {
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        // The credential caches the token and refreshes it ahead of expiry, so asking every time costs nothing.
-        var token = await credential.GetTokenAsync(new TokenRequestContext([AzureOpenAi.Scope]), cancellationToken);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token.Token);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await token.GetAsync(cancellationToken));
         return await base.SendAsync(request, cancellationToken);
     }
 }

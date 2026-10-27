@@ -42,6 +42,12 @@ about ten minutes to take effect, and a new deployment took about as long before
   running, the client holds that request back until `response.done`.
 - **A streamed chat ends with a usage-only chunk.** Its `choices` array is empty. `AzureOpenAiText.Delta` reads it
   without indexing into the array.
+- **The token is cached by the app.** Locally, `az login` does not cache the token itself: every call asked the
+  CLI again, at about 1.2 seconds a time. `AzureOpenAiToken` keeps the token until five minutes before it
+  expires.
+- **No managed-identity probe outside Production.** In the Test host, the full `DefaultAzureCredential` chain
+  retried IMDS six times and pushed the first fight past 30 seconds. The trimmed chain now applies everywhere
+  except Production.
 - **The reasoning deployments** (`gpt-5*`) refuse `temperature` and count their thinking inside
   `max_completion_tokens`. They get a `reasoning_effort` and 4,096 extra tokens. Whether a deployment is a
   reasoning one is decided from its name.

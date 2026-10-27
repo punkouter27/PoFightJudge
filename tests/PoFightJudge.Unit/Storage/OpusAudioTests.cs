@@ -47,5 +47,12 @@ public class OpusAudioTests
         var act = () => OpusAudio.Encode(Speech(0.1), 44_100);
 
         act.Should().Throw<ArgumentOutOfRangeException>();
+
+        // A real fight reads back too. Its size estimate once multiplied the compressed length by the byte rate in
+        // an int, which went negative past ~67 KB of Opus — about twenty seconds — and failed every real analysis.
+        var fight = OpusAudio.Encode(Speech(40), Rate);
+        fight.Length.Should().BeGreaterThan(70_000, "long enough to have overflowed");
+        var wav = OpusAudio.DecodeToWav(fight, Rate);
+        TimeSpan.FromSeconds((wav.Length - WavWriter.HeaderBytes) / 2.0 / Rate).Should().BeCloseTo(TimeSpan.FromSeconds(40), TimeSpan.FromMilliseconds(200));
     }
 }

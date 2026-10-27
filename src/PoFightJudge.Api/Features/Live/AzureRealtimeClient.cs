@@ -3,7 +3,6 @@ using System.Net.WebSockets;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Channels;
-using Azure.Core;
 using PoFightJudge.Api.Features.Ai;
 using PoFightJudge.Api.Features.Voice;
 
@@ -50,15 +49,15 @@ public sealed partial class AzureRealtimeClient(
     }
 
     /// <summary>The real connector: a WebSocket carrying the app identity's bearer token.</summary>
-    public static async Task<ILiveSocket> ConnectAsync(Uri address, TokenCredential credential, CancellationToken ct)
+    public static async Task<ILiveSocket> ConnectAsync(Uri address, AzureOpenAiToken token, CancellationToken ct)
     {
-        ArgumentNullException.ThrowIfNull(credential);
-        var token = await credential.GetTokenAsync(new TokenRequestContext([AzureOpenAi.Scope]), ct);
+        ArgumentNullException.ThrowIfNull(token);
+        var bearer = await token.GetAsync(ct);
         ClientWebSocket? socket = null;
         try
         {
             socket = new ClientWebSocket();
-            socket.Options.SetRequestHeader("Authorization", $"Bearer {token.Token}");
+            socket.Options.SetRequestHeader("Authorization", $"Bearer {bearer}");
             await socket.ConnectAsync(address, ct);
             var live = new ClientWebSocketLiveSocket(socket);
             socket = null;
@@ -77,6 +76,7 @@ public sealed partial class AzureRealtimeClient(
             throw new InvalidOperationException("Already connected.");
         }
 
+        var started = System.Diagnostics.Stopwatch.GetTimestamp();
         _socket = await connect(ct);
         _pumping = new CancellationTokenSource();
         _pump = PumpAsync(_socket, _pumping.Token);
@@ -91,7 +91,8 @@ public sealed partial class AzureRealtimeClient(
             throw new InvalidOperationException($"Azure realtime did not accept the session within {options.SetupTimeout.TotalSeconds:0} seconds.");
         }
 
-        LogConnected(logger, models.Live);
+        var elapsed = System.Diagnostics.Stopwatch.GetElapsedTime(started);
+        LogConnected(logger, models.Live, elapsed.TotalMilliseconds);
     }
 
     public Task SendAudioAsync(ReadOnlyMemory<byte> pcm16k, CancellationToken ct) =>
@@ -409,8 +410,8 @@ public sealed partial class AzureRealtimeClient(
         return false;
     }
 
-    [LoggerMessage(EventId = 3011, Level = LogLevel.Information, Message = "Azure realtime connected ({Model})")]
-    private static partial void LogConnected(ILogger logger, string model);
+    [LoggerMessage(EventId = 3011, Level = LogLevel.Information, Message = "Azure realtime connected ({Model}) in {ElapsedMs:F0}ms")]
+    private static partial void LogConnected(ILogger logger, string model, double elapsedMs);
 
     [LoggerMessage(EventId = 3012, Level = LogLevel.Warning, Message = "Azure realtime receive loop ended with an error")]
     private static partial void LogPumpFailed(ILogger logger, Exception ex);

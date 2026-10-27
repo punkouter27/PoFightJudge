@@ -35,9 +35,10 @@ public static class StorageServiceExtensions
     {
         var azurite = environment.IsDevelopment() && configuration.GetValue<bool>(Toggles.UseAzurite);
 
-        // Locally the cloud-only providers (environment, workload identity, IMDS) only add seconds of probing before
-        // `az login` is tried; Production keeps the full chain, where managed identity is the one that answers.
-        TokenCredential credential = environment.IsDevelopment()
+        // Locally the cloud-only providers (environment, workload identity, IMDS) only add probing before `az login`
+        // is tried — in the Test host IMDS alone retried six times and took the first Azure OpenAI call past thirty
+        // seconds (2026-10-27). Production keeps the full chain, where managed identity is the one that answers.
+        TokenCredential credential = !environment.IsProduction()
             ? new DefaultAzureCredential(new DefaultAzureCredentialOptions
             {
                 ExcludeEnvironmentCredential = true,

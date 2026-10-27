@@ -32,7 +32,7 @@ public static partial class FightServiceExtensions
             ? () => new AzureRealtimeClient(
                 ct => AzureRealtimeClient.ConnectAsync(
                     AzureRealtimeClient.AddressFor(ai.AzureEndpoint!, sp.GetRequiredService<GeminiModelOptions>().Live),
-                    sp.GetRequiredService<Azure.Core.TokenCredential>(),
+                    sp.GetRequiredService<AzureOpenAiToken>(),
                     ct),
                 sp.GetRequiredService<LiveOptions>(),
                 sp.GetRequiredService<GeminiModelOptions>(),

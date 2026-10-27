@@ -146,8 +146,9 @@ public static class OpusAudio
         // Sized up front from what the compressed side weighs, so the stream is not reallocated and recopied a
         // dozen times on the way to its final size. Being a little wrong costs one resize; being absent costs all
         // of them.
-        var expected = reserveHeader + (ogg.Length * (sampleRate * 2) / Math.Max(1, BitsPerSecond / 8));
-        var pcm = new MemoryStream(expected);
+        // In long: the product passes int.MaxValue at about 67 KB of Opus, twenty seconds of a fight.
+        var expected = reserveHeader + ((long)ogg.Length * sampleRate * 2 / Math.Max(1, BitsPerSecond / 8));
+        var pcm = new MemoryStream((int)Math.Min(expected, Array.MaxLength));
         pcm.SetLength(reserveHeader);
         pcm.Position = reserveHeader;
 
