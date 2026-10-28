@@ -1,3 +1,4 @@
+using System.Reflection;
 using Azure.Core;
 using Azure.Identity;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
@@ -180,6 +181,19 @@ try
     var app = builder.Build();
 
     // ── Pipeline ──────────────────────────────────────────────────────────────────────────────────────────────────
+    // Which build answered: the SDK stamps the commit into the informational version as <version>+<sha>, and the deploy
+    // checks this header against the commit it shipped. OnStarting, so a response the exception handler rewrites keeps it.
+    var commit = typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+') is [_, var sha] ? sha : "unknown";
+    app.Use((ctx, next) =>
+    {
+        ctx.Response.OnStarting(() =>
+        {
+            ctx.Response.Headers["X-Commit"] = commit;
+            return Task.CompletedTask;
+        });
+        return next(ctx);
+    });
+
     // Request logging sits outside the exception handler so the line records the status the caller actually got.
     // The other way round, a malformed request that the handler answers with a 400 was logged as a 500.
     app.UseSerilogRequestLogging();

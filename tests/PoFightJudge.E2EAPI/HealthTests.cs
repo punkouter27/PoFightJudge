@@ -59,6 +59,7 @@ public partial class HealthTests(ApiFactory factory)
         var ok = await client.GetAsync(ApiRoutes.Health.Url);
         ok.Headers.GetValues("Content-Security-Policy").Single().Should().Contain("frame-ancestors 'none'");
         ok.Headers.GetValues("X-Content-Type-Options").Single().Should().Be("nosniff");
+        ok.Headers.GetValues("X-Commit").Single().Should().MatchRegex("^[0-9a-f]{40}$", "the deploy matches it against the commit it shipped");
         ok.Headers.GetValues("Permissions-Policy").Single().Should().Contain("microphone=(self)");
 
         var missing = await client.GetAsync($"{ApiRoutes.ApiPrefix}/does-not-exist");
