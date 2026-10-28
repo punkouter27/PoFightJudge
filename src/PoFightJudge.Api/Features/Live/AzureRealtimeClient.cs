@@ -86,9 +86,9 @@ public sealed partial class AzureRealtimeClient(
         {
             await _setupComplete.Task.WaitAsync(options.SetupTimeout, ct);
         }
-        catch (TimeoutException)
+        catch (TimeoutException ex)
         {
-            throw new InvalidOperationException($"Azure realtime did not accept the session within {options.SetupTimeout.TotalSeconds:0} seconds.");
+            throw new InvalidOperationException($"Azure realtime did not accept the session within {options.SetupTimeout.TotalSeconds:0} seconds.", ex);
         }
 
         var elapsed = System.Diagnostics.Stopwatch.GetElapsedTime(started);

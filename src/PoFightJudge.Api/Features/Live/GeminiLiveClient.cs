@@ -77,10 +77,10 @@ public sealed partial class GeminiLiveClient(
         {
             await _setupComplete.Task.WaitAsync(options.SetupTimeout, ct);
         }
-        catch (TimeoutException)
+        catch (TimeoutException ex)
         {
             throw new InvalidOperationException(
-                $"Gemini Live did not acknowledge setup within {options.SetupTimeout.TotalSeconds:0} seconds.");
+                $"Gemini Live did not acknowledge setup within {options.SetupTimeout.TotalSeconds:0} seconds.", ex);
         }
 
         LogConnected(logger, models.Live);
