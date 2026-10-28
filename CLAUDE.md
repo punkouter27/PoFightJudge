@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+@AGENTS.md
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 Read [AGENTS.md](AGENTS.md) first — it carries the rules, the environment matrix and the deviations table. This file

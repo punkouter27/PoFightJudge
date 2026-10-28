@@ -22,8 +22,8 @@ permissions:
   contents: read
 
 env:
-  AZURE_WEBAPP_NAME: app-pofightjudge2
-  AZURE_WEBAPP_URL: https://app-pofightjudge2.azurewebsites.net
+  AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+  AZURE_WEBAPP_URL: https://${{ vars.AZURE_WEBAPP_NAME }}.azurewebsites.net
 
 jobs:
   build:
@@ -112,6 +112,20 @@ jobs:
           package: publish
 
       # The deploy returns when the package is accepted, not when the site serves it.
+      # Same gate in every Po web repo: the process is up (/health/live) and its dependencies answer (/health).
+      - name: Health gate (/health/live, /health)
+        shell: bash
+        run: |
+          base="https://${{ vars.AZURE_WEBAPP_NAME }}.azurewebsites.net"
+          for path in /health/live /health; do
+            for attempt in $(seq 1 60); do
+              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 "$base$path" || echo 000)
+              [ "$code" = "200" ] && { echo "$path -> 200 (attempt $attempt)"; break; }
+              [ "$attempt" = "60" ] && { echo "::error::$path never returned 200 (last: $code)"; exit 1; }
+              sleep 15
+            done
+          done
+
       - name: Smoke test the deployed site
         run: |
           set -euo pipefail
