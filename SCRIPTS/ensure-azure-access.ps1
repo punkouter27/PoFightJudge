@@ -5,6 +5,10 @@ $Identity = 'system'          # 'system', or the name of a user-assigned identit
 $KeyVaultAccess = $true
 $DeployResourceGroups = @('PoFightJudge')
 $MonthlyBudgetUsd = 5            # resource-group budget; alerts email at 50%, 100% and a 100% forecast
+$DeployRoles = @(               # this repo's CI runs subscription-scope Bicep that creates role assignments
+    'Contributor|'
+    'User Access Administrator|'
+)
 $AppRoles = @(                  # role | scope under the subscription ('' = the subscription itself)
     'Storage Table Data Contributor|/resourceGroups/PoFightJudge/providers/Microsoft.Storage/storageAccounts/stpofightjudge2'
     'Storage Blob Data Contributor|/resourceGroups/PoFightJudge/providers/Microsoft.Storage/storageAccounts/stpofightjudge2'
@@ -46,6 +50,11 @@ foreach ($s in "repo:punkouter27/${Repo}:ref:refs/heads/$Branch", "repo:punkoute
 }
 foreach ($rg in $DeployResourceGroups) {
     az role assignment create --assignee-object-id $spId --assignee-principal-type ServicePrincipal --role Contributor --scope "/subscriptions/$Sub/resourceGroups/$rg" -o none; Step "deploy: Contributor @ $rg"
+}
+
+foreach ($g in $DeployRoles) {   # only repos whose CI applies subscription-scope Bicep set these
+    $role, $scope = $g -split '\|', 2
+    az role assignment create --assignee-object-id $spId --assignee-principal-type ServicePrincipal --role $role --scope "/subscriptions/$Sub$scope" -o none; Step "deploy: $role @ $(if ($scope) { $scope } else { 'subscription' })"
 }
 
 # 3. What the workflow reads. Variables, not secrets: none of these is a secret.
