@@ -115,7 +115,23 @@ jobs:
         if: steps.infra.outputs.changed == 'true'
         run: az deployment sub create --location eastus2 --template-file infra/main.bicep --name pofightjudge-${{ github.run_id }} -o none
 
+      # Same pair in every Po web repo: keep the live build, and put it back if anything fails once the
+      # new package is live (see "Roll back to the previous build" at the end of this job).
+      - name: Back up the live site
+        id: backup
+        run: |
+          token=$(az account get-access-token --query accessToken -o tsv)
+          if curl -fsS --max-time 300 -H "Authorization: Bearer $token" -o previous.zip \
+               "https://${{ vars.AZURE_WEBAPP_NAME }}.scm.azurewebsites.net/api/zip/site/wwwroot/" && [ -s previous.zip ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+            echo "Backed up $(du -h previous.zip | cut -f1) of the live site."
+          else
+            echo "::warning title=No backup::Could not download the live site, so this deploy cannot be rolled back."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Deploy to App Service
+        id: deploy
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
@@ -168,3 +184,10 @@ jobs:
           expect /api/matches 401              # the API is protected
           expect /api/no-such-route 404        # no catch-all swallowing API routes
           echo "Smoke test passed."
+
+      - name: Roll back to the previous build
+        if: failure() && steps.deploy.outcome == 'success' && steps.backup.outputs.ok == 'true'
+        run: |
+          az webapp deploy -g "${{ github.event.repository.name }}" -n "${{ vars.AZURE_WEBAPP_NAME }}" \
+            --src-path previous.zip --type zip --clean true
+          echo "::error title=Rolled back::${{ github.sha }} failed after it went live; the previous build is live again."
