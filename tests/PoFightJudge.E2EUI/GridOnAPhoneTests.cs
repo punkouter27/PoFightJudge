@@ -29,7 +29,7 @@ public class GridOnAPhoneTests(AppFixture app)
         await RecordAsync(MatchMode.Fight, "the thermostat, again", MatchSide.Human("HA1", "Alex"), MatchSide.Human("HA2", "Sam"));
 
         var offenders = new List<string>();
-        foreach (var route in new[] { "/history", "/fighters", "/health", "/vs/HA1/HA2" })
+        foreach (var route in new[] { "/history", "/fighters", "/status", "/vs/HA1/HA2" })
         {
             var (context, page, _) = await app.OpenAsync(AppFixture.Mobile, route, user: User);
             await using var _ = context;

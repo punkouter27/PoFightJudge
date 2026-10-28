@@ -41,7 +41,7 @@ public class EveryRouteTests(AppFixture app)
     /// </summary>
     private static readonly string[] Lists =
     [
-        "/profiles", "/fighters", "/history", "/health",
+        "/profiles", "/fighters", "/history", "/status",
     ];
 
     /// <summary>

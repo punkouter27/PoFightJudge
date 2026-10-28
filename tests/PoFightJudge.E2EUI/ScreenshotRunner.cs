@@ -29,7 +29,7 @@ public sealed class ScreenshotRunner(AppFixture app, ITestOutputHelper output)
         ("fighters", "/fighters"),
         ("profiles", "/profiles"),
         ("history", "/history"),
-        ("health", "/health"),
+        ("health", "/status"),
         ("login", "/login"),
     ];
 

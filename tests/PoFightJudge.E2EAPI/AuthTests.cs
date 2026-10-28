@@ -27,6 +27,8 @@ public class AuthTests(ApiFactory factory)
         "/auth/guest",
         "/auth/logout",
         "/auth/me",
+        "/health",
+        "/health/live",
         "/{*path:nonfile}",
     ];
 

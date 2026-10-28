@@ -18,6 +18,10 @@ public static class ApiRoutes
 
         public const string DetailsSegment = "/details";
         public const string DetailsUrl = $"{Url}{DetailsSegment}";
+
+        /// <summary>The pair every Po web app answers: readiness (the same checks as <see cref="Url"/>) and bare liveness.</summary>
+        public const string PlatformUrl = "/health";
+        public const string LiveUrl = "/health/live";
     }
 
     public static class Diag

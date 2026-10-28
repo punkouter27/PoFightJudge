@@ -25,6 +25,8 @@ public sealed class HealthEndpoints : ICarterModule
     {
         var ready = new HealthCheckOptions { Predicate = h => h.Tags.Contains(ReadyTag) };
         app.MapHealthChecks(ApiRoutes.Health.Url, ready).AllowAnonymous().WithTags("Health");
+        app.MapHealthChecks(ApiRoutes.Health.PlatformUrl, ready).AllowAnonymous().WithTags("Health");
+        app.MapGet(ApiRoutes.Health.LiveUrl, () => Results.Text("Healthy")).AllowAnonymous().WithTags("Health");
 
         app.MapGet(ApiRoutes.Health.DetailsUrl, async (HttpContext http, HealthCheckService health, IConfiguration config, IHostEnvironment env, TimeProvider clock, AiLatencyTracker tracker, CancellationToken ct) =>
         {
