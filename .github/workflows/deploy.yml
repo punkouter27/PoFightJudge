@@ -31,11 +31,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', 'Directory.Packages.props') }}
@@ -52,7 +52,7 @@ jobs:
         run: dotnet test tests/PoFightJudge.E2EAPI --no-build -c Release --verbosity minimal
       - name: Publish API
         run: dotnet publish src/PoFightJudge.Api -c Release --no-build -o publish
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: webapp
           path: publish
@@ -71,15 +71,15 @@ jobs:
       name: production
       url: ${{ env.AZURE_WEBAPP_URL }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: webapp
           path: publish
       # Federated credential subjects: repo:punkouter26/PoFightJudge:ref:refs/heads/master and :environment:production
-      - uses: azure/login@v2
+      - uses: azure/login@v3
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
