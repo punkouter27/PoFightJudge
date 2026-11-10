@@ -6,14 +6,14 @@
   </PropertyGroup>
 
   <ItemGroup Label="ASP.NET Core / Blazor">
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.13" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.13" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.13" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="10.0.13" />
-    <PackageVersion Include="Microsoft.Authentication.WebAssembly.Msal" Version="10.0.13" />
-    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.13" />
-    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.13" />
-    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Authentication.WebAssembly.Msal" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="10.0.14" />
     <!-- Microsoft.Extensions.Http is framework-provided on the server (NU1510) but a real dependency for the WASM client. -->
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.13" />
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.9.0" />
@@ -74,7 +74,7 @@
     <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />
     <PackageVersion Include="NSubstitute" Version="6.2.0" />
     <PackageVersion Include="bunit" Version="2.9.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.14" />
     <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.9.0" />
     <PackageVersion Include="Testcontainers.Azurite" Version="4.14.0" />
     <PackageVersion Include="Microsoft.Playwright" Version="1.62.0" />
