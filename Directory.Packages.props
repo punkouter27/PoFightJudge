@@ -12,7 +12,7 @@
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="10.0.14" />
     <PackageVersion Include="Microsoft.Authentication.WebAssembly.Msal" Version="10.0.14" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="11.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="10.0.14" />
     <!-- Microsoft.Extensions.Http is framework-provided on the server (NU1510) but a real dependency for the WASM client. -->
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.13" />
