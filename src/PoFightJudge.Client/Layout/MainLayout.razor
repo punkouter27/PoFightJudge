@@ -1,8 +1,11 @@
 @inherits LayoutComponentBase
-@using PoFightJudge.Client.Components
-@inject HttpClient Http
+@using PoFightJudge.Client.Layout.Components
+@using PoFightJudge.Client.Features.Auth
+@inject IApiClient Api
 @inject NavigationManager Nav
 @inject IServiceProvider Services
+@inject IWebAssemblyHostEnvironment HostEnvironment
+@inject IJSRuntime JS
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
 <div class="shell">
@@ -64,6 +67,17 @@
             <HostPersonaPicker Persona="@Prefs.Host" PersonaChanged="@((HostPersonaId h) => Prefs.SetHostAsync(h))" />
             <AuthorizeView>
                 <Authorized>
+                    @foreach (var link in AccountMenu.Links())
+                    {
+                        <RadzenLink Path="@link.Path" Text="@link.Label" Icon="@link.Icon" />
+                    }
+                    @if (!HostEnvironment.IsProduction())
+                    {
+                        <RadzenButton Text="Dev: Fake user" Icon="switch_account" ButtonStyle="ButtonStyle.Base" Variant="Variant.Text" Size="ButtonSize.Small"
+                                      Click="@(() => AccountMenu.SwitchFakeUserAsync(JS, Nav, "dev@pofightjudge.dev"))" />
+                        <RadzenButton Text="Clear Dev user" Icon="person_off" ButtonStyle="ButtonStyle.Base" Variant="Variant.Text" Size="ButtonSize.Small"
+                                      Click="@(() => AccountMenu.SwitchFakeUserAsync(JS, Nav, null))" />
+                    }
                     <RadzenButton Text="Sign out" Icon="logout" ButtonStyle="ButtonStyle.Base" Variant="Variant.Outlined" Size="ButtonSize.Small"
                                   Click="SignOutAsync" Disabled="@_signingOut" />
                 </Authorized>
@@ -88,8 +102,8 @@
             </ErrorContent>
         </ErrorBoundary>
     </main>
-    @* Which build this is, for a screenshot or a bug report. Out of the way, and never in the way of a click. *@
-    <span class="build" aria-label="@($"Build {BuildStamp.Version}")">v@(BuildStamp.Version)</span>
+    <BottomNav />
+    <BuildVersion />
     <RadzenDialog />
     <RadzenTooltip />
     @* Transient failures surface here; anything that blocks the page stays inline on the page itself. *@
@@ -182,7 +196,7 @@
         try
         {
             // Best-effort: the guest cookie is server-side; the page is the cache we have to clear.
-            await Http.PostAsync(new Uri(ApiRoutes.Auth.Logout, UriKind.Relative), null);
+            await Api.LogoutAsync();
         }
         catch (HttpRequestException)
         {

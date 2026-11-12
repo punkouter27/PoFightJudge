@@ -1,0 +1,196 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PoFightJudge global styles — the "Broadcast" system (SPEC §14).
+
+   Every value downstream resolves through a design token below: colour, space,
+   radius, shadow, type and motion. Nothing hardcodes a hex, a rem gap or a
+   duration outside this block.
+
+   Theming is `color-scheme` + light-dark(), never two palettes:
+     :root                     color-scheme: dark   → dark is the default
+     html[data-theme="light"]  color-scheme: light  → user pinned light
+   Each colour token is ONE light-dark(light, dark) declaration; theme.js stamps
+   data-theme before first paint. There is deliberately no OS-preference media
+   query (DesignRulesTests enforces it) — the toggle is the only switch.
+
+   BREAKPOINTS — three, and only three (media queries cannot read custom
+   properties, so they are written literally; DesignRulesTests checks them):
+     40rem (640px)  phone → large phone
+     48rem (768px)  tablet
+     64rem (1024px) desktop / nav switch
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  color-scheme: dark;
+
+  /* ── Type ── */
+  --po-font-display: "Inter", system-ui, -apple-system, sans-serif;
+  --po-font-body: "Inter", system-ui, -apple-system, sans-serif;
+  --po-font-mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+
+  --po-text-2xs: 0.6875rem;  /* 11px — the floor */
+  --po-text-xs: 0.75rem;     /* 12px */
+  --po-text-sm: 0.875rem;    /* 14px */
+  --po-text-md: 1rem;        /* 16px */
+  --po-text-lg: 1.125rem;    /* 18px */
+  --po-text-xl: clamp(1.25rem, 1.2vw + 1rem, 1.5rem);
+  --po-text-2xl: clamp(1.75rem, 2.2vw + 1.1rem, 2.25rem);
+  --po-text-3xl: clamp(2.25rem, 3.5vw + 1.2rem, 3.25rem);
+  --po-text-4xl: clamp(3rem, 5vw + 1.4rem, 4.5rem);
+
+  /* ── Space (4px base) ── */
+  --po-space-0: 0;
+  --po-space-1: 0.25rem;
+  --po-space-2: 0.5rem;
+  --po-space-3: 0.75rem;
+  --po-space-4: 1rem;
+  --po-space-5: 1.5rem;
+  --po-space-6: 2rem;
+  --po-space-7: 3rem;
+  --po-space-8: 4rem;
+
+  /* ── Radius: broadcast chrome is square-ish ── */
+  --po-radius-xs: 3px;
+  --po-radius-sm: 4px;
+  --po-radius-md: 6px;
+  --po-radius-lg: 10px;
+  --po-radius-pill: 999px;
+
+  /* ── Glass ──
+     Panels that sit over the live stage's shader, blurring it rather than hiding it. The floor colour is opaque
+     enough on its own that the text over it still clears AA when backdrop-filter is unsupported or switched off —
+     the blur is the effect, never the legibility. */
+  --po-glass: light-dark(rgba(255, 255, 255, 0.85), rgba(21, 25, 35, 0.88));
+  --po-glass-edge: light-dark(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.08));
+  --po-glass-blur: blur(14px) saturate(1.3);
+  --po-lean: 0.5;
+  --po-glint-x: -100%;
+  --po-glint-y: -100%;
+
+  /* ── Elevation ── */
+  --po-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --po-shadow-2: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --po-shadow-3: 0 18px 48px rgba(0, 0, 0, 0.45);
+
+  /* ── Motion ── */
+  --po-dur-fast: 120ms;
+  --po-dur-base: 220ms;
+  --po-dur-slow: 420ms;
+  --po-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  /* A damped spring: past the mark, back, and settled. For things that are poured or dropped rather than slid. */
+  --po-spring: linear(0, 0.45 12%, 0.92 24%, 1.12 34%, 1.06 46%, 0.98 58%, 1.01 72%, 1);
+  /* Falling and bouncing: accelerates down, lands, and each bounce gives back less height than the last. */
+  --po-bounce: linear(0, 0.06 10%, 0.25 20%, 0.56 30%, 1 40%, 0.9 50%, 0.87 55%, 0.9 60%, 1 70%, 0.97 78%, 1 86%, 0.995 93%, 1);
+  --po-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* ── Safe area ──
+     index.html asks for viewport-fit=cover, which puts the page under the notch and the home indicator. These are
+     what gives it back: every edge that touches the frame adds the inset for that edge, and a browser that has no
+     insets resolves all four to zero. ── */
+  --po-safe-t: env(safe-area-inset-top, 0px);
+  --po-safe-r: env(safe-area-inset-right, 0px);
+  --po-safe-b: env(safe-area-inset-bottom, 0px);
+  --po-safe-l: env(safe-area-inset-left, 0px);
+
+  /* ── Page widths (PageShell) ── */
+  --po-page-narrow: 46rem;
+  --po-page-standard: 75rem;   /* 1200px — the hi-fi Home/Verdict column */
+  --po-page-wide: 86rem;       /* 1376px — the live stage */
+  --po-page-gutter: var(--po-space-6);
+
+  /* ── Surfaces ── */
+  --po-bg: light-dark(#f4f1ea, #0b0d12);
+  --po-bg-elev: light-dark(#ece8df, #10131a);
+  --po-surface: light-dark(#ffffff, #151923);
+  --po-surface-2: light-dark(#f5f2eb, #1c2230);
+  --po-surface-3: light-dark(#e9e5dc, #232a3a);
+
+  /* ── Ink ── */
+  --po-fg: light-dark(#15171d, #eef0f4);
+  --po-fg-invert: light-dark(#ffffff, #0b0d12);
+  --po-muted: light-dark(#545c6b, #98a1b3);          /* AA on every surface */
+  --po-muted-soft: light-dark(#8b93a3, #5e6778);     /* dots and rules only — never text */
+
+  /* ── Lines ── */
+  --po-border: light-dark(#b9b3a6, #40495d);        /* ≥ 1.9:1 on --po-surface in both themes */
+  --po-border-strong: light-dark(#8b8578, #525c73);
+  --po-rule: light-dark(rgba(21, 23, 29, 0.08), rgba(255, 255, 255, 0.08));
+
+  /* ── Brand & status. FILL tokens; each has an AA-safe *-text twin for words. ── */
+  --po-accent: light-dark(#ffcc33, #ffcc33);
+  --po-accent-fg: light-dark(#0b0d12, #0b0d12);
+  --po-accent-text: light-dark(#7a5a00, #ffcc33);
+  --po-accent-soft: light-dark(rgba(255, 204, 51, 0.18), rgba(255, 204, 51, 0.16));
+  --po-p1: light-dark(#0a5d7a, #3fa9f5);
+  --po-p1-soft: light-dark(rgba(10, 93, 122, 0.14), rgba(63, 169, 245, 0.17));
+  --po-p2: light-dark(#a5004e, #ff4f8b);
+  --po-p2-soft: light-dark(rgba(165, 0, 78, 0.12), rgba(255, 79, 139, 0.17));
+  --po-danger: light-dark(#b3261e, #ff5a5a);
+  --po-danger-fg: light-dark(#ffffff, #1a0a0b);
+  --po-success: light-dark(#16704a, #4ade80);
+  --po-warning: light-dark(#8a5e04, #facc15);
+  --po-focus: light-dark(#0b5fa5, #7cc7ff);
+  --po-live: light-dark(#b3261e, #ff5a5a);
+
+  /* ── Rank tiers (Elo, read against the ladder): one fill each, every one light enough to carry the same dark ink,
+     and the same in both themes — a medal is the colour it is. ── */
+  --po-tier-ink: light-dark(#0b0d12, #0b0d12);
+  --po-tier-bronze: light-dark(#d08a4f, #d08a4f);
+  --po-tier-silver: light-dark(#c3cad6, #c3cad6);
+  --po-tier-gold: light-dark(#ffcc33, #ffcc33);
+  --po-tier-platinum: light-dark(#5fd4c9, #5fd4c9);
+  --po-tier-diamond: light-dark(#9ad8ff, #9ad8ff);
+
+  /* ── Radzen bridge ──
+     Radzen's own stylesheet is injected by <RadzenTheme> after this file, so the
+     bridge sits on html:root (higher specificity than Radzen's :root) and maps
+     the library's variables onto ours. Grids, tabs, charts, inputs and dialogs
+     then inherit the palette in both themes without a second colour system. */
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+html:root {
+  --rz-primary: var(--po-accent);
+  --rz-primary-light: var(--po-accent);
+  --rz-primary-lighter: var(--po-accent-soft);
+  --rz-primary-dark: var(--po-accent);
+  --rz-on-primary: var(--po-accent-fg);
+  --rz-on-primary-light: var(--po-accent-fg);
+  --rz-secondary: var(--po-p1);
+  --rz-on-secondary: var(--po-fg-invert);
+  --rz-info: var(--po-p1);
+  --rz-success: var(--po-success);
+  --rz-warning: var(--po-warning);
+  --rz-danger: var(--po-danger);
+  --rz-on-danger: var(--po-danger-fg);
+  --rz-text-color: var(--po-fg);
+  --rz-text-secondary-color: var(--po-muted);
+  --rz-text-tertiary-color: var(--po-muted);
+  --rz-text-title-color: var(--po-fg);
+  --rz-text-contrast-color: var(--po-fg-invert);
+  --rz-body-background-color: var(--po-bg);
+  --rz-base-background-color: var(--po-surface);
+  --rz-panel-background-color: var(--po-surface);
+  --rz-card-background-color: var(--po-surface);
+  --rz-input-background-color: var(--po-surface-2);
+  --rz-dialog-background-color: var(--po-surface);
+  --rz-menu-background-color: transparent;
+  --rz-border-color: var(--po-border);
+  --rz-input-border-color: var(--po-border);
+  --rz-border-radius: var(--po-radius-md);
+  /* Radzen sizes its buttons from these, in a sheet <RadzenTheme> injects after this file at the same specificity —
+     which is why app.css asking .rz-button for a 44 px min-height lost, and the session buttons measured 36. The
+     bridge sits on html:root, so setting the variable is what actually moves them. sm stays where it is: 28 px
+     clears WCAG 2.5.8's 24, and a select bar of 44 px pills is a different design. */
+  --rz-button-size-md: 2.75rem;
+  --rz-input-border-radius: var(--po-radius-sm);
+  --rz-button-border-radius: var(--po-radius-sm);
+  --rz-body-font-family: var(--po-font-body);
+  --rz-text-font-family: var(--po-font-body);
+  --rz-input-font-family: var(--po-font-body);
+  --rz-series-1: var(--po-p1);
+  --rz-series-2: var(--po-p2);
+  --rz-series-3: var(--po-accent);
+  --rz-series-4: var(--po-success);
+}

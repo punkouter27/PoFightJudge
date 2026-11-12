@@ -1,0 +1,17 @@
+.po-build-version {
+  position: fixed;
+  right: max(var(--po-space-3), var(--po-safe-r));
+  bottom: max(var(--po-space-2), var(--po-safe-b));
+  z-index: 4;
+  font-family: var(--po-font-mono);
+  font-size: var(--po-text-2xs);
+  color: var(--po-muted-soft);
+  pointer-events: none;
+  user-select: none;
+}
+
+@media (max-width: 40rem) {
+  .po-build-version {
+    bottom: calc(3.75rem + var(--po-safe-b));
+  }
+}

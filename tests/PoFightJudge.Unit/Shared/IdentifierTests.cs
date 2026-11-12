@@ -21,7 +21,7 @@ public class IdentifierTests
         var id = ProfileId.From("kdh");
 
         id.Value.Should().Be("KDH");
-        id.ToString().Should().Be("KDH");
+        id.ToString(System.Globalization.CultureInfo.InvariantCulture).Should().Be("KDH");
         ProfileId.From(" k.d.h ").Should().Be(id, "punctuation and whitespace are stripped like PoArgueJudge's Initials");
 
         FighterId.From("mlt").Value.Should().Be("MLT");

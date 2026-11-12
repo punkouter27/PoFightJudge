@@ -1,0 +1,19 @@
+@inherits LayoutComponentBase
+
+<div class="po-bare-shell">
+    <main class="po-bare-main" id="main-content" tabindex="-1">
+        <ErrorBoundary>
+            <ChildContent>@Body</ChildContent>
+            <ErrorContent>
+                <section class="po-card" role="alert">
+                    <h1 class="po-display">Something went wrong</h1>
+                    <p>Refresh the page or return home.</p>
+                </section>
+            </ErrorContent>
+        </ErrorBoundary>
+    </main>
+    <BuildVersion />
+    <RadzenDialog />
+    <RadzenTooltip />
+    <RadzenNotification />
+</div>

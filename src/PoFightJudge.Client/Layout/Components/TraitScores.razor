@@ -1,0 +1,18 @@
+@using PoFightJudge.Client.Features.Stats
+@* The out-of-ten judgements. Bars, because the comparison between them is the point, not the digits. *@
+<div class="traits">
+    @foreach (var (label, score, hint) in StatFormat.Traits(Assessment))
+    {
+        <div class="trait" data-trait="@label.ToLowerInvariant()" title="@hint">
+            <span class="label">@label</span>
+            <RadzenProgressBar Value="@(score * 10)" Max="100" ShowValue="false"
+                               ProgressBarStyle="@(score >= 7 ? ProgressBarStyle.Success : score >= 4 ? ProgressBarStyle.Info : ProgressBarStyle.Warning)"
+                               class="bar" aria-label="@($"{label} {score} out of 10")" />
+            <span class="score po-display">@score</span>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public PlayerAssessmentDto Assessment { get; set; } = default!;
+}

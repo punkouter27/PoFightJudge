@@ -1,0 +1,37 @@
+.overall {
+  display: flex;
+  align-items: center;
+  gap: var(--po-space-3);
+  margin-bottom: var(--po-space-5);
+}
+
+h2 {
+  font-size: var(--po-text-xl);
+  margin: var(--po-space-5) 0 var(--po-space-3);
+}
+
+::deep .grid {
+  border: 1px solid var(--po-border);
+  border-radius: var(--po-radius-md);
+}
+
+::deep .grid td {
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* On a phone the detail sits under the name it explains rather than in a column off the side of the screen. */
+.check {
+  display: grid;
+  gap: var(--po-space-1);
+  min-width: 0;
+}
+
+.check .name,
+.check .detail {
+  overflow-wrap: anywhere;
+}
+
+.check .detail {
+  font-size: var(--po-text-xs);
+}

@@ -47,7 +47,7 @@ window.PoFx = (function () {
   // of the stage (app.css), and fullscreen — only when `full`, because only a click may ask for it — takes the
   // browser's too. A browser that will not go fullscreen (an iPhone has no element fullscreen) still gets the page.
   function table(on, full) {
-    document.documentElement.classList.toggle("po-table", !!on);
+    document.documentElement.classList.toggle("pofightjudge:table", !!on);
     if (!full) {
       return;
     }

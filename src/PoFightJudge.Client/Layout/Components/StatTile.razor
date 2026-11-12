@@ -1,0 +1,11 @@
+@using PoFightJudge.Client.Features.Stats
+@* One measured number, with what it means underneath it. *@
+<div class="stat" data-group="@Stat.Group.ToString().ToLowerInvariant()">
+    <span class="label po-eyebrow">@Stat.Label</span>
+    <span class="value po-display">@Stat.Value</span>
+    <span class="hint po-muted">@Stat.Hint</span>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Stat Stat { get; set; } = new("—", "—", string.Empty, StatGroup.Floor);
+}

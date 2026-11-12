@@ -47,12 +47,12 @@ public class ThemeAndViewportTests(AppFixture app)
         var effects = page.Locator(".po-settings .rz-switch:has(input[aria-label='Stage effects'])");
         (await effects.Locator("input").GetAttributeAsync("aria-checked")).Should().Be("false", "the simplest stage is the default");
         await effects.ClickAsync();
-        await page.WaitForFunctionAsync("() => localStorage.getItem('po-effects') === 'on'", null, new() { Timeout = 5_000 });
+        await page.WaitForFunctionAsync("() => localStorage.getItem('pofightjudge:effects') === 'on'", null, new() { Timeout = 5_000 });
 
         await page.ReloadAsync(new() { WaitUntil = WaitUntilState.NetworkIdle });
         await AppFixture.WaitForAppAsync(page, errors);
         (await page.EvaluateAsync<string?>("document.documentElement.getAttribute('data-theme')")).Should().Be("light");
-        (await page.EvaluateAsync<string?>("localStorage.getItem('po-theme')")).Should().Be("light");
+        (await page.EvaluateAsync<string?>("localStorage.getItem('pofightjudge:theme')")).Should().Be("light");
         (await page.EvaluateAsync<string>(Chrome)).Should().Be("#f4f1ea", "the browser's own chrome is light before the app has even started");
         (await page.EvaluateAsync<double>("window.PoSfx.volume()")).Should().Be(0.4);
         (await page.EvaluateAsync<bool>("window.PoMotion.still()")).Should().BeFalse("the switch was turned on before the reload");

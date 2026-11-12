@@ -1,4 +1,4 @@
-using PoFightJudge.Client.Components;
+using PoFightJudge.Client.Layout.Components;
 using PoFightJudge.Shared.Models;
 
 namespace PoFightJudge.Unit.Client;

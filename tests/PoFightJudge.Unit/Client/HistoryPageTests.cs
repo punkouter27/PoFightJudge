@@ -4,15 +4,21 @@ using Bunit.Rendering;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using NSubstitute;
-using PoFightJudge.Client.Components;
-using PoFightJudge.Client.Pages;
+using PoFightJudge.Client.Layout.Components;
+using PoFightJudge.Client.Features.Auth;
+using PoFightJudge.Client.Features.Diagnostics;
+using PoFightJudge.Client.Features.Fight;
+using PoFightJudge.Client.Features.Fighters;
+using PoFightJudge.Client.Features.History;
+using PoFightJudge.Client.Features.Home;
+using PoFightJudge.Client.Features.Watch;
 using PoFightJudge.Client.Services;
 using PoFightJudge.Shared.Identifiers;
 using PoFightJudge.Shared.Models;
 using Radzen;
 using Radzen.Blazor;
-using FightersPage = PoFightJudge.Client.Pages.Fighters;
-using ProfilesPage = PoFightJudge.Client.Pages.Profiles;
+using FightersPage = PoFightJudge.Client.Features.Fighters.Fighters;
+using ProfilesPage = PoFightJudge.Client.Features.Fighters.Profiles;
 
 namespace PoFightJudge.Unit.Client;
 

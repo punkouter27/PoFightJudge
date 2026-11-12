@@ -107,6 +107,9 @@
   .wordmark {
     font-size: var(--po-text-lg);
   }
+  .content {
+    padding-bottom: calc(3.75rem + var(--po-safe-b));
+  }
 }
 
 /* ── Settings: one button on the bar, a small card under it ──
@@ -171,16 +174,4 @@
 
 @keyframes po-fade {
   from { opacity: 0; }
-}
-
-
-/* The build version, bottom right of every page. */
-.build {
-  position: fixed;
-  inset-block-end: calc(var(--po-space-1) + var(--po-safe-b, 0px));
-  inset-inline-end: calc(var(--po-space-2) + var(--po-safe-r, 0px));
-  z-index: 5;
-  font-size: var(--po-text-xs);
-  color: var(--po-muted);
-  pointer-events: none;
 }

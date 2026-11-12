@@ -93,7 +93,7 @@ window.PoLive = (function () {
 
   let out = null;
 
-  window.addEventListener("po-volume", function (e) {
+  window.addEventListener("pofightjudge:volume", function (e) {
     if (out) {
       out.gain.value = e.detail;
     }

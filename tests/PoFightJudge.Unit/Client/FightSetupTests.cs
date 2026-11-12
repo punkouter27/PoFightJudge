@@ -8,7 +8,7 @@ using PoFightJudge.Shared.Models;
 using Radzen;
 
 // The domain tests own the namespace PoFightJudge.Unit.Fight, which shadows the page type here.
-using FightPage = PoFightJudge.Client.Pages.Fight;
+using FightPage = PoFightJudge.Client.Features.Fight.Fight;
 
 namespace PoFightJudge.Unit.Client;
 

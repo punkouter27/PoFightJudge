@@ -1,0 +1,68 @@
+@using PoFightJudge.Client.Features.Stats
+@* How somebody's mood moved through the fight. With too few points to draw a line, the shape of the whole thing is shown instead. *@
+<div class="emotions">
+    @if (CanDraw(Assessment))
+    {
+        <RadzenChart class="chart">
+            <RadzenAreaSeries Data="@Timeline" CategoryProperty="@nameof(EmotionPointDto.AtSeconds)"
+                              ValueProperty="@nameof(EmotionPointDto.Intensity)" Title="Intensity" Smooth="true" />
+            <RadzenCategoryAxis Formatter="@FormatSeconds">
+                <RadzenAxisTitle Text="Time" />
+            </RadzenCategoryAxis>
+            <RadzenValueAxis Min="0" Max="10">
+                <RadzenAxisTitle Text="Intensity" />
+            </RadzenValueAxis>
+        </RadzenChart>
+
+        <ul class="moments">
+            @foreach (var point in Timeline)
+            {
+                <li><span class="po-chip">@point.Dominant</span> at @StatFormat.Seconds(point.AtSeconds)</li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p class="po-muted">Not enough of the fight was read to draw how the mood moved. This is the whole of it instead.</p>
+        <div class="profile">
+            @foreach (var (name, share) in Shares)
+            {
+                <div class="share" data-emotion="@name">
+                    <span class="label">@name</span>
+                    <RadzenProgressBar Value="@share" Max="100" ShowValue="false" ProgressBarStyle="ProgressBarStyle.Info"
+                                       class="bar" aria-label="@($"{name} {share} percent")" />
+                    <span class="pct po-display">@share%</span>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>A line needs two points. With one, it would be a dot pretending to be a trend.</summary>
+    public const int MinimumPoints = 2;
+
+    /// <summary>Whether there is enough here to draw movement at all. Pure, so the decision is testable on its own.</summary>
+    public static bool CanDraw(PlayerAssessmentDto assessment)
+    {
+        ArgumentNullException.ThrowIfNull(assessment);
+        return assessment.EmotionTimeline.Count >= MinimumPoints;
+    }
+
+    [Parameter, EditorRequired] public PlayerAssessmentDto Assessment { get; set; } = default!;
+
+    private IReadOnlyList<EmotionPointDto> Timeline => Assessment.EmotionTimeline;
+
+    private IEnumerable<(string Name, int Share)> Shares =>
+        new (string, int)[]
+        {
+            ("calm", Assessment.Emotions.Calm),
+            ("confident", Assessment.Emotions.Confident),
+            ("frustrated", Assessment.Emotions.Frustrated),
+            ("angry", Assessment.Emotions.Angry),
+            ("anxious", Assessment.Emotions.Anxious),
+            ("amused", Assessment.Emotions.Amused),
+        }.Where(e => e.Item2 > 0).OrderByDescending(e => e.Item2);
+
+    private static string FormatSeconds(object value) => StatFormat.Seconds(Convert.ToDouble(value, System.Globalization.CultureInfo.InvariantCulture));
+}

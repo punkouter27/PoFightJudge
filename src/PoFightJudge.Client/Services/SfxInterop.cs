@@ -116,7 +116,7 @@ public sealed class SfxInterop(IJSRuntime js, ILocalStorageService storage)
     public const string GetVolume = "PoSfx.volume";
     public const string SetVolume = "PoSfx.setVolume";
 
-    public const string StorageKey = "po-sound";
+    public const string StorageKey = "pofightjudge:sound";
     public const string On = "on";
     public const string Off = "off";
 

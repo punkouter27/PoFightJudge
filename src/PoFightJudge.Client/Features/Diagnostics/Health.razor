@@ -1,0 +1,109 @@
+@page "/status"
+@attribute [AllowAnonymous]
+@inject IApiClient Api
+@inject Viewport Viewport
+@implements IDisposable
+
+<PageTitle>Health · PoFightJudge</PageTitle>
+
+<PageShell Width="PageShell.ShellWidth.Standard" Eyebrow="Diagnostics" Title="Health" Lead="Connections, configuration presence and feature flags. Values are never shown, only whether they are set.">
+    <Actions>
+        <RadzenButton Text="Refresh" Icon="refresh" ButtonStyle="ButtonStyle.Secondary" Click="LoadAsync" IsBusy="@_loading" />
+    </Actions>
+    <ChildContent>
+        @* A wrapper this page owns, and nothing more (display: contents). Scoped CSS reaches into a child component
+           only from an element written here: without one, every ::deep rule for this page matches nothing. *@
+        <div class="po-scope">
+        @if (_error is not null)
+        {
+            <PageAlert Kind="AlertStyle.Danger">@_error</PageAlert>
+        }
+        else if (_report is null)
+        {
+            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+        }
+        else
+        {
+            <div class="overall">
+                <RadzenBadge BadgeStyle="@Style(_report.Overall)" Text="@_report.Overall.ToString()" />
+                <span class="po-muted">@_report.Environment · @_report.Timestamp.ToString("HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) UTC</span>
+            </div>
+            @foreach (var category in Enum.GetValues<HealthCategory>())
+            {
+                var rows = _report.Checks.Where(c => c.Category == category).ToList();
+                if (rows.Count == 0)
+                {
+                    continue;
+                }
+
+                <h2>@category</h2>
+                <RadzenDataGrid TItem="HealthCheckDto" Data="@rows" AllowPaging="true" PageSize="20" AllowSorting="true" Density="Density.Compact" class="grid">
+                    <Columns>
+                        @* 16rem + 9rem + a detail column came to 400 px of table on a 356 px screen. On a phone the detail moves
+                           under the name it belongs to rather than off the side of the table — the same three facts, in the
+                           order somebody reads them. *@
+                        <RadzenDataGridColumn TItem="HealthCheckDto" Property="@nameof(HealthCheckDto.Name)" Title="Check" Width="@(Viewport.IsPhone ? "62%" : "16rem")">
+                            <Template Context="row">
+                                <span class="check">
+                                    <span class="name">@row.Name</span>
+                                    @if (Viewport.IsPhone && row.Detail is { Length: > 0 })
+                                    {
+                                        <span class="detail po-muted">@row.Detail</span>
+                                    }
+                                </span>
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="HealthCheckDto" Property="@nameof(HealthCheckDto.State)" Title="State" Width="@(Viewport.IsPhone ? "38%" : "9rem")">
+                            <Template Context="row"><RadzenBadge BadgeStyle="@Style(row.State)" Text="@row.State.ToString()" /></Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="HealthCheckDto" Property="@nameof(HealthCheckDto.Detail)" Title="Detail" Visible="@(!Viewport.IsPhone)" />
+                    </Columns>
+                </RadzenDataGrid>
+            }
+        }
+        </div>
+    </ChildContent>
+</PageShell>
+
+@code {
+    private HealthReportDto? _report;
+    private string? _error;
+    private bool _loading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Viewport.Changed += OnViewportChanged;
+        await Viewport.InitializeAsync();
+        await LoadAsync();
+    }
+
+    private void OnViewportChanged(object? sender, EventArgs e) => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Viewport.Changed -= OnViewportChanged;
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _report = await Api.GetHealthDetailsAsync();
+        }
+        catch (Exception ex) when (ApiFailure.Describe(ex, "The API did not answer") is { } why)
+        {
+            _error = why;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static BadgeStyle Style(HealthState state) => state switch
+    {
+        HealthState.Ok => BadgeStyle.Success,
+        HealthState.Degraded => BadgeStyle.Warning,
+        HealthState.NotConfigured => BadgeStyle.Light,
+        _ => BadgeStyle.Danger,
+    };
+}

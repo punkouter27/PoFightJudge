@@ -2,7 +2,7 @@ using Blazored.LocalStorage;
 using Bunit;
 using Microsoft.JSInterop;
 using NSubstitute;
-using PoFightJudge.Client.Components;
+using PoFightJudge.Client.Layout.Components;
 using PoFightJudge.Client.Services;
 using PoFightJudge.Shared.Models;
 

@@ -12,8 +12,8 @@
 window.PoSfx = (function () {
   "use strict";
 
-  const STORAGE_KEY = "po-sound";
-  const VOLUME_KEY = "po-volume";
+  const STORAGE_KEY = "pofightjudge:sound";
+  const VOLUME_KEY = "pofightjudge:volume";
   const OFF = "off";
   const MASTER_GAIN = 0.7;
   const NOISE_SECONDS = 2;

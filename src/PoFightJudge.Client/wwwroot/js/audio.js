@@ -10,7 +10,7 @@ const PoAudio = (() => {
   let bus = null;
   let out = null;
 
-  window.addEventListener('po-volume', (e) => {
+  window.addEventListener('pofightjudge:volume', (e) => {
     if (out) {
       out.gain.value = e.detail;
     }

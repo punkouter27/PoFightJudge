@@ -1,6 +1,6 @@
 using Blazored.LocalStorage;
 using Microsoft.JSInterop;
-using PoFightJudge.Client.Components;
+using PoFightJudge.Client.Layout.Components;
 using PoFightJudge.Shared.Models;
 
 namespace PoFightJudge.Client.Services;
@@ -13,11 +13,11 @@ namespace PoFightJudge.Client.Services;
 public sealed class Preferences(ILocalStorageService storage)
 {
     /// <summary>The same key <c>js/theme.js</c>'s <c>PoMotion.still()</c> reads before any effect mounts.</summary>
-    public const string EffectsKey = "po-effects";
-    public const string HeatKey = "po-heat";
-    public const string HostKey = "po-host";
-    public const string AsrKey = "po-asr";
-    public const string DetailKey = "po-detail";
+    public const string EffectsKey = "pofightjudge:effects";
+    public const string HeatKey = "pofightjudge:heat";
+    public const string HostKey = "pofightjudge:host";
+    public const string AsrKey = "pofightjudge:asr";
+    public const string DetailKey = "pofightjudge:detail";
     public const string On = "on";
     public const string Off = "off";
 

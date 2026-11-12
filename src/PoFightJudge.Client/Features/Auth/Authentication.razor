@@ -1,0 +1,46 @@
+@page "/authentication/{action}"
+@layout BareLayout
+@attribute [AllowAnonymous]
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@inject Microsoft.AspNetCore.Components.WebAssembly.Hosting.IWebAssemblyHostEnvironment Env
+@inject NavigationManager Nav
+
+<PageTitle>Signing in · PoFightJudge</PageTitle>
+
+@if (MicrosoftSignIn.IsAvailable(Env))
+{
+    @* MSAL's redirect handler. Registered only where MicrosoftSignIn.IsAvailable, so rendering it elsewhere would throw. *@
+    <RemoteAuthenticatorView Action="@Action">
+        <LoggingIn><p class="po-boot">Signing you in…</p></LoggingIn>
+        <CompletingLoggingIn><p class="po-boot">Completing sign-in…</p></CompletingLoggingIn>
+        <LogOut><p class="po-boot">Signing you out…</p></LogOut>
+        <LogOutSucceeded><p class="po-boot">Signed out.</p></LogOutSucceeded>
+        <LogInFailed>
+            @* Said in a sentence, with a way forward. Microsoft's own message is a paragraph of ids that fills the
+               screen and tells nobody what to do; it is kept underneath for whoever is asked to look into it. *@
+            <PageShell Width="PageShell.ShellWidth.Narrow" Eyebrow="Sign in" Title="That did not work">
+                <PageAlert Kind="AlertStyle.Danger">@MicrosoftSignIn.Explain(context)</PageAlert>
+                <p class="again">
+                    <RadzenButton Text="Choose another account" Icon="switch_account" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Large"
+                                  Click="@(() => MicrosoftSignIn.Start(Nav, "/"))" />
+                </p>
+                <details class="po-muted">
+                    <summary>What Microsoft said</summary>
+                    <p class="said">@context</p>
+                </details>
+            </PageShell>
+        </LogInFailed>
+    </RemoteAuthenticatorView>
+}
+else
+{
+    <PageShell Width="PageShell.ShellWidth.Narrow" Title="Microsoft sign-in">
+        <PageAlert Kind="AlertStyle.Info">
+            Microsoft sign-in is not set up on this host. Use <a href="login">Continue as Guest</a>.
+        </PageAlert>
+    </PageShell>
+}
+
+@code {
+    [Parameter] public string? Action { get; set; }
+}

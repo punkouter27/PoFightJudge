@@ -1,13 +1,26 @@
 root = true
+
 [*]
 indent_style = space
-indent_size = 4
 end_of_line = lf
-insert_final_newline = true
 charset = utf-8
-[*.{json,yml,yaml,razor,css,js,md,props,csproj,slnx}]
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{cs,razor}]
+indent_size = 4
+
+[*.{json,yml,yaml,csproj,props,targets,slnx}]
 indent_size = 2
+
+[*.{md,txt}]
+trim_trailing_whitespace = false
+
 [*.cs]
-csharp_style_namespace_declarations = file_scoped:warning
-dotnet_sort_system_directives_first = true
-csharp_prefer_braces = when_multiline:suggestion
+dotnet_diagnostic.CA1707.severity = none
+dotnet_diagnostic.CA1711.severity = none
+dotnet_diagnostic.CA1716.severity = none
+dotnet_diagnostic.CA1848.severity = none
+dotnet_diagnostic.CA1859.severity = none
+dotnet_diagnostic.CA1873.severity = none
+dotnet_diagnostic.CA2007.severity = none

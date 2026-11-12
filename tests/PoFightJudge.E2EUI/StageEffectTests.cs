@@ -190,7 +190,7 @@ public class StageEffectTests(AppFixture app)
             await using var _ = context;
             if (switchedOn)
             {
-                await context.AddInitScriptAsync("try { localStorage.setItem('po-effects', 'on'); } catch (e) { }");
+                await context.AddInitScriptAsync("try { localStorage.setItem('pofightjudge:effects', 'on'); } catch (e) { }");
             }
 
             var page = await context.NewPageAsync();

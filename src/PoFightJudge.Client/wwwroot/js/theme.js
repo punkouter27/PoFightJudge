@@ -14,7 +14,7 @@
 (function () {
   var theme = null;
   try {
-    theme = localStorage.getItem('po-theme');
+    theme = localStorage.getItem('pofightjudge:theme');
     if (theme) theme = theme.replace(/^"|"$/g, '');
     if (theme === 'light' || theme === 'dark') document.documentElement.setAttribute('data-theme', theme);
   } catch (e) { /* storage blocked: keep the default */ }
@@ -57,7 +57,7 @@ window.PoMotion = {
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
     } catch (e) { /* no media queries: fall through to the setting */ }
     try {
-      return (localStorage.getItem('po-effects') || '').replace(/^"|"$/g, '') !== 'on';
+      return (localStorage.getItem('pofightjudge:effects') || '').replace(/^"|"$/g, '') !== 'on';
     } catch (e) {
       return true;
     }

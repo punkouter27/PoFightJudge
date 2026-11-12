@@ -1,6 +1,6 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using PoFightJudge.Client.Components;
+using PoFightJudge.Client.Layout.Components;
 using PoFightJudge.Shared.Identifiers;
 using PoFightJudge.Shared.Models;
 using Radzen;

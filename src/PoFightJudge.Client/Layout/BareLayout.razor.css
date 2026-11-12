@@ -1,0 +1,14 @@
+.po-bare-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--po-bg);
+  color: var(--po-fg);
+}
+
+.po-bare-main {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: var(--po-space-5);
+}

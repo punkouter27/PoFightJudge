@@ -2,7 +2,13 @@ using Blazored.LocalStorage;
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using PoFightJudge.Client.Pages;
+using PoFightJudge.Client.Features.Auth;
+using PoFightJudge.Client.Features.Diagnostics;
+using PoFightJudge.Client.Features.Fight;
+using PoFightJudge.Client.Features.Fighters;
+using PoFightJudge.Client.Features.History;
+using PoFightJudge.Client.Features.Home;
+using PoFightJudge.Client.Features.Watch;
 using PoFightJudge.Client.Services;
 using Radzen;
 

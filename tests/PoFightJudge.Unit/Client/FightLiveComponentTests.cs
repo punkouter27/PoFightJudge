@@ -1,6 +1,6 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
-using PoFightJudge.Client.Components;
+using PoFightJudge.Client.Layout.Components;
 using PoFightJudge.Shared.Identifiers;
 using PoFightJudge.Shared.Models;
 using Radzen;
@@ -76,7 +76,7 @@ public class RiserTests
             (SessionPhase.Debate, int.MaxValue, 180, false),
         })
         {
-            PoFightJudge.Client.Pages.FightLive.RiserDue(phase, before, now).Should().Be(due, $"{phase} {before} to {now}");
+            PoFightJudge.Client.Features.Fight.FightLive.RiserDue(phase, before, now).Should().Be(due, $"{phase} {before} to {now}");
         }
     }
 
@@ -87,9 +87,9 @@ public class RiserTests
         var quiet = new DebateSnapshotDto(MatchId.New(), SessionPhase.Debate, "t", "AB", "CD", Speaker.Player1, 10, 170, null);
         var called = quiet with { Flags = [strawman] };
 
-        PoFightJudge.Client.Pages.FightLive.NewFlag(quiet, quiet).Should().BeNull();
-        PoFightJudge.Client.Pages.FightLive.NewFlag(quiet, called).Should().Be(strawman);
-        PoFightJudge.Client.Pages.FightLive.NewFlag(called, called with { DebateElapsedSeconds = 11 }).Should().BeNull("the clock ticking is not a new call");
-        PoFightJudge.Client.Pages.FightLive.NewFlag(null, called).Should().Be(strawman, "a page that joins late still shows the latest one");
+        PoFightJudge.Client.Features.Fight.FightLive.NewFlag(quiet, quiet).Should().BeNull();
+        PoFightJudge.Client.Features.Fight.FightLive.NewFlag(quiet, called).Should().Be(strawman);
+        PoFightJudge.Client.Features.Fight.FightLive.NewFlag(called, called with { DebateElapsedSeconds = 11 }).Should().BeNull("the clock ticking is not a new call");
+        PoFightJudge.Client.Features.Fight.FightLive.NewFlag(null, called).Should().Be(strawman, "a page that joins late still shows the latest one");
     }
 }

@@ -1,7 +1,7 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using PoFightJudge.Client.Components;
+using PoFightJudge.Client.Layout.Components;
 using PoFightJudge.Client.Services;
 using PoFightJudge.Shared.Identifiers;
 using PoFightJudge.Shared.Models;
@@ -99,7 +99,7 @@ public sealed class ProfilesPageTests : BunitContext, IAsyncLifetime
     [Fact]
     public async Task The_cast_is_listed_with_records_and_only_the_default_cast_can_be_put_back()
     {
-        var cut = Render<PoFightJudge.Client.Pages.Profiles>();
+        var cut = Render<PoFightJudge.Client.Features.Fighters.Profiles>();
 
         await cut.WaitForAssertionAsync(() => cut.FindAll("article.profile").Should().ContainSingle());
         cut.Find("article.profile .record").TextContent.Should().Contain("2–1");

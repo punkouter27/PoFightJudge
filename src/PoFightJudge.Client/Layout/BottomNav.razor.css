@@ -1,0 +1,32 @@
+.po-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 40rem) {
+  .po-bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 15;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    align-items: center;
+    min-height: 3.5rem;
+    padding-bottom: var(--po-safe-b);
+    background: var(--po-bg-elev);
+    border-top: 1px solid var(--po-border);
+  }
+
+  ::deep .po-bottom-nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 44px;
+    font-size: var(--po-text-2xs);
+    color: var(--po-muted);
+    text-decoration: none;
+  }
+}

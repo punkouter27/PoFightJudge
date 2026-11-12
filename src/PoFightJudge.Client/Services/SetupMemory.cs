@@ -26,8 +26,8 @@ public sealed record WatchCard(string Husband, string Wife, string Topic, string
 /// </summary>
 public sealed class SetupMemory(ILocalStorageService storage)
 {
-    public const string FightKey = "po-last-fight";
-    public const string WatchKey = "po-last-watch";
+    public const string FightKey = "pofightjudge:last-fight";
+    public const string WatchKey = "pofightjudge:last-watch";
 
     private FightCard? _pendingFight;
     private WatchCard? _pendingWatch;

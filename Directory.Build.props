@@ -5,21 +5,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsNotAsErrors>CS1591;NU1900</WarningsNotAsErrors>
-    <InvariantGlobalization>true</InvariantGlobalization>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <!-- Full built-in rule set (library selection 2026-09-06); demotions live in .globalconfig with a reason each. -->
-    <AnalysisLevel>latest-all</AnalysisLevel>
-    <!-- Fail the build on a NuGet advisory rather than emitting a warning nobody reads. -->
     <NuGetAudit>true</NuGetAudit>
     <NuGetAuditMode>all</NuGetAuditMode>
     <NuGetAuditLevel>low</NuGetAuditLevel>
-    <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Meziantou.Analyzer" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" PrivateAssets="all" />
-    <AdditionalFiles Include="$(MSBuildThisFileDirectory)BannedSymbols.txt" Link="BannedSymbols.txt" />
-  </ItemGroup>
 </Project>

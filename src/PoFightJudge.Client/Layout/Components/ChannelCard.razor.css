@@ -1,0 +1,99 @@
+/* A row rather than a poster, at every width: the mark, the name, one line about it, and the button that opens it.
+   Three of these used to be 225 px of a desktop home page; as rows they leave the lists below on the first screen. */
+.channel {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: "mark title" "mark blurb" "mark cta";
+  align-items: center;
+  gap: var(--po-space-1) var(--po-space-3);
+  padding: var(--po-space-3) var(--po-space-4);
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: var(--po-radius-md);
+  transition: transform var(--po-dur-fast) var(--po-ease), border-color var(--po-dur-fast) var(--po-ease);
+}
+
+.channel:hover {
+  transform: translateY(-2px);
+}
+
+.channel.p1 { background: linear-gradient(165deg, var(--po-p1-soft) 0%, var(--po-surface) 62%); }
+.channel.p2 { background: linear-gradient(165deg, var(--po-p2-soft) 0%, var(--po-surface) 62%); }
+.channel.accent { background: linear-gradient(165deg, var(--po-surface-3) 0%, var(--po-surface) 62%); }
+
+.channel.p1:hover { border-color: var(--po-p1); }
+.channel.p2:hover { border-color: var(--po-p2); }
+.channel.accent:hover { border-color: var(--po-accent); }
+
+.number {
+  grid-area: mark;
+  align-self: start;
+  font-size: var(--po-text-3xl);
+  line-height: 0.9;
+}
+
+.channel.p1 .number { color: var(--po-p1); }
+.channel.p2 .number { color: var(--po-p2); }
+.channel.accent .number { color: var(--po-accent); }
+
+h2 {
+  grid-area: title;
+  font-size: var(--po-text-xl);
+  letter-spacing: 0.02em;
+}
+
+.blurb {
+  grid-area: blurb;
+  font-size: var(--po-text-sm);
+  line-height: 1.4;
+}
+
+.channel ::deep .cta {
+  grid-area: cta;
+  justify-self: start;
+  color: var(--po-fg-invert);
+  margin-top: var(--po-space-1);
+}
+
+.channel.p1 ::deep .cta { background: var(--po-p1); }
+.channel.p2 ::deep .cta { background: var(--po-p2); }
+.channel.accent ::deep .cta { background: var(--po-accent); color: var(--po-accent-fg); }
+
+/* On a phone the button moves beside the text, so each card is two lines tall. */
+@media (max-width: 40rem) {
+  .channel {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "mark title cta" "mark blurb cta";
+    padding: var(--po-space-2) var(--po-space-3);
+    gap: 2px var(--po-space-2);
+  }
+
+  .number {
+    align-self: center;
+    font-size: var(--po-text-lg);
+  }
+
+  h2 {
+    align-self: end;
+    font-size: var(--po-text-md);
+  }
+
+  .blurb {
+    align-self: start;
+    font-size: var(--po-text-xs);
+    line-height: 1.3;
+  }
+
+  .channel ::deep .cta {
+    margin-top: 0;
+    font-size: var(--po-text-2xs);
+    padding-inline: var(--po-space-2);
+    max-width: 8.5rem;
+  }
+
+  .channel ::deep .cta {
+    align-self: center;
+    margin-top: 0;
+  }
+}

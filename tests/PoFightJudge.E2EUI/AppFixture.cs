@@ -100,7 +100,7 @@ public sealed class AppFixture : IAsyncLifetime
         // screenshots of the moments they live in, are about the effects, so they open with the switch on.
         if (effects)
         {
-            await context.AddInitScriptAsync("try { localStorage.setItem('po-effects', 'on'); } catch (e) { }");
+            await context.AddInitScriptAsync("try { localStorage.setItem('pofightjudge:effects', 'on'); } catch (e) { }");
         }
         // Extra headers apply to every request; keep the fake-auth header off third-party hosts (fonts) to avoid CORS noise.
         await context.RouteAsync(url => !url.StartsWith(BaseUrl, StringComparison.OrdinalIgnoreCase), route =>
@@ -136,6 +136,11 @@ public sealed class AppFixture : IAsyncLifetime
 
         await page.GotoAsync(BaseUrl + path, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
         await WaitForAppAsync(page, errors);
+        var blazorError = page.Locator("#blazor-error-ui");
+        if (await blazorError.CountAsync() > 0 && await blazorError.IsVisibleAsync())
+        {
+            errors.Add("[#blazor-error-ui] Unhandled Blazor exception banner was visible.");
+        }
         return (context, page, errors);
     }
 
@@ -178,7 +183,7 @@ public sealed class AppFixture : IAsyncLifetime
     {
         try
         {
-            await page.Locator("header.topbar").WaitForAsync(new() { Timeout = 45_000 });
+            await page.Locator("header.topbar, .po-bare-shell").First.WaitForAsync(new() { Timeout = 45_000 });
         }
         catch (TimeoutException ex)
         {

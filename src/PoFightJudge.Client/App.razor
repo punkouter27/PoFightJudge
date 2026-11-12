@@ -14,8 +14,8 @@
             <FocusOnNavigate RouteData="@routeData" Selector="h1" />
         </Found>
         <NotFound>
-            <LayoutView Layout="@typeof(Layout.MainLayout)">
-                <PoFightJudge.Client.Pages.NotFoundPage />
+            <LayoutView Layout="@typeof(Layout.BareLayout)">
+                <PoFightJudge.Client.Layout.NotFound />
             </LayoutView>
         </NotFound>
     </Router>

@@ -4,15 +4,21 @@ using Bunit;
 using Bunit.TestDoubles;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using PoFightJudge.Client.Components;
-using PoFightJudge.Client.Pages;
+using PoFightJudge.Client.Layout.Components;
+using PoFightJudge.Client.Features.Auth;
+using PoFightJudge.Client.Features.Diagnostics;
+using PoFightJudge.Client.Features.Fight;
+using PoFightJudge.Client.Features.Fighters;
+using PoFightJudge.Client.Features.History;
+using PoFightJudge.Client.Features.Home;
+using PoFightJudge.Client.Features.Watch;
 using PoFightJudge.Client.Services;
 using PoFightJudge.Shared.Identifiers;
 using PoFightJudge.Shared.Models;
 using Radzen;
 
 // The domain tests own the namespace PoFightJudge.Unit.Watch, which shadows the page type here.
-using WatchPage = PoFightJudge.Client.Pages.Watch;
+using WatchPage = PoFightJudge.Client.Features.Watch.Watch;
 
 namespace PoFightJudge.Unit.Client;
 

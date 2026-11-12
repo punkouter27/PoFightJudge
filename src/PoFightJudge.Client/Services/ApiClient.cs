@@ -21,6 +21,8 @@ public interface IApiClient
 
     Task<AuthMeDto> GuestSignInAsync(CancellationToken ct = default);
 
+    Task LogoutAsync(CancellationToken ct = default) => Task.CompletedTask;
+
     Task<FeatureFlagsDto> GetFeaturesAsync(CancellationToken ct = default);
 
     Task<HealthReportDto?> GetHealthDetailsAsync(CancellationToken ct = default);
@@ -220,6 +222,11 @@ public sealed class ApiClient(IHttpClientFactory clients) : IApiClient
         using var response = await http.PostAsync(Relative(ApiRoutes.Auth.Guest), null, ct);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<AuthMeDto>(ct) ?? AuthMeDto.Anonymous;
+    }
+
+    public async Task LogoutAsync(CancellationToken ct = default)
+    {
+        using var response = await http.PostAsync(Relative(ApiRoutes.Auth.Logout), null, ct);
     }
 
     public async Task<FeatureFlagsDto> GetFeaturesAsync(CancellationToken ct = default) =>

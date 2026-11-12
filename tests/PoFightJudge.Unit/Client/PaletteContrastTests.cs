@@ -75,7 +75,7 @@ public partial class PaletteContrastTests
 
     private static (IReadOnlyDictionary<string, string> Light, IReadOnlyDictionary<string, string> Dark) Load()
     {
-        var css = File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "PoFightJudge.Client", "wwwroot", "css", "app.css"));
+        var css = File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "PoFightJudge.Client", "wwwroot", "css", "po-tokens.css"));
         var light = new Dictionary<string, string>(StringComparer.Ordinal);
         var dark = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (Match m in LightDarkToken().Matches(css))

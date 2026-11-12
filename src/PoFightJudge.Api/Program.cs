@@ -32,7 +32,7 @@ Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
     .Enrich.FromLogContext()
-    .WriteTo.Console()
+    .WriteTo.Console(formatProvider: System.Globalization.CultureInfo.InvariantCulture)
     .CreateBootstrapLogger();
 
 try
@@ -114,12 +114,14 @@ try
             .Enrich.FromLogContext()
             .Enrich.WithEnvironmentName()
             .Enrich.WithProperty("Application", ConfigKeys.Root)
-            .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}");
+            .WriteTo.Console(
+                outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}",
+                formatProvider: System.Globalization.CultureInfo.InvariantCulture);
 
         // Seq is a local structured-log viewer (docker-compose). Development only; the sink buffers if Seq is down.
         if (ctx.HostingEnvironment.IsDevelopment() && ctx.Configuration[ConfigKeys.Telemetry.SeqServerUrl] is { Length: > 0 } seq)
         {
-            cfg.WriteTo.Seq(seq);
+            cfg.WriteTo.Seq(seq, formatProvider: System.Globalization.CultureInfo.InvariantCulture);
         }
     });
 
@@ -131,14 +133,23 @@ try
     {
         builder.Services.AddOpenTelemetry()
             .ConfigureResource(resource => resource.AddService(ConfigKeys.Root))
-            .WithMetrics(metrics => metrics.AddMeter(AiLatencyTracker.MeterName))
+            .WithMetrics(metrics =>
+            {
+                metrics.AddMeter(AiLatencyTracker.MeterName);
+                // Cost cap: drop noisy ASP.NET hosting / HTTP client pre-aggregated meters
+                metrics.AddView(instrument =>
+                    instrument.Meter.Name is "Microsoft.AspNetCore.Hosting" or "System.Net.Http"
+                        ? MetricStreamConfiguration.Drop
+                        : null);
+            })
             .UseAzureMonitor(options =>
             {
                 options.ConnectionString = appInsights;
+                options.EnableLiveMetrics = !builder.Environment.IsProduction();
 
                 // Everything, unless somebody dials it down. This app's traffic is a handful of requests a minute;
                 // sampling it would only make an already thin signal thinner.
-                options.SamplingRatio = builder.Configuration.GetValue<float?>(ConfigKeys.Telemetry.SamplingRatio) ?? 1.0f;
+                options.SamplingRatio = builder.Configuration.GetValue<float?>(ConfigKeys.Telemetry.SamplingRatio) ?? 0.1f;
             });
     }
 

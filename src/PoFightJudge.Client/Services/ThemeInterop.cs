@@ -11,7 +11,7 @@ namespace PoFightJudge.Client.Services;
 /// </summary>
 public sealed class ThemeInterop(IJSRuntime js, ILocalStorageService storage, ThemeService radzen)
 {
-    public const string StorageKey = "po-theme";
+    public const string StorageKey = "pofightjudge:theme";
     public const string Dark = "dark";
     public const string Light = "light";
     public const string RadzenDark = "material-dark";

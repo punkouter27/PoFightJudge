@@ -1,4 +1,4 @@
-using PoFightJudge.Client.Stats;
+using PoFightJudge.Client.Features.Stats;
 
 namespace PoFightJudge.Unit.Client;
 

@@ -1,0 +1,45 @@
+@using PoFightJudge.Client.Features.Stats
+@* One fighter as the report saw them: how they came across, and the line that was worth keeping. *@
+<article class="player po-card @(IsSecond ? "p2" : "p1") @(Lost ? "lost" : null)" data-tag="@Report.Name">
+    <header>
+        <span class="tag po-display">@Report.Name</span>
+        @if (Won)
+        {
+            <span class="po-chip po-chip--accent">Took it</span>
+        }
+        <span class="po-chip">@Report.Assessment.Cefr</span>
+    </header>
+
+    <p class="tone">@string.Join(", ", Report.Assessment.ToneDescriptors)</p>
+
+    <blockquote class="best">
+        <p>@Report.Assessment.BestMomentQuote</p>
+        <footer class="po-muted">their best moment</footer>
+    </blockquote>
+
+    <dl class="headline">
+        <div>
+            <dt class="po-eyebrow">Share of the room</dt>
+            <dd class="po-display"><CountUp Value="@(Report.Metrics.TalkShare * 100)" Suffix="%" Audible="@Won" /></dd>
+        </div>
+        <div>
+            <dt class="po-eyebrow">Pace</dt>
+            <dd class="po-display"><CountUp Value="@Report.Metrics.WordsPerMinute" Audible="false" /></dd>
+        </div>
+        <div>
+            <dt class="po-eyebrow">Facts right</dt>
+            <dd class="po-display"><CountUp Value="@Report.Assessment.CorrectnessPercent" Suffix="%" Audible="false" /></dd>
+        </div>
+    </dl>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public PlayerReportDto Report { get; set; } = default!;
+
+    [Parameter] public bool Won { get; set; }
+
+    /// <summary>The other one took it. Their card is cracked where the gavel landed.</summary>
+    [Parameter] public bool Lost { get; set; }
+
+    [Parameter] public bool IsSecond { get; set; }
+}

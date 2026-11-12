@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Authentication.WebAssembly.Msal.Models;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.JSInterop;
 using PoFightJudge.Client;
 using PoFightJudge.Client.Services;
 using Radzen;
@@ -40,6 +41,7 @@ builder.Services.AddScoped<ConnectionState>();
 builder.Services.AddScoped<FeatureGate>();
 builder.Services.AddScoped<Viewport>();
 builder.Services.AddScoped<ConnectionWatchHandler>();
+builder.Services.AddScoped<DevFakeUserHandler>();
 
 // Environment split (SPEC §2): Production = Microsoft Entra ID via MSAL, API calls to our own origin carry the access
 // token. Development = MSAL *and* the guest cookie: a token goes on a call when there is one, and auth state is
@@ -69,7 +71,8 @@ if (builder.HostEnvironment.IsProduction())
 else
 {
     var api = builder.Services.AddHttpClient(HttpClients.Api, c => c.BaseAddress = baseAddress)
-        .AddHttpMessageHandler<ConnectionWatchHandler>();
+        .AddHttpMessageHandler<ConnectionWatchHandler>()
+        .AddHttpMessageHandler<DevFakeUserHandler>();
     builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient(HttpClients.Api));
 
     if (MicrosoftSignIn.IsAvailable(builder.HostEnvironment))
