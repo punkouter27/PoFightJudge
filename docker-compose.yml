@@ -2,7 +2,7 @@
 #
 # azurite — runs with `--oauth basic` over HTTPS on purpose: the solution authenticates to Storage exclusively with
 # DefaultAzureCredential and has no connection-string code path (BannedSymbols.txt makes that a build error). The Azure
-# SDK refuses to send a bearer token over plain HTTP, so the cert is mandatory; SCRIPTS/azurite.ps1 exports the ASP.NET
+# SDK refuses to send a bearer token over plain HTTP, so the cert is mandatory; scripts/azurite.ps1 exports the ASP.NET
 # Core dev cert (already trusted on the machine) into ./certs.
 #
 # Ports are 12000 (blob) and 12002 (table) because PoArgueJudge (10000–10002) and PoMarriedLife (11000–11002) already bind the others.

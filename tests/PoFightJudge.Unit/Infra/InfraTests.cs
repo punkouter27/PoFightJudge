@@ -70,8 +70,8 @@ public partial class InfraTests
 
         // The workflow reads the name from the repo variable, which ensure-azure-access.ps1 sets: that script must name the same site.
         webApp.Should().NotBeEmpty();
-        Workflow.Should().Contain("AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}");
-        Read("SCRIPTS", "ensure-azure-access.ps1").Should().Contain($"$App = '{webApp}'");
+        Workflow.Should().Contain("app-name: ${{ vars.AZURE_WEBAPP_NAME }}");
+        Read("scripts", "ensure-azure-access.ps1").Should().Contain($"$App = '{webApp}'");
 
         Resources.Should().Contain("allowSharedKeyAccess: false", "there is no connection-string path in this solution at all");
         Resources.Should().Contain("type: 'SystemAssigned'");

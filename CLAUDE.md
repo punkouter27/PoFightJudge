@@ -15,8 +15,8 @@ dotnet test PoFightJudge.slnx                   # Unit, Integration (Docker), E2
 dotnet test tests/PoFightJudge.Unit             # the fast tier
 dotnet test tests/PoFightJudge.Unit --filter "FullyQualifiedName~GeminiVoiceStyleTests"   # one class or test
 dotnet format PoFightJudge.slnx                 # run it before committing
-./SCRIPTS/setup.ps1                               # clean machine → running app
-./SCRIPTS/azurite.ps1                             # just the emulator (and -Down -Wipe to throw it away)
+./scripts/setup.ps1                               # clean machine → running app
+./scripts/azurite.ps1                             # just the emulator (and -Down -Wipe to throw it away)
 dotnet run --project src/PoFightJudge.Api       # https://localhost:5001
 ```
 

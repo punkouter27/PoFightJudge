@@ -22,8 +22,8 @@
     Restore and build, but do not run the suite.
 
 .EXAMPLE
-    ./SCRIPTS/setup.ps1
-    ./SCRIPTS/setup.ps1 -Run -SkipTests
+    ./scripts/setup.ps1
+    ./scripts/setup.ps1 -Run -SkipTests
 #>
 [CmdletBinding()]
 param(

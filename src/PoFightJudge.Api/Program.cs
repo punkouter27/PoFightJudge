@@ -102,7 +102,7 @@ try
                 [ConfigKeys.Storage.TableEndpoint] = table,
                 [ConfigKeys.Storage.BlobEndpoint] = blob,
             });
-            Log.Information("Azurite ON — storage endpoints overridden to {Table} / {Blob} (SCRIPTS/azurite.ps1)", table, blob);
+            Log.Information("Azurite ON — storage endpoints overridden to {Table} / {Blob} (scripts/azurite.ps1)", table, blob);
         }
     }
 

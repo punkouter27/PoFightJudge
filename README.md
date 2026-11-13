@@ -59,13 +59,13 @@ On a clean clone, one script does the lot — prerequisites, the dev certificate
 the whole suite:
 
 ```powershell
-./SCRIPTS/setup.ps1          # add -Run to start the app when it finishes
+./scripts/setup.ps1          # add -Run to start the app when it finishes
 ```
 
 Or by hand:
 
 ```powershell
-./SCRIPTS/azurite.ps1                        # Azurite (OAuth + HTTPS on 12000/12002) + Seq (5341)
+./scripts/azurite.ps1                        # Azurite (OAuth + HTTPS on 12000/12002) + Seq (5341)
 az login                                     # DefaultAzureCredential reads kv-poshared2 and Storage with this
 dotnet run --project src/PoFightJudge.Api  # https://localhost:5001
 ```
@@ -123,12 +123,16 @@ and the persona rewrite as calls nobody waits on. On Gemini that is its discount
 standard price); on Azure, which has no such tier, it means the patient ten-minute client.
 
 The three secrets (`GeminiApiKey`, `AzureAd--TenantId`, `AzureAd--ClientId`) are set in `kv-poshared2` by hand;
-`./SCRIPTS/setup.ps1` checks the names are there and never reads a value.
+`./scripts/setup.ps1` checks the names are there and never reads a value.
 
 ## Deploy
 
-`infra/main.bicep` creates everything; `.github/workflows/deploy.yml` builds, tests, publishes and deploys on a push
-to `master`, signing in with a federated credential rather than a stored secret. The plan is free-tier: one F1 Linux
+`infra/main.bicep` creates everything, applied only through the manual `.github/workflows/infra.yml` (what-if, then
+apply). `.github/workflows/deploy.yml` is the shared Po workflow (byte-identical in every Po .NET web repo, never edited
+here): it builds, runs the Unit tier, publishes and deploys on a push to `master`, signing in with a federated
+credential rather than a stored secret. This repo's extras live in hooks it calls: `scripts/ci-checks.ps1` (format
+check and the E2EAPI tier) and `scripts/post-deploy-smoke.ps1` (shell, runtime, manifest and the API's 401/404
+answers on the live site). The plan is free-tier: one F1 Linux
 plan, which means one instance — and a live fight lives in the API process with an in-process hub, so a second
 instance would not see it anyway.
 

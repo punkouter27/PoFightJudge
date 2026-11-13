@@ -22,8 +22,8 @@
     With -Down, also delete the data volume (throws away all local tables/blobs).
 
 .EXAMPLE
-    .\SCRIPTS\azurite.ps1
-    .\SCRIPTS\azurite.ps1 -Down -Wipe
+    .\scripts\azurite.ps1
+    .\scripts\azurite.ps1 -Down -Wipe
 #>
 [CmdletBinding()]
 param(

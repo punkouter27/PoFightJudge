@@ -34,7 +34,7 @@ public sealed class StorageHealthCheck(TableServiceClient tables, BlobServiceCli
         }
         catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
-            return HealthCheckResult.Unhealthy("Storage unreachable. Locally: ./SCRIPTS/azurite.ps1", ex);
+            return HealthCheckResult.Unhealthy("Storage unreachable. Locally: ./scripts/azurite.ps1", ex);
         }
     }
 }
