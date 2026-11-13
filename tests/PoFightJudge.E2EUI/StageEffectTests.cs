@@ -299,9 +299,10 @@ public class StageEffectTests(AppFixture app)
         (await page.EvaluateAsync<string>("() => document.querySelector('.probe-stamp').className")).Should().Contain("armed");
 
         await page.EvaluateAsync("() => document.querySelector('.probe-stamp').scrollIntoView()");
-        await page.WaitForFunctionAsync("() => document.querySelector('.probe-stamp').classList.contains('stamped')", null, new() { Timeout = 5_000 });
-        (await page.EvaluateAsync<bool>("() => document.querySelector('.probe-stamp').parentElement.classList.contains('fx-thud')"))
-            .Should().BeTrue("the line a stamp lands on takes the hit");
+        await page.WaitForFunctionAsync(
+            "() => { const stamp = document.querySelector('.probe-stamp'); return stamp.classList.contains('stamped') && stamp.parentElement.classList.contains('fx-thud'); }",
+            null,
+            new() { Timeout = 5_000 });
         errors.Should().BeEmpty();
     }
 
