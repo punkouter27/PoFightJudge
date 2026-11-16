@@ -127,7 +127,7 @@ The three secrets (`GeminiApiKey`, `AzureAd--TenantId`, `AzureAd--ClientId`) are
 
 ## Deploy
 
-`infra/main.bicep` creates everything, applied only through the manual `.github/workflows/infra.yml` (what-if, then
+`infra/main.bicep` creates everything, applied only through the manual `.github/workflows/deploy.yml` (run by hand with `infra`) (what-if, then
 apply). `.github/workflows/deploy.yml` is the shared Po workflow (byte-identical in every Po .NET web repo, never edited
 here): it builds, runs the Unit tier, publishes and deploys on a push to `master`, signing in with a federated
 credential rather than a stored secret. This repo's extras live in hooks it calls: `scripts/ci-checks.ps1` (format
