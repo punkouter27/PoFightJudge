@@ -28,7 +28,9 @@ public sealed partial class AzuriteFixture : IAsyncLifetime
     {
         try
         {
-            _container = new AzuriteBuilder("mcr.microsoft.com/azure-storage/azurite:latest").Build();
+            _container = new AzuriteBuilder("mcr.microsoft.com/azure-storage/azurite:latest")
+                .WithCommand("--skipApiVersionCheck") // the SDK asks for API versions newer than the emulator knows
+                .Build();
             await _container.StartAsync();
 
             var cs = _container.GetConnectionString();
