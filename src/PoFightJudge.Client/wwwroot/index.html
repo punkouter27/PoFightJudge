@@ -21,9 +21,7 @@
   <script src="js/save.js"></script>
   <script src="js/wake.js"></script>
   <script src="js/viewport.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <!-- Inter is self-hosted (css/po-tokens.css → fonts/InterVariable.woff2): no third-party font request. -->
   <!-- Radzen's theme stylesheet is appended by js/theme.js so it is in the critical path; <RadzenTheme> in App.razor
        owns the runtime swap. app.css bridges its variables onto the --po-* tokens. -->
   <link rel="stylesheet" href="css/po-tokens.css" />

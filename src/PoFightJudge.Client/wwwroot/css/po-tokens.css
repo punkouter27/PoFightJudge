@@ -18,6 +18,17 @@
      48rem (768px)  tablet
      64rem (1024px) desktop / nav switch
    ═══════════════════════════════════════════════════════════════════════════ */
+/* Inter is served from our own origin (fonts/InterVariable.woff2, OFL, the same file Radzen ships). Loading it from
+   Google Fonts put a cross-origin font fetch on every page, which failed CORS behind some networks and cost a
+   third-party round trip besides. One variable file covers every weight the app uses. */
+@font-face {
+  font-family: "Inter";
+  src: url("../fonts/InterVariable.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
 

@@ -2,15 +2,15 @@ namespace PoFightJudge.Api.Common;
 
 /// <summary>
 /// Defence-in-depth headers for every response. The CSP allows the Blazor runtime (wasm), Radzen's inline styles,
-/// Google Fonts, our own SignalR WebSocket, and the Microsoft login endpoints used by MSAL — nothing else.
+/// our own fonts (Inter is self-hosted), our own SignalR WebSocket, and the Microsoft login endpoints used by MSAL — nothing else.
 /// </summary>
 public sealed class SecurityHeadersMiddleware(RequestDelegate next)
 {
     public const string ContentSecurityPolicy =
         "default-src 'self'; " +
         "script-src 'self' 'wasm-unsafe-eval'; " +
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-        "font-src 'self' https://fonts.gstatic.com; " +
+        "style-src 'self' 'unsafe-inline'; " +
+        "font-src 'self'; " +
         // The browser transcriber's data, when somebody turns it on: the model from Hugging Face (which redirects to
         // its CDN) and the ONNX runtime's .wasm, pinned to the one build the vendored script was made against.
         "connect-src 'self' ws: wss: https://login.microsoftonline.com https://huggingface.co https://*.hf.co " +

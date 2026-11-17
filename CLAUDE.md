@@ -73,7 +73,7 @@ dotnet run --project src/PoFightJudge.Api       # https://localhost:5001
 - **Screenshots.** After any change that affects what a page shows, run the screenshot runner for the affected
   routes and send the PNGs in chat with any console errors before saying the change is done. Cloud sessions can't
   be browsed, so this is how changes are reviewed before a deploy. Route names live in `ScreenshotRunner.Routes`;
-  leave `ROUTES` off for all of them. Google Fonts errors in a cloud session are the proxy, not the app.
+  leave `ROUTES` off for all of them. Inter is self-hosted (2026-11-17), so any font request leaving the origin is a bug.
   ```bash
   SHOTS=<scratchpad>/shots ROUTES=home,watch dotnet test tests/PoFightJudge.E2EUI \
     --filter "FullyQualifiedName~ScreenshotRunner" --logger "console;verbosity=detailed"
