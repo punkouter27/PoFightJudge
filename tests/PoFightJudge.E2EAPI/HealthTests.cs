@@ -21,7 +21,7 @@ public partial class HealthTests(ApiFactory factory)
     }
 
     [Fact]
-    public async Task Diag_requires_authentication_and_never_leaks_a_value()
+    public async Task Diag_requires_authentication_and_neither_diag_report_leaks_a_value()
     {
         // Anonymous → 401
         {
@@ -50,34 +50,33 @@ public partial class HealthTests(ApiFactory factory)
             dto.Models.Tts.Should().Be("gpt-4o-mini-tts");
             dto.Flags.Keys.Should().BeEquivalentTo(Toggles.All);
         }
-    }
 
-    [Fact]
-    public async Task The_anonymous_diag_report_names_each_dependency_and_leaks_nothing()
-    {
-        // Endpoints a leak would echo: the storage hosts, plus the Azure OpenAI host appsettings.json already carries.
-        using var host = factory.WithWebHostBuilder(b => b
-            .UseSetting(ConfigKeys.Storage.TableEndpoint, "https://leaksentinel.table.core.windows.net/")
-            .UseSetting(ConfigKeys.Storage.BlobEndpoint, "https://leaksentinel.blob.core.windows.net/"));
-        using var client = host.CreateClient();
-
-        var response = await client.GetAsync(ApiRoutes.Health.DetailsUrl);
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadAsStringAsync();
-
-        foreach (var forbidden in new[] { "test-key", "leaksentinel", "core.windows.net", "vault.azure.net", "cognitiveservices", "AccountKey", "Exception", "   at ", ".ps1", ":\\" })
+        // Anonymous /api/health/details, which the /diag page reads: names and states, never a value.
         {
-            body.Should().NotContainEquivalentOf(forbidden, "the /diag page is anonymous");
+            // Endpoints a leak would echo: the storage hosts, plus the Azure OpenAI host appsettings.json already carries.
+            using var host = factory.WithWebHostBuilder(b => b
+                .UseSetting(ConfigKeys.Storage.TableEndpoint, "https://leaksentinel.table.core.windows.net/")
+                .UseSetting(ConfigKeys.Storage.BlobEndpoint, "https://leaksentinel.blob.core.windows.net/"));
+            using var client = host.CreateClient();
+
+            var response = await client.GetAsync(ApiRoutes.Health.DetailsUrl);
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            var body = await response.Content.ReadAsStringAsync();
+
+            foreach (var forbidden in new[] { "test-key", "leaksentinel", "core.windows.net", "vault.azure.net", "cognitiveservices", "AccountKey", "Exception", "   at ", ".ps1", ":\\" })
+            {
+                body.Should().NotContainEquivalentOf(forbidden, "the /diag page is anonymous");
+            }
+
+            SecretLikePattern().IsMatch(body).Should().BeFalse();
+            GuidPattern().IsMatch(body).Should().BeFalse("no tenant, subscription or client id");
+            EmailPattern().IsMatch(body).Should().BeFalse();
+
+            var report = await response.Content.ReadFromJsonAsync<HealthReportDto>();
+            report!.Environment.Should().Be(ApiFactory.Environment);
+            report.Checks.Where(c => c.Category == HealthCategory.Service).Should().Contain(c => c.Name == "AI provider" && c.Purpose != null);
+            report.Checks.Where(c => c.LatencyMs != null).Should().OnlyContain(c => c.Category == HealthCategory.Storage || c.Category == HealthCategory.Service);
         }
-
-        SecretLikePattern().IsMatch(body).Should().BeFalse();
-        GuidPattern().IsMatch(body).Should().BeFalse("no tenant, subscription or client id");
-        EmailPattern().IsMatch(body).Should().BeFalse();
-
-        var report = await response.Content.ReadFromJsonAsync<HealthReportDto>();
-        report!.Environment.Should().Be(ApiFactory.Environment);
-        report.Checks.Where(c => c.Category == HealthCategory.Service).Should().Contain(c => c.Name == "AI provider" && c.Purpose != null);
-        report.Checks.Where(c => c.LatencyMs != null).Should().OnlyContain(c => c.Category == HealthCategory.Storage || c.Category == HealthCategory.Service);
     }
 
     [Fact]
