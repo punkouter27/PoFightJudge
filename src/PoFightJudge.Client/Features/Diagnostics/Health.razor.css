@@ -1,8 +1,52 @@
-.overall {
+::deep .banner {
+  margin: 0 0 var(--po-space-4);
+}
+
+.loading {
   display: flex;
   align-items: center;
   gap: var(--po-space-3);
-  margin-bottom: var(--po-space-5);
+}
+
+/* One dependency per card: what it is on the left, how it is doing on the right; stacked on a phone. */
+::deep .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--po-space-2) var(--po-space-4);
+  margin-bottom: var(--po-space-2);
+  padding: var(--po-space-3) var(--po-space-4);
+}
+
+.what {
+  display: grid;
+  gap: var(--po-space-1);
+  min-width: 0;
+  flex: 1 1 16rem;
+}
+
+.what .name {
+  font-weight: 600;
+}
+
+.what .purpose,
+.what .detail,
+.facts {
+  font-size: var(--po-text-sm);
+  overflow-wrap: anywhere;
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--po-space-2);
+}
+
+.about {
+  margin-top: var(--po-space-5);
+  font-size: var(--po-text-sm);
 }
 
 h2 {

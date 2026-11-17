@@ -101,6 +101,11 @@ The slices: `Profiles` (the cast, read-only) · `Watch` (the round loop and its 
 machine and the Gemini socket) · `Analysis` (transcribe, measure, judge, highlight) · `Fighters` (people, and how
 they argue) · `Records` (matches, results, history, leaderboards) · `Auth` · `Diagnostics` · `Storage` · `Voice`.
 
+**`/diag`** (alias `/status`) is the plain-English system status page, open without signing in: an overall banner,
+the API's response time, storage and each outside service (status, what it is for, probe latency), then settings
+as set/not set, the build and the environment. It reads `GET /api/health/details`, which carries no value, URI,
+path or exception text; `GET /api/diag` is the signed-in (admin in Production) operator view with models and usage.
+
 Two rules run through all of it:
 
 - **Storage is identity-only.** Endpoints and `DefaultAzureCredential`, never a connection string — the
@@ -115,7 +120,7 @@ Configuration keys are `PoFightJudge:*`; the same values live in Key Vault as `P
 committed.
 
 `PoFightJudge:Ai:DailyTokenBudget` (2,000,000 in `appsettings.json`, `0` to switch it off) is how many Gemini tokens
-one caller may spend per UTC day. Past it, every rate-limited AI route answers 429 until midnight UTC, and `/health`
+one caller may spend per UTC day. Past it, every rate-limited AI route answers 429 until midnight UTC, and `/diag`
 shows the caller where they stand. The count is in memory, so a restart forgives the day.
 
 `PoFightJudge:Ai:JudgeServiceTier` and `PoFightJudge:Ai:ProfileServiceTier` (both `flex`) mark the fight judge

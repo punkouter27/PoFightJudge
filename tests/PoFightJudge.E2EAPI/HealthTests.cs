@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Hosting;
 using PoFightJudge.Api.Features.Auth;
 using PoFightJudge.Shared;
 using PoFightJudge.Shared.Configuration;
@@ -52,6 +53,34 @@ public partial class HealthTests(ApiFactory factory)
     }
 
     [Fact]
+    public async Task The_anonymous_diag_report_names_each_dependency_and_leaks_nothing()
+    {
+        // Endpoints a leak would echo: the storage hosts, plus the Azure OpenAI host appsettings.json already carries.
+        using var host = factory.WithWebHostBuilder(b => b
+            .UseSetting(ConfigKeys.Storage.TableEndpoint, "https://leaksentinel.table.core.windows.net/")
+            .UseSetting(ConfigKeys.Storage.BlobEndpoint, "https://leaksentinel.blob.core.windows.net/"));
+        using var client = host.CreateClient();
+
+        var response = await client.GetAsync(ApiRoutes.Health.DetailsUrl);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+
+        foreach (var forbidden in new[] { "test-key", "leaksentinel", "core.windows.net", "vault.azure.net", "cognitiveservices", "AccountKey", "Exception", "   at ", ".ps1", ":\\" })
+        {
+            body.Should().NotContainEquivalentOf(forbidden, "the /diag page is anonymous");
+        }
+
+        SecretLikePattern().IsMatch(body).Should().BeFalse();
+        GuidPattern().IsMatch(body).Should().BeFalse("no tenant, subscription or client id");
+        EmailPattern().IsMatch(body).Should().BeFalse();
+
+        var report = await response.Content.ReadFromJsonAsync<HealthReportDto>();
+        report!.Environment.Should().Be(ApiFactory.Environment);
+        report.Checks.Where(c => c.Category == HealthCategory.Service).Should().Contain(c => c.Name == "AI provider" && c.Purpose != null);
+        report.Checks.Where(c => c.LatencyMs != null).Should().OnlyContain(c => c.Category == HealthCategory.Storage || c.Category == HealthCategory.Service);
+    }
+
+    [Fact]
     public async Task Every_response_carries_the_security_envelope_including_a_404()
     {
         using var client = factory.CreateClient();
@@ -71,6 +100,12 @@ public partial class HealthTests(ApiFactory factory)
         // where the static web assets exist).
         (await client.GetAsync("/js/does-not-exist.js")).StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
+
+    [GeneratedRegex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex GuidPattern();
+
+    [GeneratedRegex(@"[\w.+-]+@[\w-]+\.[\w.]+", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex EmailPattern();
 
     [GeneratedRegex("AIza[0-9A-Za-z_-]{20,}", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
     private static partial Regex SecretLikePattern();

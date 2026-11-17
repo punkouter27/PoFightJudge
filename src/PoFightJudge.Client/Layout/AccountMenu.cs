@@ -15,7 +15,7 @@ public static class AccountMenu
     [
         new("/profiles", "theater_comedy", "Cast profiles"),
         new("/history", "history", "History"),
-        new("/status", "health_and_safety", "System status"),
+        new("/diag", "health_and_safety", "System status"),
     ];
 
     public static Identity Describe(ClaimsPrincipal user)

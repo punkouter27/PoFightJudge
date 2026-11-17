@@ -1,14 +1,16 @@
+@page "/diag"
 @page "/status"
 @attribute [AllowAnonymous]
 @inject IApiClient Api
 @inject Viewport Viewport
+@inject TimeProvider Clock
 @implements IDisposable
 
-<PageTitle>Health · PoFightJudge</PageTitle>
+<PageTitle>System status · PoFightJudge</PageTitle>
 
-<PageShell Width="PageShell.ShellWidth.Standard" Eyebrow="Diagnostics" Title="Health" Lead="Connections, configuration presence and feature flags. Values are never shown, only whether they are set.">
+<PageShell Width="PageShell.ShellWidth.Standard" Eyebrow="Diagnostics" Title="System status" Lead="Whether the app and everything it depends on is working right now. Settings are shown as set or not set, never their values.">
     <Actions>
-        <RadzenButton Text="Refresh" Icon="refresh" ButtonStyle="ButtonStyle.Secondary" Click="LoadAsync" IsBusy="@_loading" />
+        <RadzenButton Text="@(_loading ? "Refreshing…" : "Refresh")" Icon="refresh" ButtonStyle="ButtonStyle.Secondary" Click="RefreshAsync" IsBusy="@_loading" Disabled="@_loading" />
     </Actions>
     <ChildContent>
         @* A wrapper this page owns, and nothing more (display: contents). Scoped CSS reaches into a child component
@@ -16,33 +18,102 @@
         <div class="po-scope">
         @if (_error is not null)
         {
-            <PageAlert Kind="AlertStyle.Danger">@_error</PageAlert>
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" AllowClose="false" class="banner" data-testid="diag-banner">
+                <strong>The app's server is not answering.</strong> @_error Try Refresh in a minute.
+            </RadzenAlert>
+            <section aria-labelledby="diag-api">
+                <h2 id="diag-api">API</h2>
+                <RadzenCard class="row">
+                    <span class="name">Reachable</span>
+                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="No" />
+                </RadzenCard>
+            </section>
         }
         else if (_report is null)
         {
-            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <div class="loading" role="status">
+                <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                <span class="po-muted">Checking everything…</span>
+            </div>
         }
         else
         {
-            <div class="overall">
-                <RadzenBadge BadgeStyle="@Style(_report.Overall)" Text="@_report.Overall.ToString()" />
-                <span class="po-muted">@_report.Environment · @_report.Timestamp.ToString("HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) UTC</span>
-            </div>
-            @foreach (var category in Enum.GetValues<HealthCategory>())
-            {
-                var rows = _report.Checks.Where(c => c.Category == category).ToList();
-                if (rows.Count == 0)
-                {
-                    continue;
-                }
+            <RadzenAlert AlertStyle="@Alert(_report.Overall)" Variant="Variant.Flat" Shade="Shade.Lighter" AllowClose="false" class="banner" data-testid="diag-banner">
+                <strong>@Headline(_report.Overall)</strong>
+                <span class="po-muted"> Last checked @_report.Timestamp.ToString("HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) UTC.</span>
+            </RadzenAlert>
 
-                <h2>@category</h2>
-                <RadzenDataGrid TItem="HealthCheckDto" Data="@rows" AllowPaging="true" PageSize="20" AllowSorting="true" Density="Density.Compact" class="grid">
+            <section aria-labelledby="diag-api">
+                <h2 id="diag-api">API</h2>
+                <RadzenCard class="row">
+                    <span class="what">
+                        <span class="name">The app's server</span>
+                        <span class="po-muted purpose">Answers every page and runs the fights.</span>
+                    </span>
+                    <span class="facts">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Reachable" />
+                        <span class="po-muted">@Ms(_apiMs)</span>
+                    </span>
+                </RadzenCard>
+            </section>
+
+            <section aria-labelledby="diag-storage">
+                <h2 id="diag-storage">Database / storage</h2>
+                @{ var stores = Rows(HealthCategory.Storage); }
+                @if (stores.Count == 0)
+                {
+                    <p class="po-muted">No data store is checked in this environment.</p>
+                }
+                @foreach (var row in stores)
+                {
+                    <RadzenCard class="row">
+                        <span class="what">
+                            <span class="name">@row.Name</span>
+                            @if (row.Purpose is { Length: > 0 })
+                            {
+                                <span class="po-muted purpose">@row.Purpose</span>
+                            }
+                        </span>
+                        <span class="facts">
+                            <RadzenBadge BadgeStyle="@Style(row.State)" Text="@Word(row.State)" />
+                            <span class="po-muted">@Ms(row.LatencyMs)</span>
+                        </span>
+                    </RadzenCard>
+                }
+            </section>
+
+            <section aria-labelledby="diag-services">
+                <h2 id="diag-services">Services</h2>
+                @{ var services = Rows(HealthCategory.Service); }
+                @if (services.Count == 0)
+                {
+                    <p class="po-muted">No outside service is checked in this environment.</p>
+                }
+                @foreach (var row in services)
+                {
+                    <RadzenCard class="row">
+                        <span class="what">
+                            <span class="name">@row.Name</span>
+                            @if (row.Purpose is { Length: > 0 })
+                            {
+                                <span class="po-muted purpose">@row.Purpose</span>
+                            }
+                            <span class="po-muted detail">@row.Detail</span>
+                        </span>
+                        <span class="facts">
+                            <RadzenBadge BadgeStyle="@Style(row.State)" Text="@Word(row.State)" />
+                            <span class="po-muted">@Ms(row.LatencyMs) · checked @_report.Timestamp.ToString("HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)</span>
+                        </span>
+                    </RadzenCard>
+                }
+            </section>
+
+            <section aria-labelledby="diag-settings">
+                <h2 id="diag-settings">Settings</h2>
+                <RadzenDataGrid TItem="HealthCheckDto" Data="@Settings" AllowPaging="true" PageSize="20" AllowSorting="true" Density="Density.Compact" class="grid">
                     <Columns>
-                        @* 16rem + 9rem + a detail column came to 400 px of table on a 356 px screen. On a phone the detail moves
-                           under the name it belongs to rather than off the side of the table — the same three facts, in the
-                           order somebody reads them. *@
-                        <RadzenDataGridColumn TItem="HealthCheckDto" Property="@nameof(HealthCheckDto.Name)" Title="Check" Width="@(Viewport.IsPhone ? "62%" : "16rem")">
+                        @* On a phone the detail moves under the name it belongs to rather than off the side of the table. *@
+                        <RadzenDataGridColumn TItem="HealthCheckDto" Property="@nameof(HealthCheckDto.Name)" Title="Setting" Width="@(Viewport.IsPhone ? "62%" : "16rem")">
                             <Template Context="row">
                                 <span class="check">
                                     <span class="name">@row.Name</span>
@@ -54,13 +125,14 @@
                             </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="HealthCheckDto" Property="@nameof(HealthCheckDto.State)" Title="State" Width="@(Viewport.IsPhone ? "38%" : "9rem")">
-                            <Template Context="row"><RadzenBadge BadgeStyle="@Style(row.State)" Text="@row.State.ToString()" /></Template>
+                            <Template Context="row"><RadzenBadge BadgeStyle="@Style(row.State)" Text="@Word(row.State)" /></Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="HealthCheckDto" Property="@nameof(HealthCheckDto.Detail)" Title="Detail" Visible="@(!Viewport.IsPhone)" />
                     </Columns>
                 </RadzenDataGrid>
-            }
+            </section>
         }
+        <p class="po-muted about">Version v@(BuildStamp.Version) · @(_report?.Environment ?? "environment unknown")</p>
         </div>
     </ChildContent>
 </PageShell>
@@ -68,12 +140,29 @@
 @code {
     private HealthReportDto? _report;
     private string? _error;
-    private bool _loading;
+    // True from the start: the first render happens before the first check has even been sent.
+    private bool _loading = true;
+    private double? _apiMs;
+
+    private IReadOnlyList<HealthCheckDto> Settings =>
+        _report?.Checks.Where(c => c.Category is HealthCategory.Configuration or HealthCategory.Feature).ToList() ?? [];
 
     protected override async Task OnInitializedAsync()
     {
         Viewport.Changed += OnViewportChanged;
         await Viewport.InitializeAsync();
+        await LoadAsync();
+    }
+
+    /// <summary>The button: one check at a time, and the button stays disabled until it is back.</summary>
+    private async Task RefreshAsync()
+    {
+        if (_loading)
+        {
+            return;
+        }
+
+        _loading = true;
         await LoadAsync();
     }
 
@@ -83,14 +172,16 @@
 
     private async Task LoadAsync()
     {
-        _loading = true;
         _error = null;
         try
         {
+            var started = Clock.GetTimestamp();
             _report = await Api.GetHealthDetailsAsync();
+            _apiMs = Math.Round(Clock.GetElapsedTime(started).TotalMilliseconds);
         }
         catch (Exception ex) when (ApiFailure.Describe(ex, "The API did not answer") is { } why)
         {
+            _report = null;
             _error = why;
         }
         finally
@@ -98,6 +189,36 @@
             _loading = false;
         }
     }
+
+    private List<HealthCheckDto> Rows(HealthCategory category) =>
+        _report?.Checks.Where(c => c.Category == category).ToList() ?? [];
+
+    private static string Ms(double? ms) => ms is { } value
+        ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{value:0} ms")
+        : "no live check";
+
+    private static string Headline(HealthState overall) => overall switch
+    {
+        HealthState.Ok => "Everything is working.",
+        HealthState.Degraded => "The app works, but something is slow or only partly answering.",
+        HealthState.NotConfigured => "The app works; some optional parts are not set up here.",
+        _ => "Something the app needs is not working.",
+    };
+
+    private static string Word(HealthState state) => state switch
+    {
+        HealthState.Ok => "Healthy",
+        HealthState.Degraded => "Degraded",
+        HealthState.NotConfigured => "Not set up",
+        _ => "Unhealthy",
+    };
+
+    private static AlertStyle Alert(HealthState state) => state switch
+    {
+        HealthState.Ok => AlertStyle.Success,
+        HealthState.Failed => AlertStyle.Danger,
+        _ => AlertStyle.Warning,
+    };
 
     private static BadgeStyle Style(HealthState state) => state switch
     {

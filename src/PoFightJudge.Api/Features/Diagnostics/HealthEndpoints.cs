@@ -13,8 +13,8 @@ namespace PoFightJudge.Api.Features.Diagnostics;
 /// <summary>
 /// Health surface. <c>/api/health</c> runs only the <c>ready</c> checks (configuration, storage)
 /// — no network probes, so the deploy gate and the tests never depend on a third party being up.
-/// <c>/api/health/details</c> adds the <c>ai</c> reachability probes and a masked configuration/feature report for
-/// the Blazor /health page. All anonymous; all presence-only.
+/// <c>/api/health/details</c> adds the <c>ai</c> reachability probes, their latency, and a presence-only
+/// configuration/feature report for the Blazor /diag page. All anonymous: no value, URI, path or exception text.
 /// </summary>
 public sealed class HealthEndpoints : ICarterModule
 {
@@ -35,14 +35,27 @@ public sealed class HealthEndpoints : ICarterModule
 
             foreach (var (name, entry) in report.Entries)
             {
-                checks.Add(new HealthCheckDto(name, Map(entry.Status), entry.Description ?? entry.Status.ToString(), HealthCategory.Connection));
+                var (label, purpose, category) = Describe(name);
+                checks.Add(new HealthCheckDto(label, Map(entry.Status), Plain(entry.Status), category, purpose, Math.Round(entry.Duration.TotalMilliseconds, 1)));
             }
 
             AddPresence(checks, "Gemini API key", config[ConfigKeys.Ai.GeminiApiKey], required: env.IsProduction());
             AddPresence(checks, "Entra client id", config[ConfigKeys.AzureAd.ClientId], required: env.IsProduction());
-            checks.Add(new HealthCheckDto("Key Vault", string.IsNullOrWhiteSpace(config[ConfigKeys.KeyVault.Uri]) ? HealthState.NotConfigured : HealthState.Ok, SecretMasker.MaskHost(config[ConfigKeys.KeyVault.Uri]), HealthCategory.Configuration));
-            checks.Add(new HealthCheckDto("Table endpoint", string.IsNullOrWhiteSpace(config[ConfigKeys.Storage.TableEndpoint]) ? HealthState.Failed : HealthState.Ok, SecretMasker.MaskHost(config[ConfigKeys.Storage.TableEndpoint]), HealthCategory.Configuration));
-            checks.Add(new HealthCheckDto("Blob endpoint", string.IsNullOrWhiteSpace(config[ConfigKeys.Storage.BlobEndpoint]) ? HealthState.Failed : HealthState.Ok, SecretMasker.MaskHost(config[ConfigKeys.Storage.BlobEndpoint]), HealthCategory.Configuration));
+            AddPresence(checks, "Table endpoint", config[ConfigKeys.Storage.TableEndpoint], required: true);
+            AddPresence(checks, "Blob endpoint", config[ConfigKeys.Storage.BlobEndpoint], required: true);
+            checks.Add(AiProvider(env, config));
+            checks.Add(new HealthCheckDto(
+                "Key Vault",
+                string.IsNullOrWhiteSpace(config[ConfigKeys.KeyVault.Uri]) ? HealthState.NotConfigured : HealthState.Ok,
+                string.IsNullOrWhiteSpace(config[ConfigKeys.KeyVault.Uri]) ? "Not used here; settings come from local files." : "Connected at startup.",
+                HealthCategory.Service,
+                "Keeps the app's secrets (API keys) out of the code."));
+            checks.Add(new HealthCheckDto(
+                "Sign-in",
+                string.IsNullOrWhiteSpace(config[ConfigKeys.AzureAd.ClientId]) ? HealthState.NotConfigured : HealthState.Ok,
+                string.IsNullOrWhiteSpace(config[ConfigKeys.AzureAd.ClientId]) ? "Microsoft sign-in is not set up here." : "Microsoft sign-in is set up.",
+                HealthCategory.Service,
+                "Lets people sign in with a Microsoft account."));
 
             // Anonymous route, so only a signed-in caller gets a row, and only their own number.
             if (http.User.UserIdOrNull() is { } caller && config.GetValue<long>(ConfigKeys.Ai.DailyTokenBudget) is > 0 and var limit)
@@ -63,6 +76,40 @@ public sealed class HealthEndpoints : ICarterModule
             return Results.Ok(new HealthReportDto(env.EnvironmentName, Aggregate(checks), clock.GetUtcNow(), checks));
         }).AllowAnonymous().WithTags("Health");
     }
+
+    /// <summary>A probe's registration name turned into what the page shows: a label, what it is for, and its section.</summary>
+    private static (string Label, string Purpose, HealthCategory Category) Describe(string name) => name switch
+    {
+        "storage" => ("Table and Blob storage", "Saves profiles, matches, recordings and faces.", HealthCategory.Storage),
+        "configuration" => ("Required settings", "Checks the keys the app needs to run are present.", HealthCategory.Service),
+        "gemini-reachable" => ("Google Gemini reachable", "The AI service used when Azure OpenAI is not set up.", HealthCategory.Service),
+        _ => (name, "A dependency the app checks on.", HealthCategory.Service),
+    };
+
+    /// <summary>Which AI is answering: the stand-ins, Azure OpenAI or Gemini. Named, never its endpoint.</summary>
+    private static HealthCheckDto AiProvider(IHostEnvironment env, IConfiguration config)
+    {
+        const string Purpose = "Writes the arguments, voices the fighters and judges the fights.";
+        if (DiagEndpoints.IsFakeAi(env, config))
+        {
+            return new HealthCheckDto("AI provider", HealthState.Ok, "Stand-in AI: canned answers, nothing is sent out.", HealthCategory.Service, Purpose);
+        }
+
+        return string.IsNullOrWhiteSpace(config[ConfigKeys.Ai.AzureOpenAiEndpoint])
+            ? new HealthCheckDto("AI provider", HealthState.Ok, "Google Gemini.", HealthCategory.Service, Purpose)
+            : new HealthCheckDto("AI provider", HealthState.Ok, "Azure OpenAI.", HealthCategory.Service, Purpose);
+    }
+
+    /// <summary>
+    /// The probe's own description is left out on purpose: a failure carries hints (script paths, missing key names)
+    /// that belong in the log, not on an anonymous page.
+    /// </summary>
+    private static string Plain(HealthStatus status) => status switch
+    {
+        HealthStatus.Healthy => "Working normally.",
+        HealthStatus.Degraded => "Answering, but not fully.",
+        _ => "Not answering.",
+    };
 
     private static void AddPresence(List<HealthCheckDto> checks, string name, string? value, bool required)
     {

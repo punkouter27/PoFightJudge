@@ -16,11 +16,14 @@ public enum HealthState
     Failed,
 }
 
-/// <summary>Grouping used by the /health page to lay out its sections.</summary>
+/// <summary>Grouping used by the /diag page to lay out its sections.</summary>
 public enum HealthCategory
 {
-    /// <summary>Live probes against external services.</summary>
-    Connection,
+    /// <summary>A data store the app reads and writes (Table and Blob storage), probed live.</summary>
+    Storage,
+
+    /// <summary>An external dependency: AI provider, Key Vault, sign-in, required settings.</summary>
+    Service,
 
     /// <summary>Presence (never the raw value) of configuration.</summary>
     Configuration,
@@ -29,10 +32,14 @@ public enum HealthCategory
     Feature,
 }
 
-/// <summary>One row of the health report. <see cref="Detail"/> is masked server-side — it never carries a raw secret.</summary>
-public sealed record HealthCheckDto(string Name, HealthState State, string Detail, HealthCategory Category);
+/// <summary>
+/// One row of the health report. <see cref="Detail"/> is plain English written server-side — never a secret, a URI,
+/// a path or an exception message. <see cref="Purpose"/> says in one line what the dependency is for, and
+/// <see cref="LatencyMs"/> is how long a live probe took (null for a presence-only row).
+/// </summary>
+public sealed record HealthCheckDto(string Name, HealthState State, string Detail, HealthCategory Category, string? Purpose = null, double? LatencyMs = null);
 
-/// <summary>Full connection/configuration status, rendered by the /health page. Anonymous, so presence only.</summary>
+/// <summary>Full connection/configuration status, rendered by the /diag page. Anonymous, so presence only.</summary>
 public sealed record HealthReportDto(string Environment, HealthState Overall, DateTimeOffset Timestamp, IReadOnlyList<HealthCheckDto> Checks);
 
 /// <summary>Model ids in use per operation, as reported by /api/diag.</summary>
