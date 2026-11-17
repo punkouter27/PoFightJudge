@@ -106,6 +106,12 @@ the API's response time, storage and each outside service (status, what it is fo
 as set/not set, the build and the environment. It reads `GET /api/health/details`, which carries no value, URI,
 path or exception text; `GET /api/diag` is the signed-in (admin in Production) operator view with models and usage.
 
+**Forms** run the Shared FluentValidation rules on both ends: the page shows each message under its field and
+disables the button while it submits, and the endpoint answers a 400 validation problem keyed by the same field
+names (`CreateFightRequestValidator` on `POST /api/fights`, `RenameFighterRequestValidator` on the rename,
+`WatchSetupValidator` for the CPU/1P setup screen). The fighter rename uses `RadzenTemplateForm` with the
+`FluentValidationValidator` EditContext bridge; the multi-step setup screens call the validator directly.
+
 Two rules run through all of it:
 
 - **Storage is identity-only.** Endpoints and `DefaultAzureCredential`, never a connection string — the

@@ -56,7 +56,8 @@
 <SetupStep Problem="@Problem" Touched="@_touched" PreviewLabel="Who is arguing">
     <Sides>
         <div class="fighter-setup">
-            <FighterTagInput Label="Fighter one" Name="player1Tag" Tag="@_one" TagChanged="@OnOneChanged" Known="@_known" Excluded="@_two" />
+            <FighterTagInput Label="Fighter one" Name="player1Tag" Tag="@_one" TagChanged="@OnOneChanged" Known="@_known" Excluded="@_two"
+                             Error="@ErrorFor(nameof(CreateFightRequest.Player1Tag))" ShowError="@_refused" />
             @* 2P has no husband or wife. The seat is for afterwards: what they say here becomes a persona that
                CPU and 1P can put in an argument, and those channels pit a husband against a wife. *@
             <div class="seat">
@@ -70,7 +71,8 @@
             </div>
         </div>
         <div class="fighter-setup">
-            <FighterTagInput Label="Fighter two" Name="player2Tag" Tag="@_two" TagChanged="@OnTwoChanged" Known="@_known" Excluded="@_one" />
+            <FighterTagInput Label="Fighter two" Name="player2Tag" Tag="@_two" TagChanged="@OnTwoChanged" Known="@_known" Excluded="@_one"
+                             Error="@ErrorFor(nameof(CreateFightRequest.Player2Tag))" ShowError="@_refused" />
             <div class="seat">
                 <span class="po-eyebrow">Argues as</span>
                 <RadzenSelectBar @bind-Value="_twoRole" TValue="ProfileRole" Name="player2Role" Size="ButtonSize.Small" aria-label="Fighter two argues as">
@@ -90,7 +92,8 @@
     /// <summary>What about. Who hosts is a Settings choice (Referee unless changed), so setup does not ask.</summary>
     private RenderFragment AboutStep => @<div class="step">
 @* A spun topic deals the sides as well, so nobody picks the easy one; they can still be changed. *@
-<TopicField @bind-Value="_topic" Spun="@(() => _oneStance = Sides.Deal(Random.Shared))" Label="What are you arguing about?" Placeholder="loading the dishwasher my way"
+<TopicField Value="@_topic" ValueChanged="@OnTopicChanged" Spun="@(() => _oneStance = Sides.Deal(Random.Shared))" Label="What are you arguing about?" Placeholder="loading the dishwasher my way"
+            Error="@ErrorFor(nameof(CreateFightRequest.Topic))"
             Hint="Something to be for or against. Leave it blank and the host will ask you both at the top of the show." />
 @if (_topic.Trim().Length > 0)
 {
@@ -160,12 +163,25 @@
 
     private const string Lead = "The two of you, one microphone, and a judge who hosts the argument, questions you both and rules at the end. Your initials are your record: whoever has argued here before is remembered by them.";
 
-    /// <summary>Why the fight cannot start yet, or null when it can.</summary>
-    private string? Problem =>
-        _one.Length == 0 || _two.Length == 0 ? "Both fighters need a tag."
-        : !Initials.IsTag(_one) || !Initials.IsTag(_two) ? "A tag is exactly three letters."
-        : string.Equals(_one, _two, StringComparison.OrdinalIgnoreCase) ? "Two people cannot share one tag."
-        : null;
+    /// <summary>The same rules <c>POST /api/fights</c> runs, so nothing the page allows is refused there.</summary>
+    private static readonly CreateFightRequestValidator Rules = new();
+
+    /// <summary>A 400's field errors, until the next change; the request's property names are the keys.</summary>
+    private IReadOnlyDictionary<string, string[]> _serverErrors = NoErrors;
+
+    /// <summary>Set once the server has refused a start: every field's message is then shown, typed into or not.</summary>
+    private bool _refused;
+
+    private CreateFightRequest Request => new(_persona, _one, _two, _topic.Trim() is { Length: > 0 } t ? t : null, _oneRole, _twoRole, OneStance);
+
+    private FluentValidation.Results.ValidationResult Check => Rules.Validate(Request);
+
+    private string? ErrorFor(string field) =>
+        _serverErrors.TryGetValue(field, out var server) && server.Length > 0 ? server[0]
+        : Check.Errors.FirstOrDefault(e => string.Equals(e.PropertyName, field, StringComparison.Ordinal))?.ErrorMessage;
+
+    /// <summary>Why the fight cannot start yet, or null when it can: the first thing the validator found.</summary>
+    private string? Problem => _serverErrors.Values.SelectMany(v => v).FirstOrDefault() ?? Check.Errors.FirstOrDefault()?.ErrorMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -195,9 +211,13 @@
     private FighterDto? Known(string tag) =>
         tag.Length == 0 ? null : _known.FirstOrDefault(f => string.Equals(f.Tag, tag, StringComparison.OrdinalIgnoreCase));
 
-    private void OnOneChanged(string tag) => (_one, _touched) = (tag, true);
+    private void OnOneChanged(string tag) => (_one, _touched, _serverErrors) = (tag, true, NoErrors);
 
-    private void OnTwoChanged(string tag) => (_two, _touched) = (tag, true);
+    private void OnTwoChanged(string tag) => (_two, _touched, _serverErrors) = (tag, true, NoErrors);
+
+    private void OnTopicChanged(string topic) => (_topic, _serverErrors) = (topic, NoErrors);
+
+    private static readonly IReadOnlyDictionary<string, string[]> NoErrors = new Dictionary<string, string[]>(StringComparer.Ordinal);
 
     private async Task StartAsync()
     {
@@ -210,9 +230,14 @@
         _error = null;
         try
         {
-            var started = await Api.StartFightAsync(new CreateFightRequest(_persona, _one, _two, _topic.Trim() is { Length: > 0 } t ? t : null, _oneRole, _twoRole, OneStance));
+            var started = await Api.StartFightAsync(Request);
             await Memory.RememberAsync(new FightCard(_one, _two, _topic.Trim(), _oneRole, _twoRole, _persona) { Device = _device ?? string.Empty, OneStance = OneStance });
             Nav.NavigateTo($"fight/{started.MatchId.Value}");
+        }
+        catch (ApiException ex) when (ex.Errors.Count > 0)
+        {
+            // A validation problem goes under the fields it is about, not in a banner at the bottom.
+            (_serverErrors, _refused, _touched) = (ex.Errors, true, true);
         }
         catch (Exception ex) when (ApiFailure.Describe(ex, "The fight could not be started") is { } why)
         {

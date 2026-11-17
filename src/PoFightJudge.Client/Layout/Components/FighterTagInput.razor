@@ -13,9 +13,9 @@
                                 aria-label="@Label" />
         </ChildContent>
         <Helper>
-            @if (Error is { Length: > 0 })
+            @if (Shown is { } error)
             {
-                <span class="validation-message">@Error</span>
+                <span class="validation-message" role="alert">@error</span>
             }
             else
             {
@@ -37,25 +37,30 @@
     /// <summary>Everyone who has argued before. Empty until the roster exists, which simply means no suggestions.</summary>
     [Parameter] public IReadOnlyList<FighterDto> Known { get; set; } = [];
 
-    /// <summary>The other side's tag, which this one may not be.</summary>
+    /// <summary>The other side's tag, which this one may not be; only used to leave it out of the suggestions.</summary>
     [Parameter] public string? Excluded { get; set; }
 
-    private string? Error { get; set; }
+    /// <summary>
+    /// What the setup's validator (Shared <c>CreateFightRequestValidator</c>) says about this tag, or the server's
+    /// answer. Shown once there is something to judge — three characters typed, or an answer from the server — so
+    /// the first two letters of a tag are not greeted with a complaint about being two letters.
+    /// </summary>
+    [Parameter] public string? Error { get; set; }
+
+    /// <summary>True to show <see cref="Error"/> whatever has been typed: a refused start, or a server answer.</summary>
+    [Parameter] public bool ShowError { get; set; }
+
+    private bool _typed;
+
+    private string? Shown => Error is { Length: > 0 } && (ShowError || (_typed && Tag.Length >= Initials.MaxLength)) ? Error : null;
 
     private IEnumerable<FighterDto> Suggestions =>
         Known.Where(f => !string.Equals(f.Tag, Excluded, StringComparison.OrdinalIgnoreCase));
 
     private async Task OnTyped(object? value)
     {
-        var typed = value?.ToString() ?? string.Empty;
-        var normalized = Initials.Normalize(typed);
-
-        Error = typed.Trim().Length > 0 && !Initials.IsTag(typed) && normalized.Length >= Initials.MaxLength
-            ? "A tag is exactly three letters."
-            : string.Equals(normalized, Initials.Normalize(Excluded), StringComparison.Ordinal) && normalized.Length > 0
-                ? "The other fighter already has that tag."
-                : null;
-
+        _typed = true;
+        var normalized = Initials.Normalize(value?.ToString());
         Tag = normalized;
         await TagChanged.InvokeAsync(normalized);
     }

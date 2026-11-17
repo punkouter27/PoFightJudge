@@ -38,12 +38,23 @@
         else
         {
             <div class="head po-card">
-                <div class="who">
-                    <span class="tag po-display">@_profile.Fighter.Tag</span>
-                    <RadzenTextBox @bind-Value="_name" Placeholder="Give them a name" MaxLength="40" aria-label="Display name" class="name" />
-                    <RadzenButton Text="Save name" Icon="save" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Flat" Size="ButtonSize.Small"
-                                  Disabled="@(!CanRename)" Click="RenameAsync" />
-                </div>
+                @* The rename is a form: the Shared rules run as it is typed and again on save, and their message sits
+                   under the box rather than in a toast after the fact. *@
+                <RadzenTemplateForm TItem="RenameForm" Data="@_rename" Submit="@RenameAsync">
+                    <FluentValidationValidator TModel="RenameForm" TRequest="RenameFighterRequest" @ref="_renameRules"
+                                               Validator="@RenameRules" Project="@(f => new RenameFighterRequest(f.DisplayName))" />
+                    <div class="who">
+                        <span class="tag po-display">@_profile.Fighter.Tag</span>
+                        <div class="name-field">
+                            <RadzenTextBox @bind-Value="_rename.DisplayName" Name="DisplayName" Placeholder="Give them a name"
+                                           MaxLength="@WatchLimits.MaxNameLength" aria-label="Display name" class="name" />
+                            <ValidationMessage For="@(() => _rename.DisplayName)" />
+                        </div>
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="@(_saving ? "Saving…" : "Save name")" Icon="save"
+                                      ButtonStyle="ButtonStyle.Primary" Variant="Variant.Flat" Size="ButtonSize.Small"
+                                      Disabled="@(!CanRename || _saving)" IsBusy="@_saving" />
+                    </div>
+                </RadzenTemplateForm>
                 <RadzenButton Icon="delete" Text="Forget them" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Text" Size="ButtonSize.Small"
                               Click="ForgetAsync" />
             </div>
@@ -155,7 +166,10 @@
 @code {
     private FighterProfileDto? _profile;
     private IReadOnlyList<FighterResultDto> _results = [];
-    private string? _name;
+    private readonly RenameForm _rename = new();
+    private static readonly RenameFighterRequestValidator RenameRules = new();
+    private FluentValidationValidator<RenameForm, RenameFighterRequest>? _renameRules;
+    private bool _saving;
     private bool _loading = true;
 
     /// <summary>Why the record could not be read, when that — and not an unknown tag — is what happened.</summary>
@@ -174,7 +188,7 @@
         : $"Everything {Title} has argued, counted from the debates themselves.";
 
     /// <summary>Only a change worth saving enables the button; a blank name is a way of clearing one.</summary>
-    private bool CanRename => _profile is not null && !string.Equals(_name ?? string.Empty, _profile.Fighter.DisplayName, StringComparison.Ordinal);
+    private bool CanRename => _profile is not null && !string.Equals(_rename.DisplayName ?? string.Empty, _profile.Fighter.DisplayName, StringComparison.Ordinal);
 
     private string Run => _profile!.Stats.Streak switch
     {
@@ -209,7 +223,7 @@
         {
             _profile = await Api.GetFighterProfileAsync(FighterId.From(Initials.Normalize(Tag)));
             _results = _profile is null ? [] : [.. _profile.Results.OrderByDescending(r => r.At)];
-            _name = _profile?.Fighter.DisplayName;
+            _rename.DisplayName = _profile?.Fighter.DisplayName;
             await CheckTierAsync();
         }
         catch (Exception ex) when (ApiFailure.Describe(ex, "Their record could not be read") is { } why)
@@ -276,23 +290,38 @@
 
     private async Task RenameAsync()
     {
-        if (_profile is null)
+        if (_profile is null || _saving)
         {
             return;
         }
 
+        _saving = true;
         try
         {
             // The tag never moves: it is what every result on this page is keyed on.
-            var renamed = await Api.RenameFighterAsync(FighterId.From(_profile.Fighter.Tag), _name);
+            var renamed = await Api.RenameFighterAsync(FighterId.From(_profile.Fighter.Tag), _rename.DisplayName);
             _profile = _profile with { Fighter = renamed };
-            _name = renamed.DisplayName;
+            _rename.DisplayName = renamed.DisplayName;
             Notifications.Notify(NotificationSeverity.Success, "Saved", $"{renamed.Tag} is now {renamed.DisplayName}.");
+        }
+        catch (ApiException ex) when (ex.Errors.Count > 0)
+        {
+            _renameRules?.Show(ex.Errors);
         }
         catch (ApiException ex)
         {
             Notifications.Notify(NotificationSeverity.Error, "Not saved", ex.Summary);
         }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    /// <summary>What the rename box edits; it becomes a <see cref="RenameFighterRequest"/> to be checked and sent.</summary>
+    private sealed class RenameForm
+    {
+        public string? DisplayName { get; set; }
     }
 
     private async Task ForgetAsync()

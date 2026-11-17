@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using PoFightJudge.Api.Features.Auth;
 using PoFightJudge.Api.Features.Fight;
@@ -50,6 +51,11 @@ public class FightTests(ApiFactory factory)
             .StatusCode.Should().Be(HttpStatusCode.BadRequest, "two letters is not a tag");
         (await client.PostAsJsonAsync(ApiRoutes.Fights.Base, new CreateFightRequest(HostPersonaId.Referee, "aa1", "bbx")))
             .StatusCode.Should().Be(HttpStatusCode.BadRequest, "letters only");
+
+        // The same Shared rules the setup page runs, answered field by field so the page can put them under the box.
+        var sameTwice = await client.PostAsJsonAsync(ApiRoutes.Fights.Base, new CreateFightRequest(HostPersonaId.Referee, "aax", "AAX"));
+        sameTwice.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await sameTwice.Content.ReadFromJsonAsync<HttpValidationProblemDetails>())!.Errors.Keys.Should().Contain(nameof(CreateFightRequest.Player2Tag));
 
         // Read through the store rather than over HTTP: the roster endpoint is a later task, but the rows are the point.
         var fighters = factory.Services.GetRequiredService<IFighterRepository>();

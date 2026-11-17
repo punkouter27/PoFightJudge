@@ -5,9 +5,18 @@
         <ChildContent>
             @* Published as it is typed, so nothing is lost by pressing Start without leaving the box first. *@
             <RadzenTextBox Value="@Value" ValueChanged="@TypedAsync" @oninput="@(e => TypedAsync(e.Value?.ToString() ?? string.Empty))"
-                           Name="topic" MaxLength="200" Placeholder="@Placeholder" />
+                           Name="topic" MaxLength="@WatchLimits.MaxTopicLength" Placeholder="@Placeholder" />
         </ChildContent>
-        <Helper><span class="po-muted">@Hint</span></Helper>
+        <Helper>
+            @if (Error is { Length: > 0 })
+            {
+                <span class="validation-message" role="alert">@Error</span>
+            }
+            else
+            {
+                <span class="po-muted">@Hint</span>
+            }
+        </Helper>
     </RadzenFormField>
 
     @* The way out of a blank mind: pull the lever. How hot it runs is a Settings choice (Medium unless changed). *@
@@ -68,6 +77,9 @@
     [Parameter] public string Placeholder { get; set; } = "turning the heating up";
 
     [Parameter] public string Hint { get; set; } = "Leave it blank and they will find something.";
+
+    /// <summary>The setup validator's (or the server's) message about the topic, shown in place of the hint.</summary>
+    [Parameter] public string? Error { get; set; }
 
     /// <summary>Asked for rather than injected, like the clock: a page rendered without preferences spins medium.</summary>
     private Heat SpinHeat => (Services.GetService(typeof(Preferences)) as Preferences)?.Heat ?? Heat.Medium;

@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Claims;
 using Carter;
+using PoFightJudge.Api.Common;
 using PoFightJudge.Api.Features.Auth;
 using PoFightJudge.Api.Features.Fighters;
 using PoFightJudge.Api.Features.Live;
@@ -26,6 +27,7 @@ public sealed class FightEndpoints : ICarterModule
         // other call that reaches a model.
         fights.MapPost("/", StartAsync)
             .RequireRateLimiting(WatchServiceExtensions.AiPolicy)
+            .WithValidation<CreateFightRequest>()
             .Produces<CreateFightResponse>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status503ServiceUnavailable);

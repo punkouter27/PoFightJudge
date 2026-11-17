@@ -84,7 +84,16 @@
                                                    Name="yourTag" MaxLength="@Initials.MaxLength" Placeholder="ABC"
                                                    aria-label="Your fighter tag" />
                                 </ChildContent>
-                                <Helper><span class="po-muted">Three letters. The same tag you argue under, so this counts towards your record.</span></Helper>
+                                <Helper>
+                                    @if (TagError is { } tagError)
+                                    {
+                                        <span class="validation-message" role="alert">@tagError</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="po-muted">Three letters. The same tag you argue under, so this counts towards your record.</span>
+                                    }
+                                </Helper>
                             </RadzenFormField>
                         </div>
                     }
@@ -103,6 +112,7 @@
     private RenderFragment AboutStep => @<div class="step">
             @* A spun topic deals the sides as well, so nobody picks the easy one; they can still be changed. *@
             <TopicField @bind-Value="_topic" Spun="@(() => _husbandStance = Sides.Deal(Random.Shared))" Placeholder="turning the heating up"
+                        Error="@ErrorFor(nameof(WatchSetup.Topic))"
                         Hint="Something to be for or against. Leave it blank and they will find something." />
             @if (_topic.Trim().Length > 0)
             {
@@ -111,7 +121,7 @@
             }
 
             <div class="go">
-                <RadzenButton Text="Start the argument" Icon="theaters" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Large" Disabled="@(Problem is not null)" Click="@Start" />
+                <RadzenButton Text="Start the argument" Icon="theaters" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Large" Disabled="@(Problem is not null || _starting)" IsBusy="@_starting" Click="@Start" />
             </div>
         </div>;
 
@@ -171,20 +181,26 @@
         ? "whichever side they are not"
         : RoleOf(_opponent) == ProfileRole.Husband ? "the wife" : "the husband";
 
+    /// <summary>The setup's rules, from Shared beside the request validators the API runs on every round.</summary>
+    private static readonly WatchSetupValidator Rules = new();
+
+    private FluentValidation.Results.ValidationResult Check =>
+        Rules.Validate(new WatchSetup(IsOnePlayer, _husband, _wife, _opponent, _tag, _topic));
+
+    private string? ErrorFor(string field) =>
+        Check.Errors.FirstOrDefault(e => string.Equals(e.PropertyName, field, StringComparison.Ordinal))?.ErrorMessage;
+
+    /// <summary>The tag's message, once three characters are there to judge — not at the first letter.</summary>
+    private string? TagError => Initials.Normalize(_tag).Length >= Initials.MaxLength || _tag.Trim().Length >= Initials.MaxLength
+        ? ErrorFor(nameof(WatchSetup.Tag))
+        : null;
+
     /// <summary>Why the match cannot start yet, or null when it can. Doubles as the disabled reason on the button.</summary>
-    private string? Problem => IsOnePlayer ? OnePlayerProblem : CpuProblem;
+    private string? Problem =>
+        IsOnePlayer && !CanSpeak ? "Nothing here can transcribe a spoken turn, so 1P is off."
+        : Check.Errors.FirstOrDefault()?.ErrorMessage;
 
-    private string? OnePlayerProblem =>
-        !CanSpeak ? "Nothing here can transcribe a spoken turn, so 1P is off."
-        : _opponent is null ? "Pick who you are arguing with."
-        : !Initials.IsTag(_tag) ? "Say who you are: exactly three letters."
-        : string.Equals(Initials.Normalize(_tag), _opponent.Id, StringComparison.OrdinalIgnoreCase) ? "That tag belongs to the profile you are arguing with."
-        : null;
-
-    private string? CpuProblem =>
-        _husband is null || _wife is null ? "Pick both sides."
-        : string.Equals(_husband.Id, _wife.Id, StringComparison.OrdinalIgnoreCase) ? "Both sides cannot be the same."
-        : null;
+    private bool _starting;
 
     /// <summary>The profile's role, which is what decides which seat is left for the person.</summary>
     private ProfileRole RoleOf(MatchSide side) =>
@@ -313,17 +329,25 @@
 
     private async Task Start()
     {
-        if (Problem is not null)
+        if (Problem is not null || _starting)
         {
             return;
         }
 
-        Simulation.Set(_husband!, _wife!, _topic, HusbandStance);
-        await Memory.RememberAsync(new WatchCard(
-            _husband!.IsHuman ? string.Empty : _husband.Id,
-            _wife!.IsHuman ? string.Empty : _wife.Id,
-            _topic,
-            IsOnePlayer ? Initials.Normalize(_tag) : string.Empty));
-        Nav.NavigateTo("watch/play");
+        _starting = true;
+        try
+        {
+            Simulation.Set(_husband!, _wife!, _topic, HusbandStance);
+            await Memory.RememberAsync(new WatchCard(
+                _husband!.IsHuman ? string.Empty : _husband.Id,
+                _wife!.IsHuman ? string.Empty : _wife.Id,
+                _topic,
+                IsOnePlayer ? Initials.Normalize(_tag) : string.Empty));
+            Nav.NavigateTo("watch/play");
+        }
+        finally
+        {
+            _starting = false;
+        }
     }
 }

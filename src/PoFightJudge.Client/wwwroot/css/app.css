@@ -156,6 +156,13 @@ body { background: transparent; }
 .po-p1 { color: var(--po-p1); }
 .po-p2 { color: var(--po-p2); }
 
+/* ── Form errors: Blazor's ValidationMessage and the setup screens' field messages, one look everywhere ── */
+.validation-message {
+  color: var(--po-danger);
+  font-size: var(--po-text-xs);
+  margin-top: var(--po-space-1);
+}
+
 /* ── Chips (RadzenBadge is used for status; this is the broadcast strip label) ── */
 .po-chip {
   display: inline-flex;

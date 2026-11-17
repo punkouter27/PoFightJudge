@@ -4,6 +4,8 @@
 
 .who .tag { font-size: var(--po-text-2xl); letter-spacing: 0.06em; }
 
+.name-field { display: grid; min-width: 0; }
+
 ::deep .name { min-width: 12rem; }
 
 /* Positioned, because the sparks a promotion throws off the badge hang their canvas in here. */
