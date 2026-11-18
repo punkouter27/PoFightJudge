@@ -10,5 +10,5 @@
 .po-bare-main {
   flex: 1;
   min-width: 0;
-  padding-bottom: var(--po-space-5);
+  padding-bottom: var(--po-space-7);
 }

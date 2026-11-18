@@ -82,17 +82,17 @@ public sealed class ScreenshotRunner(AppFixture app, ITestOutputHelper output)
 
     }
 
-    /// <summary>What the bar opens on a desktop: the settings panel.</summary>
+    /// <summary>Where the header's gear goes on a desktop: the settings page.</summary>
     private async Task MenusAsync(string folder)
     {
         var (context, page, errors) = await app.OpenAsync(AppFixture.Desktop, "/", effects: Effects);
         try
         {
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-            await page.GetByRole(AriaRole.Button, new() { Name = "Settings" }).ClickAsync();
+            await page.GetByRole(AriaRole.Link, new() { Name = "Settings" }).ClickAsync();
             await page.Locator(".po-settings").WaitForAsync(new() { Timeout = 10_000 });
             await page.WaitForTimeoutAsync(400);
-            await ShootAsync(page, folder, "home-settings", "/", errors);
+            await ShootAsync(page, folder, "home-settings", "/settings", errors);
         }
         finally
         {

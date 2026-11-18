@@ -1,0 +1,161 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PoFightJudge app tokens — the "Broadcast" system (SPEC §14), on the Po web standard.
+
+   css/po-tokens.css (the Po web standard, the same file in every Po web app, loaded FIRST) owns the look: Inter
+   body, Space Grotesk headings, the indigo accent, the light/dark palette that follows the device, the radii and
+   the spacing ladder. This file never redefines one of those --po-* tokens; it adds the ones only this app has
+   (players, tiers, glass, motion, page widths) and aliases its own colour names to the estate's:
+     --po-fg → --po-text, --po-muted → --po-text-muted, --po-accent-text → --po-accent, …
+   App-only colour pairs are light-dark(light, dark) over po-tokens.css's `color-scheme: light dark`, so they follow
+   the device too. There is no theme switch and no data-theme attribute.
+
+   BREAKPOINTS — the app's own three (media queries cannot read custom properties, so they are written literally;
+   DesignRulesTests checks them; po-tokens.css carries the estate's own two and is exempt):
+     40rem (640px)  phone → large phone
+     48rem (768px)  tablet
+     64rem (1024px) desktop / nav switch
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Type (faces and the small/medium sizes are po-tokens.css's) ── */
+  --po-font-body: var(--po-font);
+
+  --po-text-2xs: 0.6875rem;  /* 11px — the floor */
+  --po-text-3xl: clamp(2.25rem, 3.5vw + 1.2rem, 3.25rem);
+  --po-text-4xl: clamp(3rem, 5vw + 1.4rem, 4.5rem);
+
+  /* ── Space (4px base; 1–6 are po-tokens.css's) ── */
+  --po-space-0: 0;
+  --po-space-7: 3rem;
+  --po-space-8: 4rem;
+
+  /* ── Radius (sm, the default and pill are po-tokens.css's) ── */
+  --po-radius-xs: 3px;
+  --po-radius-md: var(--po-radius-sm);
+  --po-radius-lg: var(--po-radius);
+
+  /* ── Glass ──
+     Panels that sit over the live stage's shader, blurring it rather than hiding it. The floor colour is opaque
+     enough on its own that the text over it still clears AA when backdrop-filter is unsupported or switched off —
+     the blur is the effect, never the legibility. */
+  --po-glass: color-mix(in srgb, var(--po-surface) 88%, transparent);
+  --po-glass-edge: light-dark(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.08));
+  --po-glass-blur: blur(14px) saturate(1.3);
+  --po-lean: 0.5;
+  --po-glint-x: -100%;
+  --po-glint-y: -100%;
+
+  /* ── Elevation ── */
+  --po-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --po-shadow-2: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --po-shadow-3: 0 18px 48px rgba(0, 0, 0, 0.45);
+
+  /* ── Motion ── */
+  --po-dur-fast: 120ms;
+  --po-dur-base: 220ms;
+  --po-dur-slow: 420ms;
+  --po-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  /* A damped spring: past the mark, back, and settled. For things that are poured or dropped rather than slid. */
+  --po-spring: linear(0, 0.45 12%, 0.92 24%, 1.12 34%, 1.06 46%, 0.98 58%, 1.01 72%, 1);
+  /* Falling and bouncing: accelerates down, lands, and each bounce gives back less height than the last. */
+  --po-bounce: linear(0, 0.06 10%, 0.25 20%, 0.56 30%, 1 40%, 0.9 50%, 0.87 55%, 0.9 60%, 1 70%, 0.97 78%, 1 86%, 0.995 93%, 1);
+  --po-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* ── Safe area ──
+     index.html asks for viewport-fit=cover, which puts the page under the notch and the home indicator. These are
+     what gives it back: every edge that touches the frame adds the inset for that edge, and a browser that has no
+     insets resolves all four to zero. ── */
+  --po-safe-t: env(safe-area-inset-top, 0px);
+  --po-safe-r: env(safe-area-inset-right, 0px);
+  --po-safe-b: env(safe-area-inset-bottom, 0px);
+  --po-safe-l: env(safe-area-inset-left, 0px);
+
+  /* ── Page widths (PageShell) ── */
+  --po-page-narrow: 46rem;
+  --po-page-standard: 75rem;   /* 1200px — the hi-fi Home/Verdict column */
+  --po-page-wide: 86rem;       /* 1376px — the live stage */
+  --po-page-gutter: var(--po-space-6);
+
+  /* ── Surfaces: the estate's bg/surface/surface-2, plus two app steps ── */
+  --po-bg-elev: light-dark(#eef0f6, #131620);
+  --po-surface-3: light-dark(#e3e6ef, #262b3a);
+
+  /* ── Ink: aliases of the estate's text tokens ── */
+  --po-fg: var(--po-text);
+  --po-fg-invert: var(--po-surface);
+  --po-muted: var(--po-text-muted);                  /* AA on every surface */
+  --po-muted-soft: light-dark(#8b91a3, #5e6476);     /* dots and rules only — never text */
+
+  /* ── Lines (--po-border is the estate's) ── */
+  --po-border-strong: light-dark(#a9afc0, #474e63);
+  --po-rule: light-dark(rgba(20, 24, 38, 0.08), rgba(255, 255, 255, 0.08));
+
+  /* ── Brand & status. The accent and the four statuses are the estate's (--po-accent, --po-success, …); the
+     *-text and *-fg twins say which to use for words on a surface and words on the fill. ── */
+  --po-accent-fg: var(--po-on-accent);
+  --po-accent-text: var(--po-accent);
+  --po-p1: light-dark(#0a5d7a, #3fa9f5);
+  --po-p1-soft: light-dark(rgba(10, 93, 122, 0.14), rgba(63, 169, 245, 0.17));
+  --po-p2: light-dark(#a5004e, #ff4f8b);
+  --po-p2-soft: light-dark(rgba(165, 0, 78, 0.12), rgba(255, 79, 139, 0.17));
+  --po-danger-fg: var(--po-on-accent);
+  --po-live: var(--po-danger);
+
+  /* ── Rank tiers (Elo, read against the ladder): one fill each, every one light enough to carry the same dark ink,
+     and the same in both themes — a medal is the colour it is. ── */
+  --po-tier-ink: light-dark(#0b0d12, #0b0d12);
+  --po-tier-bronze: light-dark(#d08a4f, #d08a4f);
+  --po-tier-silver: light-dark(#c3cad6, #c3cad6);
+  --po-tier-gold: light-dark(#ffcc33, #ffcc33);
+  --po-tier-platinum: light-dark(#5fd4c9, #5fd4c9);
+  --po-tier-diamond: light-dark(#9ad8ff, #9ad8ff);
+}
+
+/* ── Radzen bridge ──
+   Radzen's own stylesheet is injected after this file, so the bridge sits on html:root (higher specificity than
+   Radzen's :root) and maps the library's variables onto ours. Grids, tabs, charts, inputs and dialogs then inherit
+   the palette in both themes without a second colour system. */
+html:root {
+  --rz-primary: var(--po-accent);
+  --rz-primary-light: var(--po-accent);
+  --rz-primary-lighter: var(--po-accent-soft);
+  --rz-primary-dark: var(--po-accent);
+  --rz-on-primary: var(--po-accent-fg);
+  --rz-on-primary-light: var(--po-accent-fg);
+  --rz-secondary: var(--po-p1);
+  --rz-on-secondary: var(--po-fg-invert);
+  --rz-info: var(--po-p1);
+  --rz-success: var(--po-success);
+  --rz-warning: var(--po-warning);
+  --rz-danger: var(--po-danger);
+  --rz-on-danger: var(--po-danger-fg);
+  --rz-text-color: var(--po-fg);
+  --rz-text-secondary-color: var(--po-muted);
+  --rz-text-tertiary-color: var(--po-muted);
+  --rz-text-title-color: var(--po-fg);
+  --rz-text-contrast-color: var(--po-fg-invert);
+  --rz-body-background-color: var(--po-bg);
+  --rz-base-background-color: var(--po-surface);
+  --rz-panel-background-color: var(--po-surface);
+  --rz-card-background-color: var(--po-surface);
+  --rz-input-background-color: var(--po-surface-2);
+  --rz-dialog-background-color: var(--po-surface);
+  --rz-menu-background-color: transparent;
+  --rz-border-color: var(--po-border);
+  --rz-input-border-color: var(--po-border);
+  --rz-border-radius: var(--po-radius-md);
+  /* Radzen sizes its buttons from these, in a sheet <RadzenTheme> injects after this file at the same specificity —
+     which is why app.css asking .rz-button for a 44 px min-height lost, and the session buttons measured 36. The
+     bridge sits on html:root, so setting the variable is what actually moves them. sm stays where it is: 28 px
+     clears WCAG 2.5.8's 24, and a select bar of 44 px pills is a different design. */
+  --rz-button-size-md: 2.75rem;
+  --rz-input-border-radius: var(--po-radius-sm);
+  --rz-button-border-radius: var(--po-radius-sm);
+  --rz-body-font-family: var(--po-font-body);
+  --rz-text-font-family: var(--po-font-body);
+  --rz-input-font-family: var(--po-font-body);
+  --rz-series-1: var(--po-p1);
+  --rz-series-2: var(--po-p2);
+  --rz-series-3: var(--po-accent);
+  --rz-series-4: var(--po-success);
+}

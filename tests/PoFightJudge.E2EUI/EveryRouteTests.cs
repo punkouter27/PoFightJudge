@@ -91,7 +91,7 @@ public class EveryRouteTests(AppFixture app)
                             .slice(0, 3)
                             .map(e => e.tagName + '.' + String(e.className || '').split(' ').filter(c => !c.startsWith('b-')).join('.')),
                         small: [...document.querySelectorAll('button, a[href], [role=button]')]
-                            .filter(e => !e.closest('.brand'))
+                            .filter(e => !e.closest('.po-header__title'))
                             .map(e => ({ e, r: e.getBoundingClientRect() }))
                             .filter(x => x.r.width > 0 && x.r.height > 0 && (x.r.width < " + MinimumTarget + " || x.r.height < " + MinimumTarget + @"))
                             .map(x => (x.e.innerText || x.e.getAttribute('aria-label') || x.e.className || '?').trim().split('\n')[0].slice(0, 24)

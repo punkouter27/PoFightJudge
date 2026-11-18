@@ -1,61 +1,50 @@
-using Blazored.LocalStorage;
 using Microsoft.JSInterop;
 using Radzen;
 
 namespace PoFightJudge.Client.Services;
 
 /// <summary>
-/// The one place the theme is read and written: the <c>data-theme</c> attribute (our tokens), Radzen's stylesheet
-/// (<see cref="ThemeService"/>) and the persisted choice (LocalStorage, the same key <c>js/theme.js</c> reads before
-/// first paint). Dark is the default; only an explicit choice is stored.
+/// The theme follows the device (Po web standard): light or dark as <c>prefers-color-scheme</c> says, with no switch
+/// and nothing stored. Our tokens follow it in CSS on their own (po-tokens.css, light-dark()); this keeps Radzen's
+/// stylesheet (<see cref="ThemeService"/>) on the matching material/material-dark sheet, at start and whenever the
+/// device flips. <c>js/theme.js</c> makes the same choice before first paint.
 /// </summary>
-public sealed class ThemeInterop(IJSRuntime js, ILocalStorageService storage, ThemeService radzen)
+public sealed class ThemeInterop(IJSRuntime js, ThemeService radzen) : IDisposable
 {
-    public const string StorageKey = "pofightjudge:theme";
-    public const string Dark = "dark";
-    public const string Light = "light";
     public const string RadzenDark = "material-dark";
     public const string RadzenLight = "material";
 
-    public string Current { get; private set; } = Dark;
+    private DotNetObjectReference<ThemeInterop>? _self;
 
-    public bool IsDark => string.Equals(Current, Dark, StringComparison.Ordinal);
+    public bool IsDark { get; private set; } = true;
 
-    /// <summary>Reads the stored choice (if any) and applies it. Safe when storage is blocked.</summary>
+    /// <summary>Reads the device's scheme, applies it to Radzen, and listens for it to change. Safe without JS.</summary>
     public async Task InitializeAsync()
     {
         try
         {
-            var stored = await storage.GetItemAsStringAsync(StorageKey);
-            if (stored is Light or Dark)
+            Apply(await js.InvokeAsync<bool>("PoTheme.prefersDark"));
+            if (_self is null)
             {
-                await ApplyAsync(stored, persist: false);
+                _self = DotNetObjectReference.Create(this);
+                await js.InvokeVoidAsync("PoTheme.watch", _self);
             }
         }
         catch (Exception ex) when (ex is JSException or InvalidOperationException)
         {
-            // Storage blocked or not ready — keep the default.
+            // No interop (prerender, a test renderer): Radzen keeps the sheet it was given.
         }
     }
 
-    public Task ToggleAsync() => ApplyAsync(IsDark ? Light : Dark, persist: true);
+    /// <summary>Called by <c>PoTheme.watch</c> when the device switches between light and dark.</summary>
+    [JSInvokable]
+    public void OnDeviceThemeChanged(bool dark) => Apply(dark);
 
-    public async Task ApplyAsync(string theme, bool persist)
+    private void Apply(bool dark)
     {
-        Current = theme is Light ? Light : Dark;
-        radzen.SetTheme(IsDark ? RadzenDark : RadzenLight);
-        try
-        {
-            await js.InvokeVoidAsync("document.documentElement.setAttribute", "data-theme", Current);
-            await js.InvokeVoidAsync("PoTheme.chrome", Current);
-            if (persist)
-            {
-                await storage.SetItemAsStringAsync(StorageKey, Current);
-            }
-        }
-        catch (JSException)
-        {
-            // Applied via Radzen at least; the attribute/persist half failed (storage blocked).
-        }
+        IsDark = dark;
+        radzen.SetTheme(dark ? RadzenDark : RadzenLight);
     }
+
+    public void Dispose() => _self?.Dispose();
 }

@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using PoFightJudge.Shared;
 using PoFightJudge.Shared.Identifiers;
 using PoFightJudge.Shared.Models;
@@ -232,8 +233,23 @@ public sealed class ApiClient(IHttpClientFactory clients) : IApiClient
     public async Task<FeatureFlagsDto> GetFeaturesAsync(CancellationToken ct = default) =>
         await anonymous.GetFromJsonAsync<FeatureFlagsDto>(ApiRoutes.Features.Url, ct) ?? new FeatureFlagsDto(false, false, false, false);
 
-    public Task<HealthReportDto?> GetHealthDetailsAsync(CancellationToken ct = default) =>
-        http.GetFromJsonAsync<HealthReportDto>(ApiRoutes.Health.DetailsUrl, ct);
+    /// <summary>
+    /// The /diag page is anonymous. In Production the authorized client throws before the request leaves when nobody
+    /// is signed in (no token), which used to put the page into its error boundary; a signed-out visitor reads the
+    /// report through the anonymous client instead. A signed-in caller still sends the token, so their AI allowance row
+    /// comes back.
+    /// </summary>
+    public async Task<HealthReportDto?> GetHealthDetailsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await http.GetFromJsonAsync<HealthReportDto>(ApiRoutes.Health.DetailsUrl, ct);
+        }
+        catch (AccessTokenNotAvailableException)
+        {
+            return await anonymous.GetFromJsonAsync<HealthReportDto>(ApiRoutes.Health.DetailsUrl, ct);
+        }
+    }
 
     public async Task<IReadOnlyList<ProfileDto>> GetProfilesAsync(CancellationToken ct = default) =>
         await http.GetFromJsonAsync<List<ProfileDto>>(ApiRoutes.Profiles.Base, ct) ?? [];

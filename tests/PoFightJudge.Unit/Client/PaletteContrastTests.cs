@@ -4,8 +4,8 @@ using System.Text.RegularExpressions;
 namespace PoFightJudge.Unit.Client;
 
 /// <summary>
-/// Reads the design tokens straight out of <c>app.css</c> and checks the colour pairs the UI actually renders, in
-/// BOTH themes. Contrast is a property of the palette, not of a screenshot, so it belongs in the suite: change a token
+/// Reads the design tokens straight out of <c>po-tokens.css</c> (the estate's) and <c>app-tokens.css</c> (this app's,
+/// aliased onto them) and checks the colour pairs the UI actually renders, in BOTH device themes. Contrast is a property of the palette, not of a screenshot, so it belongs in the suite: change a token
 /// to something unreadable and this fails before anyone sees it.
 /// </summary>
 public partial class PaletteContrastTests
@@ -40,7 +40,7 @@ public partial class PaletteContrastTests
         ("--po-success", "--po-surface", TextMinimum, "verified claims"),
         ("--po-warning", "--po-surface", TextMinimum, "unverifiable claims"),
         ("--po-focus", "--po-bg", NonTextMinimum, "the focus ring"),
-        ("--po-border", "--po-surface", OutlineMinimum, "card outlines"),
+        ("--po-border-strong", "--po-surface", OutlineMinimum, "card outlines"),
         ("--po-tier-ink", "--po-tier-bronze", TextMinimum, "a Bronze badge"),
         ("--po-tier-ink", "--po-tier-silver", TextMinimum, "a Silver badge"),
         ("--po-tier-ink", "--po-tier-gold", TextMinimum, "a Gold badge"),
@@ -73,15 +73,57 @@ public partial class PaletteContrastTests
         failures.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// The palette as the browser resolves it. po-tokens.css (the Po web standard) declares the estate's colours as
+    /// hex, light in <c>:root</c> and dark in its <c>prefers-color-scheme: dark</c> block; app-tokens.css adds this
+    /// app's own pairs as <c>light-dark(#light, #dark)</c> and aliases the rest with <c>var(--po-*)</c>, which is
+    /// followed here to the hex it lands on.
+    /// </summary>
     private static (IReadOnlyDictionary<string, string> Light, IReadOnlyDictionary<string, string> Dark) Load()
     {
-        var css = File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "PoFightJudge.Client", "wwwroot", "css", "po-tokens.css"));
+        var root = Path.Combine(RepositoryRoot(), "src", "PoFightJudge.Client", "wwwroot", "css");
+        var estate = File.ReadAllText(Path.Combine(root, "po-tokens.css"));
+        var app = File.ReadAllText(Path.Combine(root, "app-tokens.css"));
+
         var light = new Dictionary<string, string>(StringComparer.Ordinal);
         var dark = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (Match m in LightDarkToken().Matches(css))
+
+        var darkBlock = estate.IndexOf("@media (prefers-color-scheme: dark)", StringComparison.Ordinal);
+        foreach (Match m in HexToken().Matches(estate[..darkBlock]))
+        {
+            light[m.Groups["name"].Value] = m.Groups["hex"].Value;
+            dark[m.Groups["name"].Value] = m.Groups["hex"].Value;
+        }
+
+        // The dark block's :root closes at the first brace after the media query opens.
+        var darkEnd = estate.IndexOf('}', estate.IndexOf('{', darkBlock));
+        foreach (Match m in HexToken().Matches(estate[darkBlock..darkEnd]))
+        {
+            dark[m.Groups["name"].Value] = m.Groups["hex"].Value;
+        }
+
+        foreach (Match m in LightDarkToken().Matches(app))
         {
             light[m.Groups["name"].Value] = m.Groups["light"].Value;
             dark[m.Groups["name"].Value] = m.Groups["dark"].Value;
+        }
+
+        var aliases = AliasToken().Matches(app).ToDictionary(m => m.Groups["name"].Value, m => m.Groups["target"].Value, StringComparer.Ordinal);
+        foreach (var tokens in new[] { light, dark })
+        {
+            foreach (var (name, target) in aliases)
+            {
+                var next = target;
+                for (var hop = 0; hop < 8 && !tokens.ContainsKey(next) && aliases.TryGetValue(next, out var further); hop++)
+                {
+                    next = further;
+                }
+
+                if (tokens.TryGetValue(next, out var hex))
+                {
+                    tokens[name] = hex;
+                }
+            }
         }
 
         return (light, dark);
@@ -125,4 +167,10 @@ public partial class PaletteContrastTests
     /// <summary>Only hex pairs are checked; rgba() soft tints are fills behind other tokens, never text.</summary>
     [GeneratedRegex(@"(?<name>--po-[\w-]+):\s*light-dark\(\s*(?<light>#[0-9a-fA-F]{3,6})\s*,\s*(?<dark>#[0-9a-fA-F]{3,6})\s*\)", RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 2000)]
     private static partial Regex LightDarkToken();
+
+    [GeneratedRegex(@"(?<name>--po-[\w-]+):\s*(?<hex>#[0-9a-fA-F]{3,6})\s*;", RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 2000)]
+    private static partial Regex HexToken();
+
+    [GeneratedRegex(@"(?<name>--po-[\w-]+):\s*var\(\s*(?<target>--po-[\w-]+)\s*\)\s*;", RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 2000)]
+    private static partial Regex AliasToken();
 }

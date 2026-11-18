@@ -1,0 +1,42 @@
+/* One card of settings, a row each: the label on the left, its control on the right. ::deep reaches into the rows,
+   which sit inside AuthorizeView (a child component) as well as directly in this page's markup. */
+.po-settings {
+  display: grid;
+  gap: var(--po-space-3);
+  grid-template-columns: minmax(0, 1fr);
+  padding: var(--po-space-4);
+}
+
+.po-scope ::deep .setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--po-space-3);
+}
+
+.po-scope ::deep .setting > span:first-child { flex: none; }
+
+.po-scope ::deep .links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--po-space-2) var(--po-space-4);
+}
+
+.po-scope ::deep .user {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--po-space-1);
+  min-width: 0;
+  padding: var(--po-space-1) var(--po-space-2);
+  border: 1px solid var(--po-border);
+  border-radius: var(--po-radius-pill);
+  background: var(--po-surface-2);
+  color: var(--po-muted);
+  font-size: var(--po-text-xs);
+}
+
+.po-scope ::deep .user-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

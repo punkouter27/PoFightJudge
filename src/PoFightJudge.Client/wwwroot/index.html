@@ -1,14 +1,19 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="color-scheme" content="dark light" />
-  <meta name="theme-color" content="#0b0d12" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#f6f7fb" />
   <title>PoFightJudge</title>
   <base href="/" />
-  <!-- Theme is stamped before the first stylesheet paints, or the OS palette renders and then snaps (see js/theme.js). -->
+  <!-- Po web standard tokens FIRST: self-hosted Inter + Space Grotesk, the indigo accent, the light/dark palette that
+       follows the device, and the shell (header, gear, build stamp, /diag cards). -->
+  <link rel="stylesheet" href="css/po-tokens.css" />
+  <!-- Radzen's sheet for the device's scheme goes in the critical path from here (see js/theme.js). -->
   <script src="js/theme.js"></script>
+  <!-- Tab with nothing focused opens the developer window (/po-dev.html). A file, not inline: the CSP is script-src 'self'. -->
+  <script src="js/po-devwindow.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/fx.js"></script>
   <script src="js/sfx.js"></script>
@@ -21,10 +26,10 @@
   <script src="js/save.js"></script>
   <script src="js/wake.js"></script>
   <script src="js/viewport.js"></script>
-  <!-- Inter is self-hosted (css/po-tokens.css → fonts/InterVariable.woff2): no third-party font request. -->
-  <!-- Radzen's theme stylesheet is appended by js/theme.js so it is in the critical path; <RadzenTheme> in App.razor
-       owns the runtime swap. app.css bridges its variables onto the --po-* tokens. -->
-  <link rel="stylesheet" href="css/po-tokens.css" />
+  <!-- Fonts are self-hosted (css/po-tokens.css → fonts/*.woff2): no third-party font request. Radzen's theme
+       stylesheet is appended by js/theme.js; <RadzenTheme> in App.razor owns the runtime swap, and app-tokens.css
+       bridges its variables onto the --po-* tokens. -->
+  <link rel="stylesheet" href="css/app-tokens.css" />
   <link rel="stylesheet" href="css/po-motion.css" />
   <link rel="stylesheet" href="css/app.css" />
   <link rel="stylesheet" href="PoFightJudge.Client.styles.css" />

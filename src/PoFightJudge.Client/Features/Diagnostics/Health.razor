@@ -23,9 +23,9 @@
             </RadzenAlert>
             <section aria-labelledby="diag-api">
                 <h2 id="diag-api">API</h2>
-                <RadzenCard class="row">
+                <RadzenCard class="row po-diag__card">
                     <span class="name">Reachable</span>
-                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="No" />
+                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="No" class="po-badge po-badge--bad" />
                 </RadzenCard>
             </section>
         }
@@ -45,20 +45,20 @@
 
             <section aria-labelledby="diag-api">
                 <h2 id="diag-api">API</h2>
-                <RadzenCard class="row">
+                <RadzenCard class="row po-diag__card">
                     <span class="what">
                         <span class="name">The app's server</span>
                         <span class="po-muted purpose">Answers every page and runs the fights.</span>
                     </span>
                     <span class="facts">
-                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Reachable" />
+                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Reachable" class="po-badge po-badge--ok" />
                         <span class="po-muted">@Ms(_apiMs)</span>
                     </span>
                 </RadzenCard>
             </section>
 
             <section aria-labelledby="diag-storage">
-                <h2 id="diag-storage">Database / storage</h2>
+                <h2 id="diag-storage">Data</h2>
                 @{ var stores = Rows(HealthCategory.Storage); }
                 @if (stores.Count == 0)
                 {
@@ -66,7 +66,7 @@
                 }
                 @foreach (var row in stores)
                 {
-                    <RadzenCard class="row">
+                    <RadzenCard class="row po-diag__card">
                         <span class="what">
                             <span class="name">@row.Name</span>
                             @if (row.Purpose is { Length: > 0 })
@@ -75,7 +75,7 @@
                             }
                         </span>
                         <span class="facts">
-                            <RadzenBadge BadgeStyle="@Style(row.State)" Text="@Word(row.State)" />
+                            <RadzenBadge BadgeStyle="@Style(row.State)" Text="@Word(row.State)" class="@($"po-badge po-badge--{Badge(row.State)}")" />
                             <span class="po-muted">@Ms(row.LatencyMs)</span>
                         </span>
                     </RadzenCard>
@@ -91,7 +91,7 @@
                 }
                 @foreach (var row in services)
                 {
-                    <RadzenCard class="row">
+                    <RadzenCard class="row po-diag__card">
                         <span class="what">
                             <span class="name">@row.Name</span>
                             @if (row.Purpose is { Length: > 0 })
@@ -101,7 +101,7 @@
                             <span class="po-muted detail">@row.Detail</span>
                         </span>
                         <span class="facts">
-                            <RadzenBadge BadgeStyle="@Style(row.State)" Text="@Word(row.State)" />
+                            <RadzenBadge BadgeStyle="@Style(row.State)" Text="@Word(row.State)" class="@($"po-badge po-badge--{Badge(row.State)}")" />
                             <span class="po-muted">@Ms(row.LatencyMs) · checked @_report.Timestamp.ToString("HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)</span>
                         </span>
                     </RadzenCard>
@@ -211,6 +211,14 @@
         HealthState.Degraded => "Degraded",
         HealthState.NotConfigured => "Not set up",
         _ => "Unhealthy",
+    };
+
+    /// <summary>The Po badge modifier (po-tokens.css): ok, warn or bad.</summary>
+    private static string Badge(HealthState state) => state switch
+    {
+        HealthState.Ok => "ok",
+        HealthState.Failed => "bad",
+        _ => "warn",
     };
 
     private static AlertStyle Alert(HealthState state) => state switch

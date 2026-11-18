@@ -1,6 +1,6 @@
 /* index.html declares apple-mobile-web-app-capable, so an installed copy runs under the status bar rather than
-   below it. The top inset is the shell's, not the bar's: the two banners sit above the bar and would otherwise be
-   the things wearing the notch. */
+   below it. The top inset is the shell's, not the header's: the two banners sit above the header and would otherwise
+   be the things wearing the notch. */
 .shell {
   min-height: 100vh;
   min-height: 100dvh;
@@ -10,142 +10,18 @@
   color: var(--po-fg);
 }
 
-/* ── Top bar: [brand | session]. No nav: Home is every destination, and the brand leads back to it. ── */
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--po-space-3);
-  min-height: 56px;
-  padding-block: 0;
-  padding-inline: max(var(--po-space-4), var(--po-safe-l)) max(var(--po-space-4), var(--po-safe-r));
-  border-bottom: 1px solid var(--po-border);
-  background: color-mix(in srgb, var(--po-bg-elev) 88%, transparent);
-  backdrop-filter: saturate(140%) blur(14px);
-  -webkit-backdrop-filter: saturate(140%) blur(14px);
-}
-
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--po-space-2);
-  color: var(--po-fg);
-  text-decoration: none;
-  line-height: 1;
-  flex: none;
-  white-space: nowrap;
-}
-
-.brand:hover { color: var(--po-fg); }
-
-.mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--po-radius-sm);
-  background: var(--po-accent);
-  color: var(--po-accent-fg);
-  flex: none;
-}
-
-.wordmark {
-  font-family: var(--po-font-display);
-  font-size: var(--po-text-lg);
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.wordmark em {
-  font-style: normal;
-  color: var(--po-accent-text);
-}
-
-
-.session {
-  flex: none;
-  display: flex;
-  align-items: center;
-  gap: var(--po-space-2);
-  white-space: nowrap;
-}
-
-.user {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--po-space-1);
-  padding: var(--po-space-1) var(--po-space-2);
-  border: 1px solid var(--po-border);
-  border-radius: var(--po-radius-pill);
-  background: var(--po-surface-2);
-  color: var(--po-muted);
-  font-size: var(--po-text-xs);
-  max-width: 10rem;
-}
-
-.user-name {
-  max-width: 7rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .content {
   flex: 1;
   min-width: 0;
-  /* Room under the last of the page for the build stamp, which is fixed in the corner and would sit on it. */
-  padding-bottom: var(--po-space-5);
+  /* Room under the last of the page for the build stamp (.po-version), which is fixed in the corner and would sit on it. */
+  padding-bottom: var(--po-space-7);
 }
 
 @media (max-width: 40rem) {
-  .wordmark {
-    font-size: var(--po-text-lg);
-  }
   .content {
-    padding-bottom: calc(3.75rem + var(--po-safe-b));
+    padding-bottom: calc(3.75rem + var(--po-safe-b) + var(--po-space-2));
   }
 }
-
-/* ── Settings: one button on the bar, a small card under it ──
-   The scrim is clear: the panel is a menu, not a dialog that dims the page, but a click anywhere still closes it. */
-.po-settings-scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-}
-
-.po-settings {
-  position: fixed;
-  z-index: 21;
-  inset-block-start: calc(56px + var(--po-safe-t) + var(--po-space-2));
-  inset-inline-end: max(var(--po-space-4), var(--po-safe-r));
-  display: grid;
-  gap: var(--po-space-3);
-  min-width: 15rem;
-  /* The host picker's taglines are long; the panel stays a card and the dropdown truncates. */
-  width: min(22rem, calc(100vw - 2 * var(--po-space-4)));
-  grid-template-columns: minmax(0, 1fr);
-  padding: var(--po-space-4);
-  box-shadow: var(--po-shadow-3);
-  animation: po-fade var(--po-dur-fast) var(--po-ease);
-}
-
-.po-settings:focus { outline: none; }
-
-.setting {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--po-space-3);
-}
-
-.setting > span:first-child { flex: none; }
 
 /* What is left when a page has thrown. Deliberately plain: it is the last thing standing. */
 .broke {
@@ -170,8 +46,4 @@
   display: flex;
   gap: var(--po-space-3);
   flex-wrap: wrap;
-}
-
-@keyframes po-fade {
-  from { opacity: 0; }
 }

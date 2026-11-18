@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-    Repo-specific build checks, run by the shared deploy.yml after the unit tests.
+    Repo-specific build checks, run by hand (the Po deploy.yml builds and deploys only; it calls no test hook).
 
 .DESCRIPTION
-    Runs from the repo root on ubuntu-latest, after `dotnet build *.slnx -c Release`.
+    Runs from the repo root, after `dotnet build *.slnx -c Release`.
     1. dotnet format --verify-no-changes (formatting drift fails the build)
     2. The E2EAPI tier: in-process on the fakes, no Azurite or browser needed.
     Integration (Azurite) and E2EUI (Playwright + microphone fixture) stay local: scripts/setup.ps1.

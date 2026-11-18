@@ -16,5 +16,22 @@ public static class ClaimsPrincipalExtensions
     public static string? DisplayName(this ClaimsPrincipal user) =>
         user.Identity?.Name ?? user.FindFirstValue("name") ?? user.FindFirstValue("preferred_username");
 
+    /// <summary>
+    /// The sign-in address, when the credential has one: an Entra token's email or preferred_username, or a FakeAuth
+    /// name that is an address. A guest has none.
+    /// </summary>
+    public static string? Email(this ClaimsPrincipal user)
+    {
+        foreach (var candidate in new[] { user.FindFirstValue(ClaimTypes.Email), user.FindFirstValue("email"), user.FindFirstValue("preferred_username"), user.FindFirstValue(ClaimTypes.Upn), user.Identity?.Name })
+        {
+            if (candidate is { Length: > 0 } value && value.Contains('@', StringComparison.Ordinal))
+            {
+                return value;
+            }
+        }
+
+        return null;
+    }
+
     public static bool IsAdmin(this ClaimsPrincipal user) => user.IsInRole("Admin");
 }

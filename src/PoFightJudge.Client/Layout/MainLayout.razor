@@ -1,89 +1,12 @@
 @inherits LayoutComponentBase
-@using PoFightJudge.Client.Layout.Components
-@using PoFightJudge.Client.Features.Auth
-@inject IApiClient Api
 @inject NavigationManager Nav
-@inject IServiceProvider Services
-@inject IWebAssemblyHostEnvironment HostEnvironment
-@inject IJSRuntime JS
-@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 
 <div class="shell">
     <FakeAiBanner />
     <ConnectionBanner />
-    <header class="topbar">
-        <a class="brand" href="">
-            <span class="mark" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6z"></path></svg>
-            </span>
-            <span class="wordmark">PoFight <em>Judge</em></span>
-        </a>
-        <div class="session">
-            @* Who you are, the sound, the volume, the theme and the way out: five things nobody needs every minute,
-               behind one button rather than five across the bar. *@
-            <RadzenButton class="settings-toggle" Icon="tune" ButtonStyle="ButtonStyle.Base" Variant="Variant.Text"
-                          aria-label="Settings" title="Settings" aria-expanded="@(_settings ? "true" : "false")" aria-controls="po-settings"
-                          Click="@(() => _settings = !_settings)" />
-        </div>
-    </header>
-    @if (_settings)
-    {
-        <div class="po-settings-scrim" @onclick="@(() => _settings = false)" aria-hidden="true"></div>
-        <section class="po-settings po-card" id="po-settings" role="dialog" aria-label="Settings" tabindex="-1"
-                 @ref="_settingsPanel" @onkeydown="@OnSettingsKey">
-            <AuthorizeView>
-                <Authorized>
-                    <span class="user"><RadzenIcon Icon="person" /><span class="user-name">@context.User.Identity?.Name</span></span>
-                </Authorized>
-            </AuthorizeView>
-            <div class="setting"><span class="po-eyebrow">Sound</span><SoundToggle /></div>
-            <div class="setting"><span class="po-eyebrow">Theme</span><ThemeToggle /></div>
-            <div class="setting">
-                <span class="po-eyebrow">Stage effects</span>
-                <RadzenSwitch Value="@Prefs.Effects" ValueChanged="@((bool on) => Prefs.SetEffectsAsync(on))" Name="effects"
-                              InputAttributes="@(new Dictionary<string, object> { ["aria-label"] = "Stage effects" })" />
-            </div>
-            <div class="setting" title="The verdict's trait scores, mood chart and thirty measurements of how each of you talked.">
-                <span class="po-eyebrow">Detailed analysis</span>
-                <RadzenSwitch Value="@Prefs.Detailed" ValueChanged="@((bool on) => Prefs.SetDetailedAsync(on))" Name="detail"
-                              InputAttributes="@(new Dictionary<string, object> { ["aria-label"] = "Detailed analysis" })" />
-            </div>
-            <div class="setting" title="Your spoken 1P turns are transcribed on this device. Downloads a 41 MB model once.">
-                <span class="po-eyebrow">On-device transcription</span>
-                <RadzenSwitch Value="@Prefs.OnDeviceAsr" ValueChanged="@((bool on) => Prefs.SetOnDeviceAsrAsync(on))" Name="asr"
-                              InputAttributes="@(new Dictionary<string, object> { ["aria-label"] = "On-device transcription" })" />
-            </div>
-            <div class="setting">
-                <span class="po-eyebrow">Spin heat</span>
-                <RadzenSelectBar TValue="TopicField.Heat" Value="@Prefs.Heat" ValueChanged="@((TopicField.Heat h) => Prefs.SetHeatAsync(h))"
-                                 Size="ButtonSize.Small" Name="heat" aria-label="How spicy a topic">
-                    <Items>
-                        <RadzenSelectBarItem Text="Mild" Value="@TopicField.Heat.Mild" />
-                        <RadzenSelectBarItem Text="Medium" Value="@TopicField.Heat.Medium" />
-                        <RadzenSelectBarItem Text="Spicy" Value="@TopicField.Heat.Spicy" />
-                    </Items>
-                </RadzenSelectBar>
-            </div>
-            <HostPersonaPicker Persona="@Prefs.Host" PersonaChanged="@((HostPersonaId h) => Prefs.SetHostAsync(h))" />
-            <AuthorizeView>
-                <Authorized>
-                    @foreach (var link in AccountMenu.Links())
-                    {
-                        <RadzenLink Path="@link.Path" Text="@link.Label" Icon="@link.Icon" />
-                    }
-                    @if (!HostEnvironment.IsProduction())
-                    {
-                        <RadzenButton Text="Dev: Fake user" Icon="switch_account" ButtonStyle="ButtonStyle.Base" Variant="Variant.Text" Size="ButtonSize.Small"
-                                      Click="@(() => AccountMenu.SwitchFakeUserAsync(JS, Nav, "dev@pofightjudge.dev"))" />
-                        <RadzenButton Text="Clear Dev user" Icon="person_off" ButtonStyle="ButtonStyle.Base" Variant="Variant.Text" Size="ButtonSize.Small"
-                                      Click="@(() => AccountMenu.SwitchFakeUserAsync(JS, Nav, null))" />
-                    }
-                    <RadzenButton Text="Sign out" Icon="logout" ButtonStyle="ButtonStyle.Base" Variant="Variant.Outlined" Size="ButtonSize.Small"
-                                  Click="SignOutAsync" Disabled="@_signingOut" />
-                </Authorized>
-            </AuthorizeView>
-        </section>
-    }
+    @* The Po shell header: app name, email or Sign in, settings gear (Po web standard). No nav: Home is every
+       destination, and the name leads back to it. *@
+    <PoHeader />
     <main class="content" id="main">
         @* One unhandled render exception used to drop the whole app to index.html's error strip, which offers a
            reload and loses whatever was in progress. The boundary keeps the shell and the banner. *@
@@ -112,47 +35,16 @@
 
 @code {
     [Inject] private SfxInterop Sound { get; set; } = default!;
-    [Inject] private ThemeInterop Theme { get; set; } = default!;
     [Inject] private Preferences Prefs { get; set; } = default!;
 
-    /// <summary>Whether the settings panel is open.</summary>
-    private bool _settings;
-    private ElementReference _settingsPanel;
-    private bool _settingsFocused;
-
     /// <summary>
-    /// The stored sound and theme are applied here, once, rather than by the toggles: those live in a panel that is
-    /// only in the document while it is open.
+    /// The stored sound and preferences are applied here, once, rather than by the controls on /settings, which are
+    /// only in the document while that page is open. (The theme follows the device; App starts ThemeInterop.)
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
         await Sound.InitializeAsync();
-        await Theme.InitializeAsync();
         await Prefs.InitializeAsync();
-    }
-
-    private void OnSettingsKey(KeyboardEventArgs e)
-    {
-        if (string.Equals(e.Key, "Escape", StringComparison.Ordinal))
-        {
-            _settings = false;
-        }
-    }
-
-    private bool _signingOut;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        // Once per opening: the settings panel takes focus when it appears, so Escape closes it from the first key.
-        if (_settings && !_settingsFocused)
-        {
-            _settingsFocused = true;
-            await _settingsPanel.FocusAsync();
-        }
-        else if (!_settings)
-        {
-            _settingsFocused = false;
-        }
     }
 
     private ErrorBoundary? _boundary;
@@ -163,15 +55,8 @@
     /// </summary>
     private int _attempt;
 
-    /// <summary>
-    /// Navigating away is its own recovery: the boundary is latched until something resets it. It also closes the
-    /// settings panel, which covers a page reached some other way while it was open.
-    /// </summary>
-    protected override void OnParametersSet()
-    {
-        _settings = false;
-        _boundary?.Recover();
-    }
+    /// <summary>Navigating away is its own recovery: the boundary is latched until something resets it.</summary>
+    protected override void OnParametersSet() => _boundary?.Recover();
 
     private void Recover()
     {
@@ -183,38 +68,5 @@
     {
         Recover();
         Nav.NavigateTo("");
-    }
-
-    private async Task SignOutAsync()
-    {
-        if (_signingOut)
-        {
-            return;
-        }
-
-        _signingOut = true;
-        try
-        {
-            // Best-effort: the guest cookie is server-side; the page is the cache we have to clear.
-            await Api.LogoutAsync();
-        }
-        catch (HttpRequestException)
-        {
-            // The API may be unreachable during a sign-out from a stranded tab; navigate anyway.
-        }
-        finally
-        {
-            // A Microsoft sign-in lives in MSAL's cache as well; ending only the cookie would sign them straight back
-            // in. MSAL's logout clears it and comes back to the login page.
-            if (Services.GetService(typeof(IAccessTokenProvider)) is IAccessTokenProvider tokens
-                && (await tokens.RequestAccessToken()).TryGetToken(out _))
-            {
-                Nav.NavigateToLogout("authentication/logout", RedirectToLogin.LoginPath);
-            }
-            else
-            {
-                Nav.NavigateTo(RedirectToLogin.LoginPath, forceLoad: true);
-            }
-        }
     }
 }

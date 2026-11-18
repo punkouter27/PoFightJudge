@@ -63,10 +63,10 @@ public class FightFlowTests(AppFixture app)
         (await page.Locator(".detail .rz-tabview-nav li").CountAsync()).Should().Be(3, "the traits and the measurements wait behind a setting");
         (await page.Locator(".trait, .stat").CountAsync()).Should().Be(0);
 
-        // Detailed analysis, switched on in Settings, reaches the page that is already open.
-        await page.GetByRole(AriaRole.Button, new() { Name = "Settings" }).ClickAsync();
+        // Detailed analysis, switched on in Settings (the header's gear), is there when the verdict is opened again.
+        await page.GetByRole(AriaRole.Link, new() { Name = "Settings" }).ClickAsync();
         await page.Locator(".po-settings .setting:has-text('Detailed analysis') .rz-switch").ClickAsync();
-        await page.Keyboard.PressAsync("Escape");
+        await page.GoBackAsync();
         // A tab added after the first render draws its content when it is opened, which is when anybody reads it.
         await page.Locator(".detail .rz-tabview-nav li", new() { HasText = "How they argued" }).ClickAsync();
         await page.Locator(".trait").First.WaitForAsync(new() { Timeout = 10_000 });

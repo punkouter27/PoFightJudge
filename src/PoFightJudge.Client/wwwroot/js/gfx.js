@@ -1268,17 +1268,17 @@ fn fs(v: Out) -> @location(0) vec4f {
     mount.c3 = tokenColour(mount.tokens[2], [1.0, 0.35, 0.35]);
   }
 
-  // The theme toggle stamps data-theme on <html>; every mounted canvas re-reads its colours when it does.
+  // The theme follows the device (prefers-color-scheme); every mounted canvas re-reads its colours when it flips.
   function watchTheme() {
-    if (watchingTheme || typeof MutationObserver !== "function") {
+    if (watchingTheme || typeof window.matchMedia !== "function") {
       return;
     }
 
     watchingTheme = true;
-    new MutationObserver(function () {
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () {
       mounts.forEach(readColours);
       gpuMounts.forEach(readColours);
-    }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    });
   }
 
   function resize(mount) {

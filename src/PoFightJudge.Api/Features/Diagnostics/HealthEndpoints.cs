@@ -29,52 +29,70 @@ public sealed class HealthEndpoints : ICarterModule
         app.MapGet(ApiRoutes.Health.LiveUrl, () => Results.Text("Healthy")).AllowAnonymous().WithTags("Health");
 
         app.MapGet(ApiRoutes.Health.DetailsUrl, async (HttpContext http, HealthCheckService health, IConfiguration config, IHostEnvironment env, TimeProvider clock, AiLatencyTracker tracker, CancellationToken ct) =>
+            Results.Ok(await BuildReportAsync(http, health, config, env, clock, tracker, ct))).AllowAnonymous().WithTags("Health");
+
+        // The same report for the Po developer window (Tab → /po-dev.html), which looks here first: the state of each
+        // check as a word rather than an enum number, so any reader can badge it without this app's contract.
+        app.MapGet(ApiRoutes.Diag.StatusUrl, async (HttpContext http, HealthCheckService health, IConfiguration config, IHostEnvironment env, TimeProvider clock, AiLatencyTracker tracker, CancellationToken ct) =>
         {
-            var report = await health.CheckHealthAsync(ct);
-            var checks = new List<HealthCheckDto>();
-
-            foreach (var (name, entry) in report.Entries)
+            var report = await BuildReportAsync(http, health, config, env, clock, tracker, ct);
+            return Results.Ok(new
             {
-                var (label, purpose, category) = Describe(name);
-                checks.Add(new HealthCheckDto(label, Map(entry.Status), Plain(entry.Status), category, purpose, Math.Round(entry.Duration.TotalMilliseconds, 1)));
-            }
-
-            AddPresence(checks, "Gemini API key", config[ConfigKeys.Ai.GeminiApiKey], required: env.IsProduction());
-            AddPresence(checks, "Entra client id", config[ConfigKeys.AzureAd.ClientId], required: env.IsProduction());
-            AddPresence(checks, "Table endpoint", config[ConfigKeys.Storage.TableEndpoint], required: true);
-            AddPresence(checks, "Blob endpoint", config[ConfigKeys.Storage.BlobEndpoint], required: true);
-            checks.Add(AiProvider(env, config));
-            checks.Add(new HealthCheckDto(
-                "Key Vault",
-                string.IsNullOrWhiteSpace(config[ConfigKeys.KeyVault.Uri]) ? HealthState.NotConfigured : HealthState.Ok,
-                string.IsNullOrWhiteSpace(config[ConfigKeys.KeyVault.Uri]) ? "Not used here; settings come from local files." : "Connected at startup.",
-                HealthCategory.Service,
-                "Keeps the app's secrets (API keys) out of the code."));
-            checks.Add(new HealthCheckDto(
-                "Sign-in",
-                string.IsNullOrWhiteSpace(config[ConfigKeys.AzureAd.ClientId]) ? HealthState.NotConfigured : HealthState.Ok,
-                string.IsNullOrWhiteSpace(config[ConfigKeys.AzureAd.ClientId]) ? "Microsoft sign-in is not set up here." : "Microsoft sign-in is set up.",
-                HealthCategory.Service,
-                "Lets people sign in with a Microsoft account."));
-
-            // Anonymous route, so only a signed-in caller gets a row, and only their own number.
-            if (http.User.UserIdOrNull() is { } caller && config.GetValue<long>(ConfigKeys.Ai.DailyTokenBudget) is > 0 and var limit)
-            {
-                var used = tracker.TokensToday(caller);
-                checks.Add(new HealthCheckDto(
-                    "AI allowance today",
-                    used >= limit ? HealthState.Degraded : HealthState.Ok,
-                    string.Create(CultureInfo.InvariantCulture, $"{used:N0} of {limit:N0} tokens ({used * 100.0 / limit:0}%)"),
-                    HealthCategory.Feature));
-            }
-
-            foreach (var toggle in Toggles.All)
-            {
-                checks.Add(new HealthCheckDto($"Toggle: {toggle}", HealthState.Ok, config.GetValue<bool>(toggle) ? "on" : "off", HealthCategory.Feature));
-            }
-
-            return Results.Ok(new HealthReportDto(env.EnvironmentName, Aggregate(checks), clock.GetUtcNow(), checks));
+                status = report.Overall.ToString(),
+                environment = report.Environment,
+                checkedAt = report.Timestamp,
+                checks = report.Checks.Select(c => new { name = c.Name, status = c.State.ToString(), category = c.Category.ToString(), durationMs = c.LatencyMs }),
+            });
         }).AllowAnonymous().WithTags("Health");
+    }
+
+    /// <summary>Everything /diag shows: live probes, presence-only configuration, the toggles. Never a value.</summary>
+    private static async Task<HealthReportDto> BuildReportAsync(HttpContext http, HealthCheckService health, IConfiguration config, IHostEnvironment env, TimeProvider clock, AiLatencyTracker tracker, CancellationToken ct)
+    {
+        var report = await health.CheckHealthAsync(ct);
+        var checks = new List<HealthCheckDto>();
+
+        foreach (var (name, entry) in report.Entries)
+        {
+            var (label, purpose, category) = Describe(name);
+            checks.Add(new HealthCheckDto(label, Map(entry.Status), Plain(entry.Status), category, purpose, Math.Round(entry.Duration.TotalMilliseconds, 1)));
+        }
+
+        AddPresence(checks, "Gemini API key", config[ConfigKeys.Ai.GeminiApiKey], required: env.IsProduction());
+        AddPresence(checks, "Entra client id", config[ConfigKeys.AzureAd.ClientId], required: env.IsProduction());
+        AddPresence(checks, "Table endpoint", config[ConfigKeys.Storage.TableEndpoint], required: true);
+        AddPresence(checks, "Blob endpoint", config[ConfigKeys.Storage.BlobEndpoint], required: true);
+        checks.Add(AiProvider(env, config));
+        checks.Add(new HealthCheckDto(
+            "Key Vault",
+            string.IsNullOrWhiteSpace(config[ConfigKeys.KeyVault.Uri]) ? HealthState.NotConfigured : HealthState.Ok,
+            string.IsNullOrWhiteSpace(config[ConfigKeys.KeyVault.Uri]) ? "Not used here; settings come from local files." : "Connected at startup.",
+            HealthCategory.Service,
+            "Keeps the app's secrets (API keys) out of the code."));
+        checks.Add(new HealthCheckDto(
+            "Sign-in",
+            string.IsNullOrWhiteSpace(config[ConfigKeys.AzureAd.ClientId]) ? HealthState.NotConfigured : HealthState.Ok,
+            string.IsNullOrWhiteSpace(config[ConfigKeys.AzureAd.ClientId]) ? "Microsoft sign-in is not set up here." : "Microsoft sign-in is set up.",
+            HealthCategory.Service,
+            "Lets people sign in with a Microsoft account."));
+
+        // Anonymous route, so only a signed-in caller gets a row, and only their own number.
+        if (http.User.UserIdOrNull() is { } caller && config.GetValue<long>(ConfigKeys.Ai.DailyTokenBudget) is > 0 and var limit)
+        {
+            var used = tracker.TokensToday(caller);
+            checks.Add(new HealthCheckDto(
+                "AI allowance today",
+                used >= limit ? HealthState.Degraded : HealthState.Ok,
+                string.Create(CultureInfo.InvariantCulture, $"{used:N0} of {limit:N0} tokens ({used * 100.0 / limit:0}%)"),
+                HealthCategory.Feature));
+        }
+
+        foreach (var toggle in Toggles.All)
+        {
+            checks.Add(new HealthCheckDto($"Toggle: {toggle}", HealthState.Ok, config.GetValue<bool>(toggle) ? "on" : "off", HealthCategory.Feature));
+        }
+
+        return new HealthReportDto(env.EnvironmentName, Aggregate(checks), clock.GetUtcNow(), checks);
     }
 
     /// <summary>A probe's registration name turned into what the page shows: a label, what it is for, and its section.</summary>

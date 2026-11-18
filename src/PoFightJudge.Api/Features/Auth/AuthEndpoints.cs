@@ -43,6 +43,6 @@ public sealed class AuthEndpoints : ICarterModule
 
     public static AuthMeDto ToDto(ClaimsPrincipal user) =>
         user.UserIdOrNull() is { } id
-            ? new AuthMeDto(true, id, user.DisplayName() ?? id, user.FindFirstValue("auth_type") ?? user.Identity?.AuthenticationType)
+            ? new AuthMeDto(true, id, user.DisplayName() ?? id, user.FindFirstValue("auth_type") ?? user.Identity?.AuthenticationType, user.Email())
             : AuthMeDto.Anonymous;
 }

@@ -1,0 +1,29 @@
+/* The app's mark before the name. Everything else about the header is .po-header* in po-tokens.css. */
+.mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--po-radius-sm);
+  background: var(--po-accent);
+  color: var(--po-on-accent);
+  flex: none;
+}
+
+/* Signed out, the header's action is the way to the sign-in page. */
+.signin {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 var(--po-space-3);
+  border-radius: var(--po-radius-pill);
+  background: var(--po-accent);
+  color: var(--po-on-accent);
+  font-size: var(--po-text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.signin:hover { background: var(--po-accent-hover); color: var(--po-on-accent); }

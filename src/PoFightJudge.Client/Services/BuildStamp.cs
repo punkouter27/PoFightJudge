@@ -3,12 +3,13 @@ using System.Reflection;
 namespace PoFightJudge.Client.Services;
 
 /// <summary>
-/// Which build this is, as the day it was built (YYMMDD). The project file stamps it into the assembly at build
-/// time (<c>AssemblyMetadata("BuildDate", …)</c>), so it is always the build's own and never typed by hand.
+/// Which build this is, as the UTC date of its HEAD commit (YYMMDD). The PoBuildStamp target in Directory.Build.props
+/// stamps it into every assembly at build time (<c>AssemblyMetadata("BuildVersion", …)</c>), so the server and the
+/// client carry the same value and it is never typed by hand.
 /// </summary>
 public static class BuildStamp
 {
     public static string Version { get; } =
         typeof(BuildStamp).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
-            .FirstOrDefault(a => string.Equals(a.Key, "BuildDate", StringComparison.Ordinal))?.Value ?? "dev";
+            .FirstOrDefault(a => string.Equals(a.Key, "BuildVersion", StringComparison.Ordinal))?.Value ?? "dev";
 }

@@ -178,12 +178,12 @@ public sealed class AppFixture : IAsyncLifetime
         }
     }
 
-    /// <summary>The layout's top bar is rendered by Blazor, so its presence is the app having booted.</summary>
+    /// <summary>The Po header is rendered by Blazor in every layout, so its presence is the app having booted.</summary>
     public static async Task WaitForAppAsync(IPage page, IReadOnlyCollection<string> errors)
     {
         try
         {
-            await page.Locator("header.topbar, .po-bare-shell").First.WaitForAsync(new() { Timeout = 45_000 });
+            await page.Locator("header.po-header").First.WaitForAsync(new() { Timeout = 45_000 });
         }
         catch (TimeoutException ex)
         {

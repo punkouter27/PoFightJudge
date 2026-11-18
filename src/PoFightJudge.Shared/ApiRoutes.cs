@@ -27,6 +27,9 @@ public static class ApiRoutes
     public static class Diag
     {
         public const string Url = $"{ApiPrefix}/diag";
+
+        /// <summary>Anonymous: the /api/health/details checks with their states as words, for the Po developer window.</summary>
+        public const string StatusUrl = $"{Url}/status";
     }
 
     public static class Features

@@ -55,9 +55,10 @@ configuration and is answered where it is asked. `/api/features` tells the clien
 - **`TimeProvider`, never `DateTime.UtcNow`.** Also banned at build time.
 - **Radzen for anything a person operates.** `DesignRulesTests` greps the `.razor` files for raw `<button>`,
   `<input>`, `<select>` and `<textarea>`.
-- **No `prefers-color-scheme` block.** The palette is `light-dark()` over one set of tokens, with
-  `:root[data-theme]` pinning the explicit choice; the same test refuses the block and a fourth breakpoint, and
-  `PaletteContrastTests` checks contrast in both themes.
+- **The theme follows the device (Po web standard, an owner decision).** `css/po-tokens.css` (the estate's file,
+  identical in every Po web app) is the only stylesheet that asks `prefers-color-scheme`; this app's own colours are
+  `light-dark()` or aliases of its `--po-*` tokens, and there is no toggle and no `data-theme`. `DesignRulesTests`
+  refuses the query anywhere else and a fourth breakpoint, and `PaletteContrastTests` checks contrast in both themes.
 - **Never weaken a test to make it pass.** A failing test is reported as failing.
 - **The tiers are capped:** Unit 100, Integration 50, E2EAPI 25, E2EUI 25, counted in cases (a fact, or one
   theory row). `InfraTests.Every_test_tier_stays_under_its_cap` counts them from source. A new test makes room by
@@ -98,12 +99,12 @@ other through `Shared` contracts and repositories, not through each other's serv
   ping-pong targets) and `swarm` (particles stepped by transform feedback) — `particles.js` the canvas physics
   (sparks, confetti, shards, Verlet streamers), `terrain.js` a clip's spectrum drawn as mountains, and `fx.js` the
   one-shot CSS classes, the stamps, the holo foil and table mode. Each entry point answers "no"
-  rather than throwing, the drawn half is off until the Settings panel's **Stage effects** switch turns it on
+  rather than throwing, the drawn half is off until the Settings page's **Stage effects** switch turns it on
   (`po-effects`, read by `PoMotion.still()` in `theme.js`) and off whatever the switch when reduced motion is asked for, and the sound switch is stored where JS
   can read it before Blazor boots. The catalogues are spelled twice — `Sfx`/`Shaders` in C#, the voices and shaders
   in JS — and `EffectCatalogueTests` holds the pairs together, because a name the browser does not know is silence
   rather than an error; `StageEffectTests` compiles every shader and plays every voice in a real browser.
-- The optional choices live in the Settings panel, not on the setup screens: `Preferences` (client, LocalStorage)
+- The optional choices live on the Settings page (`/settings`, the header's gear), not on the setup screens: `Preferences` (client, LocalStorage)
   holds stage effects (off), spin heat (Medium), the 2P host (the Referee), on-device transcription (off) and
   detailed analysis (off), each defaulting to the simplest app. With detailed analysis off the verdict is three tabs
   (the fight, the claims, the advice); on, it adds the traits and mood chart and the thirty measurements. A change
@@ -150,6 +151,7 @@ Each was a deliberate decision made while building; the commit that made it says
 | T146 | the 2P host as a radio list (keyboard + screen reader as one choice) | a `RadzenDropDown` of the same items | the same single, keyboard-operable choice in one line instead of 210 px, which is what lets a desktop show the whole 2P setup at once |
 | T204 | Gemini as the one AI provider (SPEC §2) | Azure OpenAI on `po-aiservices-shared2` behind the same seams, chosen by `Ai:AzureOpenAiEndpoint`; Gemini stays for an empty endpoint. Also touched outside the AI slices: `StorageServiceExtensions` (shares its `TokenCredential`), `DiagEndpoints.IsFakeAi`, `GeminiClaimChecker`'s prompt wording | the Gemini account's prepaid credit ran out; the Azure resource was already paid for, and reaching it with the app identity keeps a key out of Key Vault |
 | T208 (2026-11-17) | client validation and inline errors on every submitting form, with tests | the 2P setup, CPU/1P setup and fighter rename on Shared validators; `CreateProfileRequestValidatorTests` became `Shared/FormValidatorTests` (one fact for every form validator), and the refused-start check rides in `FightSetupTests`' existing theory | Unit sat at its 100-case cap and E2EAPI at 25; the new rules are covered without raising either |
+| Po web standard (261118) | card outlines on `--po-border` | `.po-card` outlines on `--po-border-strong`; `PaletteContrastTests` checks that pair | the estate's `--po-border` (po-tokens.css, an owner decision, not edited here) is a 1.3:1 hairline on white, under the outline floor |
 | — | face uploads decoded and re-encoded on the server with ImageSharp | the browser crops to a 512 px PNG (`js/face.js`); the server checks the PNG header and size, and decodes nothing | every ImageSharp 3.x has open advisories (three high), the fixes are 4.1.2+ only, and 4.x will not build without a paid-for licence key |
 
 ## Still outstanding
@@ -219,12 +221,13 @@ the judge has no order-bias correction: there was no bias to correct.
 - **Direction questions.** After a code change over 100 lines, and only when the prompt asked no questions of
   its own, end with exactly three high-level questions about where the app's purpose is heading — the kind whose
   answer could start more changes.
-- **Build version.** Every page shows the build as `vYYMMDD` in the bottom-right corner. The client build stamps
-  it (`AssemblyMetadata("BuildDate")`, the UTC build day); `BuildStamp.Version` reads it. Never typed by hand.
+- **Build version.** Every page shows the build as `<span class="po-version">vYYMMDD</span>` in the bottom-right
+  corner: the UTC date of the HEAD commit, stamped into every assembly by the `PoBuildStamp` target in
+  `Directory.Build.props` (`AssemblyMetadata("BuildVersion")`); `BuildStamp.Version` reads it. Never typed by hand.
 
 ## CI/CD and Azure (same section in every Po repo)
 
-- A push to `master` builds, tests, deploys and health-gates (`.github/workflows/deploy.yml`). Nothing is deployed by hand.
+- A push to `master` builds, publishes, deploys and waits until `/health/live` answers with the pushed commit's `X-Commit` (`.github/workflows/deploy.yml`). Nothing is deployed by hand. The workflow runs no tests, no infra job, no rollback and no PR builds: every tier runs locally. The file is identical in every Po web repo; each repo owns its copy.
 - Azure sign-in is GitHub OIDC (the `gh-<repo>-deploy` app). Its IDs are repo **variables** `AZURE_CLIENT_ID`, `AZURE_TENANT_ID` and `AZURE_SUBSCRIPTION_ID`, and the App Service name is `AZURE_WEBAPP_NAME`. Never move them to secrets or write resource names into workflows.
 - Every permission the app and CI need lives in `scripts/ensure-azure-access.ps1`. A role granted by hand and not added there is a bug: the next re-provision loses it.
 - The app answers `/health/live` (process up, no dependencies) and `/health` (dependencies reachable). The deploy's health gate checks both.

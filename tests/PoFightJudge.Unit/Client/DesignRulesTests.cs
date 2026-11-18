@@ -4,7 +4,8 @@ namespace PoFightJudge.Unit.Client;
 
 /// <summary>
 /// The UI rules from SPEC §5 that a reviewer would otherwise have to eyeball on every change: Radzen everywhere (no
-/// raw form controls), one theme switch (no prefers-color-scheme), three breakpoints and no third.
+/// raw form controls), the theme from the device alone (only the estate's po-tokens.css asks prefers-color-scheme),
+/// three breakpoints and no fourth.
 /// </summary>
 public partial class DesignRulesTests
 {
@@ -90,23 +91,30 @@ public partial class DesignRulesTests
 
     /// <summary>
     /// The three rules AGENTS.md calls non-negotiable for the UI. Each is the kind a single stray line breaks: one
-    /// raw control that skips the Radzen theme, one media query that fights the theme switch, one breakpoint nobody
-    /// else uses.
+    /// raw control that skips the Radzen theme, one colour-scheme query outside the estate's token file, one
+    /// breakpoint nobody else uses.
     /// </summary>
     [Fact]
-    public void Pages_use_radzen_controls_one_theme_switch_and_three_breakpoints()
+    public void Pages_use_radzen_controls_the_device_theme_and_three_breakpoints()
     {
         var pages = Directory.EnumerateFiles(ClientRoot, "*.razor", SearchOption.AllDirectories)
             .Where(f => RawControl().IsMatch(File.ReadAllText(f)))
             .Select(f => Path.GetRelativePath(ClientRoot, f));
         pages.Should().BeEmpty("anything a person operates is a Radzen component");
 
-        var sheets = StyleSheets().ToDictionary(f => Path.GetRelativePath(ClientRoot, f), File.ReadAllText, StringComparer.Ordinal);
+        // po-tokens.css is the Po web standard's own file, the same in every Po web app (an owner decision): it alone
+        // asks the device for its colour scheme, and it carries the estate's breakpoints, not this app's.
+        var sheets = StyleSheets()
+            .Where(f => !string.Equals(Path.GetFileName(f), EstateTokens, StringComparison.Ordinal))
+            .ToDictionary(f => Path.GetRelativePath(ClientRoot, f), File.ReadAllText, StringComparer.Ordinal);
         sheets.Where(s => s.Value.Contains("prefers-color-scheme", StringComparison.Ordinal)).Select(s => s.Key)
-            .Should().BeEmpty("the palette is light-dark() and data-theme pins the choice");
+            .Should().BeEmpty("the theme follows the device through po-tokens.css; app colours are light-dark() over it");
         sheets.SelectMany(s => MediaWidth().Matches(s.Value).Select(m => m.Groups["value"].Value)).Distinct(StringComparer.Ordinal)
             .Should().BeSubsetOf(["40rem", "48rem", "64rem"], "there are three breakpoints and no fourth");
     }
+
+    /// <summary>The Po web standard's token file: copied verbatim into every Po web app, never edited here.</summary>
+    private const string EstateTokens = "po-tokens.css";
 
     /// <summary>Classes the JavaScript layer adds to an element, which therefore never appear in the markup.</summary>
     private static readonly HashSet<string> AddedByScript = new(StringComparer.Ordinal)

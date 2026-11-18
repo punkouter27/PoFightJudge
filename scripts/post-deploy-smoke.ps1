@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Checks the live site after the shared deploy.yml health gate has passed.
+    Checks the live site after a deploy; run by hand (the Po deploy.yml no longer calls it).
 
 .DESCRIPTION
     The WASM shell, runtime and manifest are served, the API is protected, and no catch-all

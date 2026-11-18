@@ -68,17 +68,32 @@ dotnet run --project src/PoFightJudge.Api       # https://localhost:5001
 - **Direction questions.** After a code change over 100 lines, and only when the prompt asked no questions of
   its own, end with exactly three high-level questions about where the app's purpose is heading — the kind whose
   answer could start more changes.
-- **Build version.** Every page shows the build as `vYYMMDD` in the bottom-right corner. The client build stamps
-  it (`AssemblyMetadata("BuildDate")`, the UTC build day); `BuildStamp.Version` reads it. Never typed by hand.
+- **Build version.** Every page shows the build as `<span class="po-version">vYYMMDD</span>` in the bottom-right
+  corner: the UTC date of the HEAD commit, stamped into every assembly by the `PoBuildStamp` target in
+  `Directory.Build.props` (`AssemblyMetadata("BuildVersion")`); `BuildStamp.Version` reads it. Never typed by hand.
 - **Screenshots.** After any change that affects what a page shows, run the screenshot runner for the affected
   routes and send the PNGs in chat with any console errors before saying the change is done. Cloud sessions can't
   be browsed, so this is how changes are reviewed before a deploy. Route names live in `ScreenshotRunner.Routes`;
-  leave `ROUTES` off for all of them. Inter is self-hosted (2026-11-17), so any font request leaving the origin is a bug.
+  leave `ROUTES` off for all of them. Inter and Space Grotesk are self-hosted (po-tokens.css), so any font request leaving the origin is a bug.
   ```bash
   SHOTS=<scratchpad>/shots ROUTES=home,watch dotnet test tests/PoFightJudge.E2EUI \
     --filter "FullyQualifiedName~ScreenshotRunner" --logger "console;verbosity=detailed"
   ```
 - **Do not hand over commands to type.** If it can be run here, run it — CLI or web GUI.
+
+## Po shell (Po web standard)
+
+- `wwwroot/css/po-tokens.css`, `wwwroot/js/po-devwindow.js`, `wwwroot/js/po-dev.js`, `wwwroot/po-dev.html`, the two
+  fonts and `.github/workflows/deploy.yml` are the Po web standard's files: identical in every Po web repo, each repo
+  owning its copy. Never edit them here. App tokens live in `css/app-tokens.css` and alias the `--po-*` estate ones.
+- **Header** (`Layout/PoHeader.razor`, both layouts): the app name top-left; the signed-in email (a guest shows its
+  id) or **Sign in**, then the one settings gear → `/settings` (anonymous: theme note, build, sound, effects, host,
+  sign out — what the old top-bar panel held).
+- **Theme** follows the device (`prefers-color-scheme`): no toggle, no `data-theme`; `ThemeInterop` keeps Radzen's
+  material / material-dark sheet in step.
+- **/diag** (anonymous, also in Production): API / Data / Services as `.po-diag__card`s with `.po-badge--ok|warn|bad`.
+- **Tab** with nothing focused opens `/po-dev.html`: `/health/live` + `X-Commit`, and the checks from the anonymous
+  `GET /api/diag/status`. `App.razor` moves focus to the h1 only after the user follows a link.
 
 ## Ask before
 

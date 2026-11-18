@@ -36,7 +36,7 @@ A merge of [PoMarriedLife](https://github.com/punkouter26/PoMarriedLife) and
 
 Governance: [AGENTS.md](AGENTS.md) is how it is worked on.
 
-**On-device transcription.** The Settings panel's **On-device transcription** switch (off by default) transcribes a
+**On-device transcription.** The Settings page's **On-device transcription** switch (off by default) transcribes a
 spoken 1P turn in the browser with Whisper (`Xenova/whisper-tiny.en`, q8, a 41 MB download cached after the first
 time), on WebGPU when the browser has a GPU adapter and WASM when not. transformers.js 4.3.1 is vendored under
 `wwwroot/lib/transformers` because the CSP runs same-origin scripts only. The model (Hugging Face) and the ONNX
@@ -138,12 +138,12 @@ The three secrets (`GeminiApiKey`, `AzureAd--TenantId`, `AzureAd--ClientId`) are
 
 ## Deploy
 
-`infra/main.bicep` creates everything, applied only through the manual `.github/workflows/deploy.yml` (run by hand with `infra`) (what-if, then
-apply). `.github/workflows/deploy.yml` is the shared Po workflow (byte-identical in every Po .NET web repo, never edited
-here): it builds, runs the Unit tier, publishes and deploys on a push to `master`, signing in with a federated
-credential rather than a stored secret. This repo's extras live in hooks it calls: `scripts/ci-checks.ps1` (format
-check and the E2EAPI tier) and `scripts/post-deploy-smoke.ps1` (shell, runtime, manifest and the API's 401/404
-answers on the live site). The plan is free-tier: one F1 Linux
+`infra/main.bicep` creates everything and is applied by hand (`az deployment group what-if`, then `create`).
+`.github/workflows/deploy.yml` is the Po web standard workflow (identical in every Po .NET web repo; each repo owns
+its copy and never edits it alone): on a push to `master` it builds, publishes and deploys, signing in with a federated
+credential rather than a stored secret, then waits until `/health/live` reports the pushed commit. It runs no tests:
+every tier runs locally. `scripts/ci-checks.ps1` (format check and the E2EAPI tier) and `scripts/post-deploy-smoke.ps1`
+(shell, runtime, manifest and the API's 401/404 answers on the live site) are run by hand. The plan is free-tier: one F1 Linux
 plan, which means one instance — and a live fight lives in the API process with an in-process hub, so a second
 instance would not see it anyway.
 

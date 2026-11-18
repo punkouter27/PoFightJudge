@@ -100,7 +100,8 @@ body { background: transparent; }
 
 .po-card {
   background: var(--po-surface);
-  border: 1px solid var(--po-border);
+  /* The estate's --po-border is a hairline (1.3:1 on white); a card's outline is the one line that has to read. */
+  border: 1px solid var(--po-border-strong);
   border-radius: var(--po-radius-md);
   padding: var(--po-space-4);
 }
@@ -279,3 +280,12 @@ body { background: transparent; }
    class on <html> and takes it off again when the page goes. Named from here rather than scoped, because the
    chrome belongs to the layout and the decision belongs to the fight page. */
 html.po-table .shell > :not(main) { display: none; }
+
+/* ── Po shell (Po web standard) ──
+   The header, gear, build stamp and /diag cards are styled by po-tokens.css; only this app's adjustments live here.
+   On a phone the bottom nav (BottomNav, ≤40rem) owns the bottom edge, so the stamp is lifted above it. */
+:root { --po-stamp-lift: 0px; }
+
+@media (max-width: 40rem) {
+  :root:has(.po-bottom-nav) { --po-stamp-lift: 3.75rem; }
+}

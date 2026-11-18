@@ -1,0 +1,130 @@
+@page "/settings"
+@attribute [AllowAnonymous]
+@inject IApiClient Api
+@inject NavigationManager Nav
+@inject IServiceProvider Services
+@inject IWebAssemblyHostEnvironment HostEnvironment
+@inject IJSRuntime JS
+@inject ThemeInterop Theme
+@inject Preferences Prefs
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using PoFightJudge.Client.Features.Auth
+
+<PageTitle>Settings · PoFightJudge</PageTitle>
+
+@* Where the Po header's gear goes, signed in or out. It holds what the settings panel on the old top bar did — who
+   you are, the sound, the stage effects, the analysis depth, transcription, spin heat, the host, the way out — plus
+   the two things every Po app's settings say: the theme follows the device, and which build this is. *@
+<PageShell Width="PageShell.ShellWidth.Narrow" Eyebrow="Settings" Title="Settings" Lead="How the app looks and sounds on this device, and who is signed in.">
+    <div class="po-scope">
+        <section class="po-settings po-card" aria-label="Settings">
+            <div class="setting">
+                <span class="po-eyebrow">Theme</span>
+                <span class="po-muted" data-testid="settings-theme">Follows your device (@(Theme.IsDark ? "dark" : "light") now)</span>
+            </div>
+            <div class="setting">
+                <span class="po-eyebrow">Build</span>
+                <span class="po-muted" data-testid="settings-build">v@(BuildStamp.Version)</span>
+            </div>
+            <AuthorizeView>
+                <Authorized>
+                    <div class="setting">
+                        <span class="po-eyebrow">Signed in as</span>
+                        <span class="user"><RadzenIcon Icon="person" /><span class="user-name">@AccountMenu.Describe(context.User).Email</span></span>
+                    </div>
+                </Authorized>
+            </AuthorizeView>
+            <div class="setting"><span class="po-eyebrow">Sound</span><SoundToggle /></div>
+            <div class="setting">
+                <span class="po-eyebrow">Stage effects</span>
+                <RadzenSwitch Value="@Prefs.Effects" ValueChanged="@((bool on) => Prefs.SetEffectsAsync(on))" Name="effects"
+                              InputAttributes="@(new Dictionary<string, object> { ["aria-label"] = "Stage effects" })" />
+            </div>
+            <div class="setting" title="The verdict's trait scores, mood chart and thirty measurements of how each of you talked.">
+                <span class="po-eyebrow">Detailed analysis</span>
+                <RadzenSwitch Value="@Prefs.Detailed" ValueChanged="@((bool on) => Prefs.SetDetailedAsync(on))" Name="detail"
+                              InputAttributes="@(new Dictionary<string, object> { ["aria-label"] = "Detailed analysis" })" />
+            </div>
+            <div class="setting" title="Your spoken 1P turns are transcribed on this device. Downloads a 41 MB model once.">
+                <span class="po-eyebrow">On-device transcription</span>
+                <RadzenSwitch Value="@Prefs.OnDeviceAsr" ValueChanged="@((bool on) => Prefs.SetOnDeviceAsrAsync(on))" Name="asr"
+                              InputAttributes="@(new Dictionary<string, object> { ["aria-label"] = "On-device transcription" })" />
+            </div>
+            <div class="setting">
+                <span class="po-eyebrow">Spin heat</span>
+                <RadzenSelectBar TValue="TopicField.Heat" Value="@Prefs.Heat" ValueChanged="@((TopicField.Heat h) => Prefs.SetHeatAsync(h))"
+                                 Size="ButtonSize.Small" Name="heat" aria-label="How spicy a topic">
+                    <Items>
+                        <RadzenSelectBarItem Text="Mild" Value="@TopicField.Heat.Mild" />
+                        <RadzenSelectBarItem Text="Medium" Value="@TopicField.Heat.Medium" />
+                        <RadzenSelectBarItem Text="Spicy" Value="@TopicField.Heat.Spicy" />
+                    </Items>
+                </RadzenSelectBar>
+            </div>
+            <HostPersonaPicker Persona="@Prefs.Host" PersonaChanged="@((HostPersonaId h) => Prefs.SetHostAsync(h))" />
+            <AuthorizeView>
+                <Authorized>
+                    <div class="links">
+                        @foreach (var link in AccountMenu.Links())
+                        {
+                            <RadzenLink Path="@link.Path" Text="@link.Label" Icon="@link.Icon" />
+                        }
+                    </div>
+                    @if (!HostEnvironment.IsProduction())
+                    {
+                        <div class="links">
+                            <RadzenButton Text="Dev: Fake user" Icon="switch_account" ButtonStyle="ButtonStyle.Base" Variant="Variant.Text" Size="ButtonSize.Small"
+                                          Click="@(() => AccountMenu.SwitchFakeUserAsync(JS, Nav, "dev@pofightjudge.dev"))" />
+                            <RadzenButton Text="Clear Dev user" Icon="person_off" ButtonStyle="ButtonStyle.Base" Variant="Variant.Text" Size="ButtonSize.Small"
+                                          Click="@(() => AccountMenu.SwitchFakeUserAsync(JS, Nav, null))" />
+                        </div>
+                    }
+                    <RadzenButton Text="Sign out" Icon="logout" ButtonStyle="ButtonStyle.Base" Variant="Variant.Outlined" Size="ButtonSize.Small"
+                                  Click="SignOutAsync" Disabled="@_signingOut" />
+                </Authorized>
+                <NotAuthorized>
+                    <RadzenLink Path="@RedirectToLogin.LoginPath" Text="Sign in" Icon="login" />
+                </NotAuthorized>
+            </AuthorizeView>
+        </section>
+    </div>
+</PageShell>
+
+@code {
+    private bool _signingOut;
+
+    protected override async Task OnInitializedAsync() => await Prefs.InitializeAsync();
+
+    private async Task SignOutAsync()
+    {
+        if (_signingOut)
+        {
+            return;
+        }
+
+        _signingOut = true;
+        try
+        {
+            // Best-effort: the guest cookie is server-side; the page is the cache we have to clear.
+            await Api.LogoutAsync();
+        }
+        catch (HttpRequestException)
+        {
+            // The API may be unreachable during a sign-out from a stranded tab; navigate anyway.
+        }
+        finally
+        {
+            // A Microsoft sign-in lives in MSAL's cache as well; ending only the cookie would sign them straight back
+            // in. MSAL's logout clears it and comes back to the login page.
+            if (Services.GetService(typeof(IAccessTokenProvider)) is IAccessTokenProvider tokens
+                && (await tokens.RequestAccessToken()).TryGetToken(out _))
+            {
+                Nav.NavigateToLogout("authentication/logout", RedirectToLogin.LoginPath);
+            }
+            else
+            {
+                Nav.NavigateTo(RedirectToLogin.LoginPath, forceLoad: true);
+            }
+        }
+    }
+}

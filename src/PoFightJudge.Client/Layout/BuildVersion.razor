@@ -1,3 +1,4 @@
 @using PoFightJudge.Client.Services
 
-<span class="po-build-version" aria-label="@($"Build {BuildStamp.Version}")">v@(BuildStamp.Version)</span>
+@* The Po build stamp, vYYMMDD (UTC date of the HEAD commit), fixed bottom-right by .po-version in po-tokens.css. *@
+<span class="po-version" aria-label="@($"Build {BuildStamp.Version}")">v@(BuildStamp.Version)</span>

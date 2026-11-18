@@ -48,11 +48,17 @@ public sealed class ApiAuthStateProvider : AuthenticationStateProvider
             return Anonymous;
         }
 
-        var identity = new ClaimsIdentity(
+        List<Claim> claims =
         [
             new Claim(ClaimTypes.NameIdentifier, me.UserId ?? string.Empty),
             new Claim(ClaimTypes.Name, me.Name ?? me.UserId ?? "user"),
-        ], me.AuthType ?? "api");
+        ];
+        if (me.Email is { Length: > 0 } email)
+        {
+            claims.Add(new Claim(ClaimTypes.Email, email));
+        }
+
+        var identity = new ClaimsIdentity(claims, me.AuthType ?? "api");
         return new AuthenticationState(new ClaimsPrincipal(identity));
     }
 }
