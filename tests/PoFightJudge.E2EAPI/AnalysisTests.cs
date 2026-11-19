@@ -100,6 +100,28 @@ public class AnalysisTests(ApiFactory factory)
         (await WaitForResultAsync("FXA", "analysis-full")).Should().ContainSingle();
         (await WaitForResultAsync("FXB", "analysis-full")).Should().ContainSingle();
 
+        // A fight recorded on a phone with no host, uploaded afterwards, is read the same way into the same records,
+        // and an upload retried after a timeout answers with the fight it already made rather than a second one.
+        // Its turns are half-second taps that cover a sixth of the speech: with no host on the mic, speech outside
+        // the turns is still the fighters', not host bleed to be thrown away.
+        var recorded = new RecordedFightRequest(
+            MatchId.New(), "fxa", "fxb", new DateTimeOffset(2026, 1, 1, 9, 0, 0, TimeSpan.Zero),
+            [.. Enumerable.Range(0, 7).Select(i => new RecordedTurnDto(i % 2 == 0 ? Speaker.Player1 : Speaker.Player2, i * 3, (i * 3) + 0.5))], "Ann", "Bob", "the thermostat");
+        using (var upload = RecordedForm(recorded))
+        {
+            (await client.PostAsync(ApiRoutes.Fights.RecordedUrl, upload)).StatusCode.Should().Be(HttpStatusCode.Created);
+        }
+
+        using (var retried = RecordedForm(recorded))
+        {
+            (await client.PostAsync(ApiRoutes.Fights.RecordedUrl, retried)).StatusCode.Should().Be(HttpStatusCode.OK);
+        }
+
+        var recordedReport = (await WaitForAsync(client, recorded.MatchId, AnalysisStatus.Ready)).Report!;
+        recordedReport.Player1.Metrics.Words.Should().BeGreaterThan(0, "a fight with no host keeps the speech its turns do not cover");
+        recordedReport.Player2.Metrics.Words.Should().BeGreaterThan(0, "the phone's turn timeline puts each voice on its own fighter");
+        (await WaitForResultAsync("FXA", "analysis-full", atLeast: 2)).Should().HaveCount(2);
+
         // And both of them are now somebody the CPU and 1P channels can put in a seat, read from this fight. The
         // persona is written after the ruling is readable, deliberately — the room is not kept waiting on it — so
         // it is allowed a moment to land.
@@ -110,14 +132,14 @@ public class AnalysisTests(ApiFactory factory)
     }
 
     /// <summary>One fighter's rows, once the pipeline has written them. Same ten seconds the persona is given.</summary>
-    private async Task<IReadOnlyList<FighterResultDto>> WaitForResultAsync(string tag, string userId)
+    private async Task<IReadOnlyList<FighterResultDto>> WaitForResultAsync(string tag, string userId, int atLeast = 1)
     {
         var results = factory.Services.GetRequiredService<IFighterResultRepository>();
         const int Attempts = 100;
         for (var attempt = 0; attempt < Attempts; attempt++)
         {
             var rows = await results.ListForAsync(FighterId.From(tag), userId);
-            if (rows.Count > 0)
+            if (rows.Count >= atLeast)
             {
                 return rows;
             }
@@ -146,6 +168,16 @@ public class AnalysisTests(ApiFactory factory)
     }
 
     /// <summary>Puts a recording where the pipeline expects one, for a fight nobody spoke into.</summary>
+    /// <summary>A phone's upload: the meta JSON and twenty seconds of 16 kHz mono WAV.</summary>
+    private static MultipartFormDataContent RecordedForm(RecordedFightRequest meta)
+    {
+        var form = new MultipartFormDataContent { { new StringContent(System.Text.Json.JsonSerializer.Serialize(meta, System.Text.Json.JsonSerializerOptions.Web)), "meta" } };
+        var audio = new ByteArrayContent(PoFightJudge.Api.Features.Fight.WavWriter.Build(16_000, new byte[640_000]));
+        audio.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("audio/wav");
+        form.Add(audio, "audio", "fight.wav");
+        return form;
+    }
+
     private async Task GiveItARecordingAsync(MatchId id)
     {
         var matches = factory.Services.GetRequiredService<IMatchRepository>();

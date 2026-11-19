@@ -5,13 +5,15 @@ namespace PoFightJudge.Api.Features.Analysis;
 
 /// <summary>
 /// Maps diarizer labels (spk_1, spk_2, …) onto Player1/Player2 by overlap with the orchestrator's turn timeline.
-/// Labels that mostly fall outside any player turn are treated as the host's voice bleeding into the mic and dropped.
+/// Labels that mostly fall outside any player turn are treated as the host's voice bleeding into the mic and dropped —
+/// only when there was a host. A fight recorded with no host (a phone's offline recording) has nobody to bleed in, so
+/// every voice is kept and mapped by overlap alone.
 /// </summary>
 public static class SpeakerMapper
 {
     private const double HostBleedThreshold = 0.25;
 
-    public static MappedTranscript Map(TranscriptDto transcript, IReadOnlyList<TurnDto> turns)
+    public static MappedTranscript Map(TranscriptDto transcript, IReadOnlyList<TurnDto> turns, bool hostOnMic = true)
     {
         if (transcript.Words.Count == 0)
         {
@@ -30,7 +32,7 @@ public static class SpeakerMapper
             var p2 = Overlap(words, playerTurns, Speaker.Player2);
             var inTurns = p1 + p2;
 
-            if (playerTurns.Count > 0 && total > 0 && inTurns / total < HostBleedThreshold)
+            if (hostOnMic && playerTurns.Count > 0 && total > 0 && inTurns / total < HostBleedThreshold)
             {
                 assignment[label] = null;
                 notes.Add($"{label} ignored ({words.Count} words mostly outside player turns — likely the host).");

@@ -56,3 +56,23 @@ public sealed record TranscriptWord(string Text, string Label, double Start, dou
 
 /// <summary>A whole transcript: the words in order, and the plain text they spell out.</summary>
 public sealed record TranscriptDto(string Text, IReadOnlyList<TranscriptWord> Words);
+
+/// <summary>Who held the floor when, in a fight recorded without a host: seconds from the start of the recording.</summary>
+public sealed record RecordedTurnDto(Speaker Speaker, double StartSeconds, double EndSeconds);
+
+/// <summary>
+/// The form field that travels with a recorded fight's audio (multipart <c>meta</c>, JSON). The phone picks
+/// <see cref="MatchId"/> itself so an upload retried after a timeout lands on the same fight instead of a second one.
+/// </summary>
+public sealed record RecordedFightRequest(
+    MatchId MatchId,
+    string Player1Tag,
+    string Player2Tag,
+    DateTimeOffset RecordedAt,
+    IReadOnlyList<RecordedTurnDto> Turns,
+    string? Player1Name = null,
+    string? Player2Name = null,
+    string? Topic = null,
+    Stance? Player1Stance = null,
+    ProfileRole Player1Role = ProfileRole.Husband,
+    ProfileRole Player2Role = ProfileRole.Wife);

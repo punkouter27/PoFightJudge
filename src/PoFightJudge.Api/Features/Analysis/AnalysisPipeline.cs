@@ -137,7 +137,8 @@ public sealed partial class AnalysisPipeline(
         }
 
         var turns = await turnsTask;
-        var mapped = SpeakerMapper.Map(transcript, turns);
+        // A fight with no host (recorded on a phone, uploaded later) has no host voice to filter out.
+        var mapped = SpeakerMapper.Map(transcript, turns, hostOnMic: !string.IsNullOrEmpty(match.Persona));
         LogTranscribed(logger, matchId.Value, transcript.Words.Count, source, mapped.Note);
 
         var first = SpeechMetrics.Compute(Speaker.Player1, mapped, turns);

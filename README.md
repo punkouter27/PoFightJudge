@@ -119,6 +119,37 @@ Two rules run through all of it:
 - **Records are computed on read.** Nothing is accumulated on a counter, so re-reading a fight corrects its record
   instead of counting it twice, and deleting one removes it everywhere. The Elo rating on the boards and the roster
   is replayed the same way (`EloRatings`), so a deleted fight takes its points with it.
+- **Recorded fights.** `POST /api/fights/recorded` (multipart: `audio` = 16 kHz mono 16-bit WAV, ≤ 64 MB; `meta` =
+  `RecordedFightRequest` JSON with the tags, names, topic, stance and the phone's turn timeline) stores a fight
+  argued with no host — offline, or by choice — exactly like a live fight's players' track (Opus when `StoreOpus`),
+  saves the turns so `SpeakerMapper` puts each voice on its fighter, and queues the same analysis. The phone picks
+  the `MatchId`, so a retried upload answers 200 with the fight it already made. Covered in E2EAPI
+  (`AnalysisTests`, folded into the "a fight somebody actually argued" fact to stay at the tier's cap).
+
+## Phone app (`src/PoFightJudge.Mobile`)
+
+.NET MAUI for Android/iOS; not in `PoFightJudge.slnx`, not built by CI; uses only packages already pinned
+(MAUI, the SignalR client). Play (live fight, record offline, watch), History, Settings, plus verdict, shared
+ruling, leaderboard and watch result pages.
+
+- **Live fight in the background.** The microphone (echo-cancelled: Android `VoiceCommunication` +
+  `AcousticEchoCanceler`, iOS voice processing) streams 100 ms frames of 16 kHz PCM to the live hub (JSON protocol)
+  and the host's 24 kHz voice plays back, stopping on `AudioClear`. A microphone + media-playback foreground service
+  with a partial wake lock (Android) or background audio (iOS `UIBackgroundModes` audio) keeps it going with the
+  screen locked.
+- **Record now, upload later.** Offline, the phone records a WAV and the players tap whose turn it is; it is
+  kept on the phone and uploaded to `/api/fights/recorded` as soon as there is a connection.
+- **On-device speech.** A 1P watch turn is read by the phone's own recognizer (Android on-device
+  `SpeechRecognizer`, iOS `SFSpeechRecognizer` with `RequiresOnDeviceRecognition`) instead of the browser's
+  Whisper download; a phone with none records the turn and uses `/api/watch/transcribe`.
+- **Haptics** on turn changes, the host cutting in, heated lines and slaps, and a three-beat buzz on the ruling.
+- **Opponent from contacts.** Either fighter can be picked from contacts (name, a three-letter tag); the ruling's
+  share link is sent to them by SMS (or the share sheet). `https://<host>/v/{token}` and `pofightjudge://v/{token}`
+  open the shared ruling in the app when it is installed, and the web page otherwise.
+
+Sign-in: Microsoft (Entra PKCE → bearer, also sent to the hub as `access_token`; needs the redirect
+`pofightjudge://auth`) or, in Debug, the guest cookie. Dev loop: run the API, then
+`pwsh scripts/mobile-dev.ps1 -ApiPort 5000 -Run`.
 
 ## Secrets
 

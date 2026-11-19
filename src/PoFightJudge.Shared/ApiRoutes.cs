@@ -121,6 +121,10 @@ public static class ApiRoutes
         public const string EndSegment = "/{id}/end";
         public const string AnalysisSegment = "/{id}/analysis";
         public const string AnalysisRetrySegment = "/{id}/analysis/retry";
+
+        /// <summary>A fight recorded on a phone with no host (offline), uploaded afterwards for the same analysis.</summary>
+        public const string RecordedSegment = "/recorded";
+        public const string RecordedUrl = $"{Base}{RecordedSegment}";
         public const string ClipSegment = "/{id}/clips/{index:int}";
 
         public static string ById(MatchId id) => $"{Base}/{id.Value}";
