@@ -168,7 +168,7 @@ public class EveryRouteTests(AppFixture app)
         var confirm = page.Locator(".rz-dialog");
         await confirm.WaitForAsync(new() { Timeout = 10_000 });
         await confirm.GetByRole(AriaRole.Button, new() { Name = "Load cast" }).ClickAsync();
-        await page.WaitForFunctionAsync("() => document.querySelectorAll('article.profile').length >= 8", null, new() { Timeout = 30_000 });
+        await page.WaitForFunctionAsync("() => document.querySelectorAll('article.profile').length >= 6", null, new() { Timeout = 30_000 });
 
         var matches = app.Services.GetRequiredService<IMatchRepository>();
         var now = app.Services.GetRequiredService<TimeProvider>().GetUtcNow();

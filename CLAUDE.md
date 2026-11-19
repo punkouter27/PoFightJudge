@@ -87,8 +87,8 @@ dotnet run --project src/PoFightJudge.Api       # https://localhost:5001
   fonts and `.github/workflows/deploy.yml` are the Po web standard's files: identical in every Po web repo, each repo
   owning its copy. Never edit them here. App tokens live in `css/app-tokens.css` and alias the `--po-*` estate ones.
 - **Header** (`Layout/PoHeader.razor`, both layouts): the app name top-left; the signed-in email (a guest shows its
-  id) or **Sign in**, then the one settings gear → `/settings` (anonymous: theme note, build, sound, effects, host,
-  sign out — what the old top-bar panel held).
+  id) or **Sign in**, then the one settings gear → `/settings` (anonymous: theme note, build, who is signed in, sign
+  out). No header on `/login` or the `/authentication/*` pages.
 - **Theme** follows the device (`prefers-color-scheme`): no toggle, no `data-theme`; `ThemeInterop` keeps Radzen's
   material / material-dark sheet in step.
 - **/diag** (anonymous, also in Production): API / Data / Services as `.po-diag__card`s with `.po-badge--ok|warn|bad`.

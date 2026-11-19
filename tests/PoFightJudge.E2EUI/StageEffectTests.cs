@@ -172,26 +172,21 @@ public class StageEffectTests(AppFixture app)
     }
 
     /// <summary>
-    /// Nothing is drawn until somebody turns stage effects on, and somebody who asked the whole system for less motion
-    /// is not given the loudest thing in it even when the switch is on.
+    /// Stage effects are always on, but somebody who asked the whole system for less motion is not given the loudest
+    /// thing in it — not even when an older build left the effects switch stored as on.
     /// </summary>
     [SkippableFact]
-    public async Task Effects_off_or_reduced_motion_mounts_nothing()
+    public async Task Reduced_motion_mounts_nothing()
     {
         Skip.If(app.Browser is null, app.Unavailable);
-        foreach (var switchedOn in new[] { false, true })
         {
-            // Switched on is only ever tried with reduced motion asked for: on and full motion is the effects working.
             var context = await app.Browser!.NewContextAsync(new BrowserNewContextOptions
             {
                 ViewportSize = AppFixture.Desktop,
-                ReducedMotion = switchedOn ? ReducedMotion.Reduce : ReducedMotion.NoPreference,
+                ReducedMotion = ReducedMotion.Reduce,
             });
             await using var _ = context;
-            if (switchedOn)
-            {
-                await context.AddInitScriptAsync("try { localStorage.setItem('pofightjudge:effects', 'on'); } catch (e) { }");
-            }
+            await context.AddInitScriptAsync("try { localStorage.setItem('pofightjudge:effects', 'on'); } catch (e) { }");
 
             var page = await context.NewPageAsync();
             await page.GotoAsync(app.BaseUrl + "/login", new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
@@ -213,7 +208,7 @@ public class StageEffectTests(AppFixture app)
                 }
                 """);
 
-            mounted.Should().BeFalse(switchedOn ? "reduced motion outranks the switch" : "stage effects are off by default");
+            mounted.Should().BeFalse("reduced motion outranks the effects");
         }
     }
 

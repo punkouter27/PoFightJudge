@@ -128,7 +128,22 @@
     /// <summary>A rotated phone is a different arrangement of the same two questions.</summary>
     private void OnViewportChanged(object? sender, EventArgs e) => InvokeAsync(StateHasChanged);
 
-    public void Dispose() => Viewport.Changed -= OnViewportChanged;
+    /// <summary>
+    /// /cpu and /1p are this one component, and it takes no parameters, so the router does not re-render it when the
+    /// channel switch moves between them. The address changing is the signal instead.
+    /// </summary>
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) =>
+        InvokeAsync(() =>
+        {
+            OnParametersSet();
+            StateHasChanged();
+        });
+
+    public void Dispose()
+    {
+        Viewport.Changed -= OnViewportChanged;
+        Nav.LocationChanged -= OnLocationChanged;
+    }
 
     /// <summary>One question gives way to the next, and it sounds like it.</summary>
     private Task TurnAsync(int step)
@@ -267,6 +282,7 @@
     protected override async Task OnInitializedAsync()
     {
         Viewport.Changed += OnViewportChanged;
+        Nav.LocationChanged += OnLocationChanged;
         await Viewport.InitializeAsync();
         try
         {

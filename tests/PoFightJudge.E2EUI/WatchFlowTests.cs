@@ -16,8 +16,8 @@ public class WatchFlowTests(AppFixture app)
         await page.GotoAsync($"{app.BaseUrl}/cpu");
         await page.Locator("div.picker").First.WaitForAsync(new() { Timeout = 30_000 });
 
-        await ChooseAsync(page, side: 0, "Matthew");
-        await ChooseAsync(page, side: 1, "Kimberly");
+        await ChooseAsync(page, side: 0, "Donald");
+        await ChooseAsync(page, side: 1, "Melania");
 
         await AppFixture.ToTheLastStepAsync(page);
         // A topic gives each of them a side: For / Against is offered, and both cards say which side they argue.
@@ -76,8 +76,8 @@ public class WatchFlowTests(AppFixture app)
         await page.GotoAsync($"{app.BaseUrl}/1p");
         await page.Locator("div.picker").First.WaitForAsync(new() { Timeout = 30_000 });
 
-        // 1P asks one thing: who you are arguing with. Matthew is a husband, so the wife's seat is yours.
-        await ChooseAsync(page, side: 0, "Matthew");
+        // 1P asks one thing: who you are arguing with. Donald is a husband, so the wife's seat is yours.
+        await ChooseAsync(page, side: 0, "Donald");
         await page.Locator("input[name=yourTag]").FillAsync("KDX");
 
         await AppFixture.ToTheLastStepAsync(page);
@@ -117,7 +117,7 @@ public class WatchFlowTests(AppFixture app)
         var confirm = page.Locator(".rz-dialog");
         await confirm.WaitForAsync(new() { Timeout = 10_000 });
         await confirm.GetByRole(AriaRole.Button, new() { Name = "Load cast" }).ClickAsync();
-        await page.WaitForFunctionAsync("() => document.querySelectorAll('article.profile').length >= 8", null, new() { Timeout = 30_000 });
+        await page.WaitForFunctionAsync("() => document.querySelectorAll('article.profile').length >= 6", null, new() { Timeout = 30_000 });
     }
 
     /// <summary>Picks an option out of one side's dropdown; side 0 is the husband, side 1 the wife.</summary>

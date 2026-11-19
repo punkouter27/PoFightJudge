@@ -23,9 +23,7 @@ public class NavigationTests(AppFixture app)
         await page.WaitForFunctionAsync("() => location.pathname === '/settings'", null, new() { Timeout = 15_000 });
         var panel = page.Locator(".po-settings");
         await panel.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
-        (await panel.Locator(".po-volume").CountAsync()).Should().Be(1);
-        (await panel.Locator(".host-list").CountAsync()).Should().Be(1, "who hosts is a setting, not a setup question");
-        (await panel.Locator(".rz-selectbar:has-text('Spicy')").CountAsync()).Should().Be(1, "so is how hot a spin runs");
+        (await panel.Locator(".po-volume, .host-list, .rz-selectbar, .rz-switch").CountAsync()).Should().Be(0, "how the app plays is fixed, not a setting");
 
         await page.GotoAsync(app.BaseUrl + "/2p");
         await page.GetByRole(AriaRole.Button, new() { Name = "Spin" }).WaitForAsync(new() { Timeout = 15_000 });

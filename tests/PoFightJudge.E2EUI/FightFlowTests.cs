@@ -60,13 +60,7 @@ public class FightFlowTests(AppFixture app)
         (await page.Locator("section.ruling").InnerTextAsync()).Should().ContainEquivalentOf("took it");
         (await page.Locator("article.player").CountAsync()).Should().Be(2, "both of them are reported on");
         (await page.Locator(".tips li").CountAsync()).Should().Be(6, "three pieces of advice each");
-        (await page.Locator(".detail .rz-tabview-nav li").CountAsync()).Should().Be(3, "the traits and the measurements wait behind a setting");
-        (await page.Locator(".trait, .stat").CountAsync()).Should().Be(0);
-
-        // Detailed analysis, switched on in Settings (the header's gear), is there when the verdict is opened again.
-        await page.GetByRole(AriaRole.Link, new() { Name = "Settings" }).ClickAsync();
-        await page.Locator(".po-settings .setting:has-text('Detailed analysis') .rz-switch").ClickAsync();
-        await page.GoBackAsync();
+        // Detailed analysis is always on: the traits and the measurements are tabs of every verdict.
         // A tab added after the first render draws its content when it is opened, which is when anybody reads it.
         await page.Locator(".detail .rz-tabview-nav li", new() { HasText = "How they argued" }).ClickAsync();
         await page.Locator(".trait").First.WaitForAsync(new() { Timeout = 10_000 });
@@ -81,15 +75,13 @@ public class FightFlowTests(AppFixture app)
         (await page.Locator("footer.after a[href='history']").CountAsync()).Should().Be(1, "the end of a match leads to the history");
         await page.Locator("footer.after a[href='fighters']").ClickAsync();
         await page.WaitForURLAsync(u => u.EndsWith("/fighters", StringComparison.Ordinal), new() { Timeout = 30_000 });
-        // The leaderboard opens on the standings, which need two fights; one fight each is on the roster.
-        await page.Locator(".views .rz-tabview-nav li", new() { HasText = "Roster" }).ClickAsync();
-        var roster = page.Locator(".roster tbody tr", new() { HasText = "ALI" }).First;
-        await roster.WaitForAsync(new() { Timeout = 30_000 });
-        (await page.Locator(".roster tbody tr", new() { HasText = "SAM" }).CountAsync()).Should().BeGreaterThan(0, "both of them are on the card");
-        (await roster.InnerTextAsync()).Should().Contain("1", "one fight each so far");
+        // The standings need two fights; after one each, both of them are on the podium above it.
+        var podium = page.Locator(".podium a[href='fighters/ALI']");
+        await podium.WaitForAsync(new() { Timeout = 30_000 });
+        (await page.Locator(".podium a[href='fighters/SAM']").CountAsync()).Should().BeGreaterThan(0, "both of them are on the card");
 
         // Their own page carries what the host would be told about them, in the same words.
-        await roster.ClickAsync();
+        await podium.ClickAsync();
         await page.WaitForURLAsync(u => u.Contains("/fighters/ALI", StringComparison.Ordinal), new() { Timeout = 30_000 });
         await page.Locator("section.style").WaitForAsync(new() { Timeout = 30_000 });
         (await page.Locator("section.style").InnerTextAsync()).Should().ContainEquivalentOf("1 debate", "one fight is an anecdote and the panel says so");

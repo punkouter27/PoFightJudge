@@ -42,24 +42,11 @@ public class ThemeAndViewportTests(AppFixture app)
         await page.WaitForFunctionAsync($"() => {Page} === 'rgb(15, 17, 23)'", null, new() { Timeout = 5_000 });
         await page.WaitForFunctionAsync($"() => {Chrome} === '#0f1117'", null, new() { Timeout = 5_000 });
 
-        // The volume is the browser's to keep, and one slider sets it for effects and voices both.
-        await page.GetByRole(AriaRole.Link, new() { Name = "Settings" }).ClickAsync();
-        await page.Locator(".po-volume").WaitForAsync(new() { Timeout = 10_000 });
-        await page.EvaluateAsync("() => window.PoSfx.setVolume(0.4)");
-
-        // Stage effects are off until asked for, and kept.
-        // Radzen's switch is a visually hidden checkbox (role=switch) inside the span a person actually clicks.
-        var effects = page.Locator(".po-settings .rz-switch:has(input[aria-label='Stage effects'])");
-        (await effects.Locator("input").GetAttributeAsync("aria-checked")).Should().Be("false", "the simplest stage is the default");
-        await effects.ClickAsync();
-        await page.WaitForFunctionAsync("() => localStorage.getItem('pofightjudge:effects') === 'on'", null, new() { Timeout = 5_000 });
-
+        // Sound has no switch: a mute and a level an older build kept are overwritten, so it plays loud and unmuted.
+        await page.EvaluateAsync("() => { localStorage.setItem('pofightjudge:sound', 'off'); window.PoSfx.setVolume(0.4); }");
         await page.ReloadAsync(new() { WaitUntil = WaitUntilState.NetworkIdle });
         await AppFixture.WaitForAppAsync(page, errors);
-        (await page.EvaluateAsync<double>("window.PoSfx.volume()")).Should().Be(0.4);
-        (await page.EvaluateAsync<bool>("window.PoMotion.still()")).Should().BeFalse("the switch was turned on before the reload");
-        (await page.Locator(".po-volume input, .po-volume [role=slider]").First.GetAttributeAsync("aria-valuenow") ?? await page.Locator(".po-volume input").First.InputValueAsync())
-            .Should().Be("40", "the slider opens where it was left");
+        await page.WaitForFunctionAsync("() => window.PoSfx.volume() === 1", null, new() { Timeout = 5_000 });
         errors.Should().BeEmpty();
     }
 }

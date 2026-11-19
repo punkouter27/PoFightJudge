@@ -99,16 +99,14 @@ other through `Shared` contracts and repositories, not through each other's serv
   ping-pong targets) and `swarm` (particles stepped by transform feedback) — `particles.js` the canvas physics
   (sparks, confetti, shards, Verlet streamers), `terrain.js` a clip's spectrum drawn as mountains, and `fx.js` the
   one-shot CSS classes, the stamps, the holo foil and table mode. Each entry point answers "no"
-  rather than throwing, the drawn half is off until the Settings page's **Stage effects** switch turns it on
-  (`po-effects`, read by `PoMotion.still()` in `theme.js`) and off whatever the switch when reduced motion is asked for, and the sound switch is stored where JS
-  can read it before Blazor boots. The catalogues are spelled twice — `Sfx`/`Shaders` in C#, the voices and shaders
+  rather than throwing; the drawn half is always on, except under reduced motion (`PoMotion.still()` in `theme.js`),
+  and sound is always on at full volume (`SfxInterop.InitializeAsync` overwrites any mute or level an older build stored). The catalogues are spelled twice — `Sfx`/`Shaders` in C#, the voices and shaders
   in JS — and `EffectCatalogueTests` holds the pairs together, because a name the browser does not know is silence
   rather than an error; `StageEffectTests` compiles every shader and plays every voice in a real browser.
-- The optional choices live on the Settings page (`/settings`, the header's gear), not on the setup screens: `Preferences` (client, LocalStorage)
-  holds stage effects (off), spin heat (Medium), the 2P host (the Referee), on-device transcription (off) and
-  detailed analysis (off), each defaulting to the simplest app. With detailed analysis off the verdict is three tabs
-  (the fight, the claims, the advice); on, it adds the traits and mood chart and the thirty measurements. A change
-  raises `Preferences.Changed`, so an open verdict redraws without a reload.
+- How the app plays is fixed, not a setting: `Preferences` (client) holds stage effects (on), spin heat (Medium),
+  the 2P host (the Referee), on-device transcription (off) and detailed analysis (on) as constants. The Settings page
+  shows only the theme note, the build, who is signed in and the way out. The verdict always carries the traits,
+  mood chart and thirty measurements beside the fight, the claims and the advice.
 - `ScreenshotRunner` with `SEED=1` plays a watch and a fight on the fakes and photographs the moments the effects
   live in (the tape, the glitch, the heat, table mode, the verdict's reveal, shatter, story image, rematch, the
   podium). A CSS effect too quick to catch is frozen part-way; a canvas is whatever frame it lands on.

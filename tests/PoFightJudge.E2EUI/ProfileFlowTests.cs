@@ -19,9 +19,9 @@ public class ProfileFlowTests(AppFixture app)
         await confirm.GetByRole(AriaRole.Button, new() { Name = "Load cast" }).ClickAsync();
 
         var cards = page.Locator("article.profile");
-        await page.WaitForFunctionAsync("() => document.querySelectorAll('article.profile').length >= 8", null, new() { Timeout = 30_000 });
+        await page.WaitForFunctionAsync("() => document.querySelectorAll('article.profile').length >= 6", null, new() { Timeout = 30_000 });
         (await page.Locator("section.cast").CountAsync()).Should().Be(2, "husbands and wives are separate sections");
-        var mah = page.Locator("article.profile", new() { HasText = "MAH" });
+        var mah = page.Locator("article.profile", new() { HasText = "DJT" });
         await mah.Locator("img.face").WaitForAsync(new() { Timeout = 15_000 });
         (await mah.Locator("img.face").EvaluateAsync<bool>("img => img.complete && img.naturalWidth === 512")).Should().BeTrue("the seeded portrait is served as the 512 px PNG");
 

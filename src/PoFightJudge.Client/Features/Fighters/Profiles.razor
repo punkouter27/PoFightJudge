@@ -9,18 +9,7 @@
 <PageShell Width="PageShell.ShellWidth.Wide" Eyebrow="The cast" Title="Profiles"
            Lead="Every CPU and 1P match is two of these: the default cast, and everybody who has played. Their records come from their games.">
     <Actions>
-        @* One wrapping row this page owns: the search takes whatever room the switch leaves, so on a phone the two
-           share a line and the buttons take the next, rather than four lines of controls above the first card. *@
         <div class="cast-actions">
-        <RadzenSelectBar TValue="RoleFilter" @bind-Value="_filter" Size="ButtonSize.Small" aria-label="Show">
-            <Items>
-                <RadzenSelectBarItem Text="All" Value="RoleFilter.All" />
-                <RadzenSelectBarItem Text="Husbands" Value="RoleFilter.Husbands" />
-                <RadzenSelectBarItem Text="Wives" Value="RoleFilter.Wives" />
-            </Items>
-        </RadzenSelectBar>
-        <RadzenTextBox Value="@_find" @oninput="@(e => _find = e.Value?.ToString() ?? string.Empty)" Name="find" MaxLength="40"
-                       Placeholder="Find in the cast" aria-label="Find in the cast" class="cast-find" />
         <RadzenButton Text="Load default cast" Icon="groups" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" Click="@SeedAsync" IsBusy="@_seeding" BusyText="Loading…" />
         </div>
     </Actions>
@@ -45,7 +34,7 @@
         {
             @foreach (var (role, label, chip) in Sections)
             {
-                var members = _profiles.Where(p => p.Persona.Role == role).Where(Found).OrderBy(p => p.Persona.Name ?? p.Persona.Initials, StringComparer.OrdinalIgnoreCase).ToList();
+                var members = _profiles.Where(p => p.Persona.Role == role).OrderBy(p => p.Persona.Name ?? p.Persona.Initials, StringComparer.OrdinalIgnoreCase).ToList();
                 if (members.Count == 0)
                 {
                     continue;
@@ -70,43 +59,18 @@
 </PageShell>
 
 @code {
-    private enum RoleFilter
-    {
-        All,
-        Husbands,
-        Wives,
-    }
-
     private List<ProfileDto> _profiles = [];
     private bool _loading = true;
     private bool _seeding;
     private string? _error;
-    private RoleFilter _filter = RoleFilter.All;
-    private string _find = string.Empty;
 
-    /// <summary>Whether a persona's initials, name or occupation has what was typed in it. Everybody, when nothing was.</summary>
-    private bool Found(ProfileDto profile) =>
-        _find.Trim() is not { Length: > 0 } find
-        || profile.Persona.Initials.Contains(find, StringComparison.OrdinalIgnoreCase)
-        || (profile.Persona.Name ?? string.Empty).Contains(find, StringComparison.OrdinalIgnoreCase)
-        || (profile.Persona.Occupation ?? string.Empty).Contains(find, StringComparison.OrdinalIgnoreCase);
     private string _stamp = string.Empty;
 
-    private IEnumerable<(ProfileRole Role, string Label, string Chip)> Sections
-    {
-        get
-        {
-            if (_filter is RoleFilter.All or RoleFilter.Husbands)
-            {
-                yield return (ProfileRole.Husband, "Husbands", "po-chip--p1");
-            }
-
-            if (_filter is RoleFilter.All or RoleFilter.Wives)
-            {
-                yield return (ProfileRole.Wife, "Wives", "po-chip--p2");
-            }
-        }
-    }
+    private static readonly (ProfileRole Role, string Label, string Chip)[] Sections =
+    [
+        (ProfileRole.Husband, "Husbands", "po-chip--p1"),
+        (ProfileRole.Wife, "Wives", "po-chip--p2"),
+    ];
 
     protected override Task OnInitializedAsync() => LoadAsync();
 

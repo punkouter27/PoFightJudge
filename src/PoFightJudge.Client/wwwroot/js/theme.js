@@ -56,18 +56,14 @@ window.PoTheme = {
 };
 window.PoTheme.chrome(window.PoTheme.prefersDark());
 
-// Stage effects (the shaders, the particles, the terrain, the stamps and the foil) are off unless somebody turns them
-// on in Settings, and off whatever the setting when the system asks for less motion. Read from localStorage, so the
-// first mount already knows. Every drawn-effect entry point asks this one question.
+// Stage effects (the shaders, the particles, the terrain, the stamps and the foil) are always on, except when the
+// system asks for less motion. Every drawn-effect entry point asks this one question.
 window.PoMotion = {
   still: function () {
     try {
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
-    } catch (e) { /* no media queries: fall through to the setting */ }
-    try {
-      return (localStorage.getItem('pofightjudge:effects') || '').replace(/^"|"$/g, '') !== 'on';
+      return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     } catch (e) {
-      return true;
+      return false; // no media queries: effects on
     }
   },
 };

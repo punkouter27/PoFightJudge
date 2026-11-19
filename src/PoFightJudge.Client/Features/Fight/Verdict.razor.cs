@@ -143,8 +143,6 @@ public sealed partial class Verdict : ComponentBase, IDisposable
 
     protected override async Task OnInitializedAsync()
     {
-        await Prefs.InitializeAsync();
-        Prefs.Changed += OnPreferencesChanged;
 
         if (!MatchId.TryParse(MatchIdText, null, out var id))
         {
@@ -597,16 +595,8 @@ public sealed partial class Verdict : ComponentBase, IDisposable
         }
     }
 
-    /// <summary>Detailed analysis was switched while the verdict is open: the tabs change, so the first is shown.</summary>
-    private void OnPreferencesChanged(object? sender, EventArgs e)
-    {
-        _tab = 0;
-        _ = InvokeAsync(StateHasChanged);
-    }
-
     public void Dispose()
     {
-        Prefs.Changed -= OnPreferencesChanged;
         _leaving.Cancel();
         _skip?.Dispose();
         _leaving.Dispose();

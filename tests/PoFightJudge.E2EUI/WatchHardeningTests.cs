@@ -23,7 +23,7 @@ public class WatchHardeningTests(AppFixture app)
         await page.Locator("div.picker").First.WaitForAsync(new() { Timeout = 30_000 });
 
         // Arguing with a wife leaves the husband's seat, which opens the argument: the very first turn is theirs.
-        await ChooseAsync(page, side: 0, "Kimberly");
+        await ChooseAsync(page, side: 0, "Melania");
         await page.Locator("input[name=yourTag]").FillAsync("ABE");
         await AppFixture.ToTheLastStepAsync(page);
         await page.GetByRole(AriaRole.Button, new() { Name = "Start the argument" }).ClickAsync();
@@ -70,7 +70,7 @@ public class WatchHardeningTests(AppFixture app)
         var confirm = page.Locator(".rz-dialog");
         await confirm.WaitForAsync(new() { Timeout = 10_000 });
         await confirm.GetByRole(AriaRole.Button, new() { Name = "Load cast" }).ClickAsync();
-        await page.WaitForFunctionAsync("() => document.querySelectorAll('article.profile').length >= 8", null, new() { Timeout = 30_000 });
+        await page.WaitForFunctionAsync("() => document.querySelectorAll('article.profile').length >= 6", null, new() { Timeout = 30_000 });
     }
 
     private static async Task ChooseAsync(IPage page, int side, string option)

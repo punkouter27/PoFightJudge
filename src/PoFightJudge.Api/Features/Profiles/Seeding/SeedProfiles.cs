@@ -3,7 +3,7 @@ using PoFightJudge.Shared.Models;
 namespace PoFightJudge.Api.Features.Profiles.Seeding;
 
 /// <summary>
-/// The default cast: the house couple, two invented wives, and six public figures. Each carries the Gemini voice it
+/// The default cast: three husbands (Trump, Ramsay, Schwarzenegger) and three wives (Melania Trump, Harris, Clinton). Each carries the Gemini voice it
 /// falls back to, and the ones with a cloned voice on Fish Audio carry its reference id as well. Stored records were
 /// dropped — a record is derived from play, never seeded.
 /// </summary>
@@ -17,47 +17,6 @@ public static class SeedProfiles
 
     private static List<CreateProfileRequest> Build() =>
     [
-        new()
-        {
-            Initials = "MAH", Role = ProfileRole.Husband, Name = "Matthew Herb", Age = 50, Occupation = "Software Engineer",
-            Likes = "making pop punk songs, playing guitar and drums, coding apps and games with coding LLMs, basketball, talking about life",
-            Dislikes = "clutter, rooms being a mess, wasting food, vacations that are not relaxing",
-            LogicVsEmotion = 20, Patience = 80, HoldsGrudges = 20, Jealousy = 25,
-            CommonArguments = "budget planning, vacation scheduling, chores, exwife, focusing on my son with exwife than our kids",
-            Philosophy = "Stay chill and don't waste time fighting / Create things in life",
-            TtsSettings = new TtsSettingsDto { Pitch = 0.6, Speed = 0.9, VoiceName = "Charon" },
-        },
-        new()
-        {
-            Initials = "KSH", Role = ProfileRole.Wife, Name = "Kimberly Herb", Age = 35, Occupation = "CVS Pharmacy Scheduler",
-            Likes = "watching TV, buying things for herself and her kids, watching TV drama shows, having the last word, keeping score of everything the other person has ever done wrong",
-            Dislikes = "being told anything about herself, compromise, meeting halfway, admitting she is wrong, being told she is messy, when husband rearranges items in the house, Nick getting the couch or a bed",
-            LogicVsEmotion = 85, Patience = 10, HoldsGrudges = 95, Jealousy = 70,
-            CommonArguments = "HOW SHE FIGHTS, whoever the opponent is: she never answers a criticism and never looks for agreement, a compromise or a solution. Every reply flips it onto the opponent and attacks them personally and aggressively, using something they said, did or are ('Me? What about YOU?', 'Oh, and you're perfect?'). She never concedes a point. TOPICS: Nick should sleep on the floor, not the couch or a bed; husband moving things around the house; husband thinking about his ex-wife; husband favoring his son Nick over their two kids.",
-            Philosophy = "Don't you dare turn this on me. Let's talk about what's wrong with YOU.",
-            TtsSettings = new TtsSettingsDto { Pitch = 1.0, Speed = 1.3, VoiceName = "Kore", Accent = "Filipino" },
-        },
-        new()
-        {
-            Initials = "ERS", Role = ProfileRole.Wife, Name = "Elena Rose Santiago", Age = 34, Occupation = "Interior Designer",
-            Likes = "brunch spots, playlists, color-coded calendars",
-            Dislikes = "dirty dishes, monotone replies, forgotten anniversaries",
-            LogicVsEmotion = 46, Patience = 52, HoldsGrudges = 61, Jealousy = 49,
-            CommonArguments = "emotional tone, house decor choices, texting back too slowly",
-            Philosophy = "Say what you mean, but make it worth hearing.",
-            TtsSettings = new TtsSettingsDto { Pitch = 1.1, Speed = 1.05, VoiceName = "Kore" },
-        },
-        new()
-        {
-            Initials = "KPN", Role = ProfileRole.Wife, Name = "Kavya Priya Nair", Age = 31, Occupation = "Software Engineer",
-            Likes = "tea, clean interfaces, travel planning",
-            Dislikes = "passive-aggressive notes, loud chewing, missed deadlines",
-            // 29 on the axis as the UI shows it — "coldly logical" — which is what her philosophy actually describes.
-            LogicVsEmotion = 29, Patience = 81, HoldsGrudges = 28, Jealousy = 18,
-            CommonArguments = "work-life balance, weekend plans, overanalyzing texts",
-            Philosophy = "Calm logic first, feelings second, snacks always.",
-            TtsSettings = new TtsSettingsDto { Pitch = 1.0, Speed = 0.98, VoiceName = "Kore" },
-        },
         new()
         {
             Initials = "DJT", Role = ProfileRole.Husband, Name = "Donald Trump", Age = 79, Occupation = "President of USA",

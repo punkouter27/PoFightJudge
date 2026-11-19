@@ -13,7 +13,7 @@ namespace PoFightJudge.Api.Common;
 /// </summary>
 public static class SeedAdminGate
 {
-    public static IReadOnlyList<string> DefaultAdminEmails { get; } = ["punkouter26@gmail.com"];
+    public static IReadOnlyList<string> DefaultAdminEmails { get; } = ["punkouter27@gmail.com"];
 
     public static bool IsSeedAdmin(ClaimsPrincipal user, IConfiguration configuration, bool production)
     {

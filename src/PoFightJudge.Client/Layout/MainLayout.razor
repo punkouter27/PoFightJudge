@@ -5,8 +5,11 @@
     <FakeAiBanner />
     <ConnectionBanner />
     @* The Po shell header: app name, email or Sign in, settings gear (Po web standard). No nav: Home is every
-       destination, and the name leads back to it. *@
-    <PoHeader />
+       destination, and the name leads back to it. Not on the sign-in page: there is nowhere to go before signing in. *@
+    @if (!OnLogin)
+    {
+        <PoHeader />
+    }
     <main class="content" id="main">
         @* One unhandled render exception used to drop the whole app to index.html's error strip, which offers a
            reload and loses whatever was in progress. The boundary keeps the shell and the banner. *@
@@ -34,17 +37,17 @@
 </div>
 
 @code {
+    private bool OnLogin => Nav.ToBaseRelativePath(Nav.Uri).Split('?', '#')[0].Equals("login", StringComparison.OrdinalIgnoreCase);
+
     [Inject] private SfxInterop Sound { get; set; } = default!;
-    [Inject] private Preferences Prefs { get; set; } = default!;
 
     /// <summary>
-    /// The stored sound and preferences are applied here, once, rather than by the controls on /settings, which are
-    /// only in the document while that page is open. (The theme follows the device; App starts ThemeInterop.)
+    /// Sound is switched on at full volume here, once, for every page. (The theme follows the device; App starts
+    /// ThemeInterop.)
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
         await Sound.InitializeAsync();
-        await Prefs.InitializeAsync();
     }
 
     private ErrorBoundary? _boundary;

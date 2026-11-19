@@ -188,12 +188,11 @@
         Viewport.Changed += OnViewportChanged;
         await Viewport.InitializeAsync();
         _known = await Api.GetFightersAsync();
-        await Prefs.InitializeAsync();
         _persona = Prefs.Host;
 
         // The same two people argue most nights, and typing both tags again every time is the tax on that. A rematch
         // takes precedence over the remembered card; both leave the topic to whatever it was, blank included.
-        // The host is the Settings choice, except on a rematch, which replays the host that fight had.
+        // The host is the Referee, except on a rematch, which replays the host that fight had.
         var rematch = Memory.FightRematchArmed;
         if (await Memory.FightAsync() is { } card)
         {

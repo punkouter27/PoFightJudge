@@ -1,6 +1,4 @@
-::deep .roster { width: 100%; }
 
-::deep .roster .openable { cursor: pointer; }
 
 ::deep .tag { letter-spacing: 0.06em; color: inherit; }
 

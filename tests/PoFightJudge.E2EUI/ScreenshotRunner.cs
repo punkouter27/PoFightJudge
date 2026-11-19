@@ -112,7 +112,7 @@ public sealed class ScreenshotRunner(AppFixture app, ITestOutputHelper output)
             var confirm = page.Locator(".rz-dialog");
             await confirm.WaitForAsync(new() { Timeout = 10_000 });
             await confirm.GetByRole(AriaRole.Button, new() { Name = "Load cast" }).ClickAsync();
-            await page.WaitForFunctionAsync("() => document.querySelectorAll('article.profile').length >= 8", null, new() { Timeout = 30_000 });
+            await page.WaitForFunctionAsync("() => document.querySelectorAll('article.profile').length >= 6", null, new() { Timeout = 30_000 });
 
             await page.GotoAsync($"{app.BaseUrl}/cpu");
             await page.Locator("div.picker").First.WaitForAsync(new() { Timeout = 30_000 });

@@ -145,7 +145,6 @@ public sealed partial class WatchPlay : IAsyncDisposable
         await Sound.ArmAsync(_leaving.Token);
 
         // A person in a seat will speak, so the browser's transcriber starts loading now rather than on their turn.
-        await Prefs.InitializeAsync();
         if (Prefs.OnDeviceAsr && CanRecord && (Simulation.Husband?.IsHuman == true || Simulation.Wife?.IsHuman == true))
         {
             await Asr.WarmAsync(_leaving.Token);

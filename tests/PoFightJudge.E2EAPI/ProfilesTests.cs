@@ -66,9 +66,9 @@ public class ProfilesTests(ApiFactory factory)
         list.Select(p => p.Persona.Initials).Should().Contain(SeedProfiles.All.Select(p => p.Initials), "every built-in persona is back");
         list.Should().OnlyContain(p => p.Record != null && p.Record.Rating > 0);
 
-        var kim = ProfileId.From("KSH");
+        var kim = ProfileId.From("MLT");
         (await client.PostAsJsonAsync(ApiRoutes.Profiles.Base, Persona("E2A"))).StatusCode.Should().BeOneOf([HttpStatusCode.NotFound, HttpStatusCode.MethodNotAllowed], "no profile is created by hand");
-        (await client.PutAsJsonAsync(ApiRoutes.Profiles.ById(kim), Persona("KSH", ProfileRole.Wife))).StatusCode.Should().BeOneOf([HttpStatusCode.NotFound, HttpStatusCode.MethodNotAllowed], "or edited");
+        (await client.PutAsJsonAsync(ApiRoutes.Profiles.ById(kim), Persona("MLT", ProfileRole.Wife))).StatusCode.Should().BeOneOf([HttpStatusCode.NotFound, HttpStatusCode.MethodNotAllowed], "or edited");
         (await client.DeleteAsync(ApiRoutes.Profiles.ById(kim))).StatusCode.Should().BeOneOf([HttpStatusCode.NotFound, HttpStatusCode.MethodNotAllowed], "or deleted");
         (await client.PostAsync(ApiRoutes.Profiles.Face(kim), null)).StatusCode.Should().BeOneOf([HttpStatusCode.NotFound, HttpStatusCode.MethodNotAllowed], "or given a face");
         (await client.GetAsync(ApiRoutes.Profiles.ById(kim))).StatusCode.Should().Be(HttpStatusCode.OK, "reading one still works");

@@ -75,11 +75,9 @@ a:hover { color: var(--po-fg); }
 
 /* The volume slider beside the sound switch, in the settings panel. */
 /* html:root to outrank Radzen's own .rz-slider, whose sheet is loaded after this one. */
-html:root .po-volume { width: 8rem; margin-inline-start: var(--rz-slider-handle-width, 20px); }
 
 /* Radzen centres the handle on the value, so at full volume half of it hangs off the end of the track and the
    slider is wider than its own box. Hung from its trailing edge instead, it stays inside at every value. */
-html:root .po-volume .rz-slider-handle { margin-inline-start: calc(var(--rz-slider-handle-width, 20px) * -1); }
 
 /* The page colour is painted once, by the root. Painted by body as well, it would sit on top of anything placed
    behind the page — which is where the backdrop below lives. */

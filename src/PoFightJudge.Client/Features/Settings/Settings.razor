@@ -6,16 +6,15 @@
 @inject IWebAssemblyHostEnvironment HostEnvironment
 @inject IJSRuntime JS
 @inject ThemeInterop Theme
-@inject Preferences Prefs
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @using PoFightJudge.Client.Features.Auth
 
 <PageTitle>Settings · PoFightJudge</PageTitle>
 
-@* Where the Po header's gear goes, signed in or out. It holds what the settings panel on the old top bar did — who
-   you are, the sound, the stage effects, the analysis depth, transcription, spin heat, the host, the way out — plus
-   the two things every Po app's settings say: the theme follows the device, and which build this is. *@
-<PageShell Width="PageShell.ShellWidth.Narrow" Eyebrow="Settings" Title="Settings" Lead="How the app looks and sounds on this device, and who is signed in.">
+@* Where the Po header's gear goes, signed in or out: who you are and the way out, plus the two things every Po app's
+   settings say — the theme follows the device, and which build this is. How the app plays (sound, stage effects,
+   detailed analysis, spin heat, the host) is fixed in `Preferences`, not chosen here. *@
+<PageShell Width="PageShell.ShellWidth.Narrow" Eyebrow="Settings" Title="Settings" Lead="Who is signed in, and which build this is.">
     <div class="po-scope">
         <section class="po-settings po-card" aria-label="Settings">
             <div class="setting">
@@ -34,34 +33,6 @@
                     </div>
                 </Authorized>
             </AuthorizeView>
-            <div class="setting"><span class="po-eyebrow">Sound</span><SoundToggle /></div>
-            <div class="setting">
-                <span class="po-eyebrow">Stage effects</span>
-                <RadzenSwitch Value="@Prefs.Effects" ValueChanged="@((bool on) => Prefs.SetEffectsAsync(on))" Name="effects"
-                              InputAttributes="@(new Dictionary<string, object> { ["aria-label"] = "Stage effects" })" />
-            </div>
-            <div class="setting" title="The verdict's trait scores, mood chart and thirty measurements of how each of you talked.">
-                <span class="po-eyebrow">Detailed analysis</span>
-                <RadzenSwitch Value="@Prefs.Detailed" ValueChanged="@((bool on) => Prefs.SetDetailedAsync(on))" Name="detail"
-                              InputAttributes="@(new Dictionary<string, object> { ["aria-label"] = "Detailed analysis" })" />
-            </div>
-            <div class="setting" title="Your spoken 1P turns are transcribed on this device. Downloads a 41 MB model once.">
-                <span class="po-eyebrow">On-device transcription</span>
-                <RadzenSwitch Value="@Prefs.OnDeviceAsr" ValueChanged="@((bool on) => Prefs.SetOnDeviceAsrAsync(on))" Name="asr"
-                              InputAttributes="@(new Dictionary<string, object> { ["aria-label"] = "On-device transcription" })" />
-            </div>
-            <div class="setting">
-                <span class="po-eyebrow">Spin heat</span>
-                <RadzenSelectBar TValue="TopicField.Heat" Value="@Prefs.Heat" ValueChanged="@((TopicField.Heat h) => Prefs.SetHeatAsync(h))"
-                                 Size="ButtonSize.Small" Name="heat" aria-label="How spicy a topic">
-                    <Items>
-                        <RadzenSelectBarItem Text="Mild" Value="@TopicField.Heat.Mild" />
-                        <RadzenSelectBarItem Text="Medium" Value="@TopicField.Heat.Medium" />
-                        <RadzenSelectBarItem Text="Spicy" Value="@TopicField.Heat.Spicy" />
-                    </Items>
-                </RadzenSelectBar>
-            </div>
-            <HostPersonaPicker Persona="@Prefs.Host" PersonaChanged="@((HostPersonaId h) => Prefs.SetHostAsync(h))" />
             <AuthorizeView>
                 <Authorized>
                     <div class="links">
@@ -92,8 +63,6 @@
 
 @code {
     private bool _signingOut;
-
-    protected override async Task OnInitializedAsync() => await Prefs.InitializeAsync();
 
     private async Task SignOutAsync()
     {

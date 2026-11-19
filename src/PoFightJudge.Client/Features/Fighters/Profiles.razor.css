@@ -55,9 +55,3 @@
   align-items: center;
   gap: var(--po-space-2) var(--po-space-3);
 }
-
-.cast-actions ::deep .cast-find { flex: 1 1 9rem; min-width: 0; width: 11rem; }
-
-@media (max-width: 40rem) {
-  .cast-actions ::deep .cast-find { width: auto; }
-}

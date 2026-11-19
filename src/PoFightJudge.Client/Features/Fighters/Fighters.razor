@@ -1,11 +1,8 @@
 @page "/fighters"
-@using System.Globalization
 @inject IApiClient Api
 @inject NavigationManager Nav
 
-@inject Viewport Viewport
 @inject IJSRuntime JS
-@implements IDisposable
 
 <PageTitle>Leaderboard · PoFightJudge</PageTitle>
 
@@ -35,8 +32,6 @@
         }
         else
         {
-            @* The roster and the standings are two readings of the same people. One below the other they were two
-               tables to scroll past; as tabs it is one screen, and both are rendered so either is a click away. *@
             @* The top three by rating, as cards with a foil that catches the light as they turn. *@
             @if (_podium.Count > 0)
             {
@@ -52,75 +47,10 @@
 
             @* Every "who is winning" in the app, on one board: the people at the microphone and the cast that argues
                on its own, ranked together. *@
-            <RadzenTabs RenderMode="TabRenderMode.Client" class="views">
-                <Tabs>
-                    <RadzenTabsItem Text="Standings" Icon="leaderboard">
-                        <p class="po-muted cut-off">People and the cast together. Anybody with fewer than @MinimumMatches games is left off.</p>
-                        <Board Rows="@_board" Empty="Nobody has played twice yet." />
-                    </RadzenTabsItem>
-                    <RadzenTabsItem Text="Roster" Icon="groups">
-            <RadzenDataGrid Data="@_roster" TItem="FighterStatsDto" AllowSorting="true" AllowPaging="true" PageSize="20" Density="Density.Compact" class="roster"
-                            RowClick="@(args => Open(args.Data))" RowRender="@(args => args.Attributes["class"] = "openable")">
-                <Columns>
-                    @* 5 + 8 + 5 + 5 + 8rem of declared width, before the name column: about 500 px of table, so a narrow
-                       window does not scroll sideways. A phone gets the tag, the name, the record and the form in one
-                       cell; nothing is dropped, it is stacked. When someone last fought is on their own page. *@
-                    <RadzenDataGridColumn TItem="FighterStatsDto" Title="Fighter" Visible="@Viewport.IsPhone" Sortable="false">
-                        <Template Context="row">
-                            <div class="po-stacked">
-                                <span class="po-stacked__head">
-                                    <RadzenLink Path="@($"fighters/{row.Tag}")" Text="@row.Tag" class="tag po-display" />
-                                    @if (string.Equals(row.DisplayName, row.Tag, StringComparison.Ordinal))
-                                    {
-                                        <span class="po-muted">no name yet</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="po-stacked__strong">@row.DisplayName</span>
-                                    }
-                                </span>
-                                <span class="po-stacked__fine po-muted">
-                                    <RankBadge Rating="@row.Rating" Fights="@row.Fights" /> @row.Rating · @row.Wins–@row.Losses@(row.Draws > 0 ? $"–{row.Draws}" : string.Empty) over @row.Fights
-                                    @if (row.LastFoughtAt is { } seen)
-                                    {
-                                        @($" · last {seen.LocalDateTime.ToString("d MMM yyyy", CultureInfo.CurrentCulture)}")
-                                    }
-                                </span>
-                                <FormSparkline Scores="@row.Form" />
-                            </div>
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="FighterStatsDto" Title="Tag" Width="5rem" Visible="@(!Viewport.IsPhone)" Property="@nameof(FighterStatsDto.Tag)">
-                        <Template Context="row"><RadzenLink Path="@($"fighters/{row.Tag}")" Text="@row.Tag" class="tag po-display" /></Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="FighterStatsDto" Title="Name" Visible="@(!Viewport.IsPhone)" Property="@nameof(FighterStatsDto.DisplayName)">
-                        <Template Context="row">
-                            @if (string.Equals(row.DisplayName, row.Tag, StringComparison.Ordinal))
-                            {
-                                <span class="po-muted">no name yet</span>
-                            }
-                            else
-                            {
-                                @row.DisplayName
-                            }
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="FighterStatsDto" Title="Rating" Width="8rem" Visible="@(!Viewport.IsPhone)" Property="@nameof(FighterStatsDto.Rating)">
-                        <Template Context="row">@row.Rating <RankBadge Rating="@row.Rating" Fights="@row.Fights" /></Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="FighterStatsDto" Title="Fights" Width="5rem" Visible="@(!Viewport.IsPhone)" Property="@nameof(FighterStatsDto.Fights)" />
-                    <RadzenDataGridColumn TItem="FighterStatsDto" Title="W–L" Width="5rem" Visible="@(!Viewport.IsPhone)" Sortable="false">
-                        <Template Context="row">@row.Wins–@row.Losses@(row.Draws > 0 ? $"–{row.Draws}" : string.Empty)</Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="FighterStatsDto" Title="Form" Width="8rem" Visible="@(!Viewport.IsPhone)" Sortable="false">
-                        <Template Context="row"><FormSparkline Scores="@row.Form" /></Template>
-                    </RadzenDataGridColumn>
-                </Columns>
-            </RadzenDataGrid>
-
-                    </RadzenTabsItem>
-                </Tabs>
-            </RadzenTabs>
+            <section class="views" aria-label="Standings">
+                <p class="po-muted cut-off">People and the cast together. Anybody with fewer than @MinimumMatches games is left off.</p>
+                <Board Rows="@_board" Empty="Nobody has played twice yet." />
+            </section>
         }
         </div>
     </ChildContent>
@@ -142,8 +72,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Viewport.Changed += OnViewportChanged;
-        await Viewport.InitializeAsync();
         try
         {
             _roster = await Api.GetRosterAsync();
@@ -178,17 +106,4 @@
             // Still cards; just still.
         }
     }
-
-    private void Open(FighterStatsDto? row)
-    {
-        if (row is not null)
-        {
-            Nav.NavigateTo($"fighters/{row.Tag}");
-        }
-    }
-
-    /// <summary>Which columns exist is a render decision, and a rotated phone is a different set of them.</summary>
-    private void OnViewportChanged(object? sender, EventArgs e) => InvokeAsync(StateHasChanged);
-
-    public void Dispose() => Viewport.Changed -= OnViewportChanged;
 }

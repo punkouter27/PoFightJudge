@@ -1,7 +1,5 @@
-using Blazored.LocalStorage;
 using Bunit;
 using Microsoft.JSInterop;
-using NSubstitute;
 using PoFightJudge.Client.Layout.Components;
 using PoFightJudge.Client.Services;
 using PoFightJudge.Shared.Models;
@@ -9,54 +7,21 @@ using PoFightJudge.Shared.Models;
 namespace PoFightJudge.Unit.Client;
 
 /// <summary>
-/// The Settings panel's optional choices: a first visit gets the simplest app (no stage effects, a medium spin, the
-/// Referee hosting, no on-device transcriber, the verdict without its detailed analysis), and whatever is changed is what the next visit opens on. The
-/// transcriber, once on, is a shortcut and never a dependency: anything short of words sends the clip to the server.
+/// How the app plays is fixed, not chosen: stage effects and the detailed analysis on, a medium spin, the Referee
+/// hosting, spoken turns read by the server. The transcriber is kept as a shortcut that is never a dependency:
+/// anything short of words sends the clip to the server.
 /// </summary>
 public class PreferencesTests
 {
     [Fact]
-    public async Task A_first_visit_gets_the_defaults_and_a_change_survives_a_reload()
+    public async Task How_the_app_plays_is_fixed_and_the_transcriber_never_blocks()
     {
-        var storage = Substitute.For<ILocalStorageService>();
-
-        var first = new Preferences(storage);
-        await first.InitializeAsync();
-        first.Effects.Should().BeFalse();
-        first.Heat.Should().Be(TopicField.Heat.Medium);
-        first.Host.Should().Be(HostPersonaId.Referee);
-        first.OnDeviceAsr.Should().BeFalse("it downloads a forty-megabyte model, which nobody gets without asking");
-        first.Detailed.Should().BeFalse("the traits and the thirty measurements are for whoever asks for them");
-
-        var changes = 0;
-        first.Changed += (_, _) => changes++;
-
-        await first.SetEffectsAsync(on: true);
-        await first.SetHeatAsync(TopicField.Heat.Spicy);
-        await first.SetHostAsync(HostPersonaId.Roastmaster);
-        await first.SetOnDeviceAsrAsync(on: true);
-        await first.SetDetailedAsync(on: true);
-        changes.Should().Be(5, "a page already showing a choice is told when it changes");
-
-        await storage.Received().SetItemAsStringAsync(Preferences.EffectsKey, "on", Arg.Any<CancellationToken>());
-        await storage.Received().SetItemAsStringAsync(Preferences.HeatKey, "Spicy", Arg.Any<CancellationToken>());
-        await storage.Received().SetItemAsStringAsync(Preferences.HostKey, "Roastmaster", Arg.Any<CancellationToken>());
-        await storage.Received().SetItemAsStringAsync(Preferences.AsrKey, "on", Arg.Any<CancellationToken>());
-        await storage.Received().SetItemAsStringAsync(Preferences.DetailKey, "on", Arg.Any<CancellationToken>());
-
-        // What was written is what the next visit reads back.
-        storage.GetItemAsStringAsync(Preferences.EffectsKey, Arg.Any<CancellationToken>()).Returns("on");
-        storage.GetItemAsStringAsync(Preferences.HeatKey, Arg.Any<CancellationToken>()).Returns("Spicy");
-        storage.GetItemAsStringAsync(Preferences.HostKey, Arg.Any<CancellationToken>()).Returns("Roastmaster");
-        storage.GetItemAsStringAsync(Preferences.AsrKey, Arg.Any<CancellationToken>()).Returns("on");
-        storage.GetItemAsStringAsync(Preferences.DetailKey, Arg.Any<CancellationToken>()).Returns("on");
-        var next = new Preferences(storage);
-        await next.InitializeAsync();
-        next.Effects.Should().BeTrue();
-        next.Heat.Should().Be(TopicField.Heat.Spicy);
-        next.Host.Should().Be(HostPersonaId.Roastmaster);
-        next.OnDeviceAsr.Should().BeTrue();
-        next.Detailed.Should().BeTrue();
+        var prefs = new Preferences();
+        prefs.Effects.Should().BeTrue();
+        prefs.Detailed.Should().BeTrue();
+        prefs.Heat.Should().Be(TopicField.Heat.Medium);
+        prefs.Host.Should().Be(HostPersonaId.Referee);
+        prefs.OnDeviceAsr.Should().BeFalse("it downloads a forty-megabyte model");
 
         foreach (var (heard, used) in new (string?, string?)[] { (" the bins are yours ", "the bins are yours"), (null, null), ("   ", null) })
         {

@@ -1,4 +1,3 @@
-using Blazored.LocalStorage;
 using Microsoft.JSInterop;
 
 namespace PoFightJudge.Client.Services;
@@ -107,75 +106,22 @@ public static class Sfx
 /// The choice is stored under the same key <c>js/sfx.js</c> reads for itself at load. That duplication is on
 /// purpose: silence cannot be applied retroactively, so the browser has to know before .NET can tell it.
 /// </remarks>
-public sealed class SfxInterop(IJSRuntime js, ILocalStorageService storage)
+public sealed class SfxInterop(IJSRuntime js)
 {
     public const string Play = "PoSfx.play";
     public const string Arm = "PoSfx.arm";
     public const string SetMuted = "PoSfx.setMuted";
     public const string Duck = "PoSfx.duck";
-    public const string GetVolume = "PoSfx.volume";
     public const string SetVolume = "PoSfx.setVolume";
 
-    public const string StorageKey = "pofightjudge:sound";
-    public const string On = "on";
-    public const string Off = "off";
-
-    /// <summary>Sound is on unless somebody has turned it off: this app talks out loud by design.</summary>
-    public bool IsOn { get; private set; } = true;
-
-    /// <summary>The level everything plays at — effects and voices alike — as a percentage. The browser keeps it.</summary>
-    public int Volume { get; private set; } = 100;
-
-    public async Task SetVolumeAsync(int percent, CancellationToken ct = default)
-    {
-        Volume = Math.Clamp(percent, 0, 100);
-        await BestEffort.JsAsync(() => js.InvokeVoidAsync(SetVolume, ct, Volume / 100.0));
-    }
-
-    /// <summary>Reads the stored choice and tells the browser about it. Safe when storage is blocked.</summary>
+    /// <summary>
+    /// Sound is always on at full volume: there is no switch for it any more. A mute or a level an older build kept
+    /// in this browser is overwritten here, so nobody is left stuck with a setting they can no longer reach.
+    /// </summary>
     public async Task InitializeAsync(CancellationToken ct = default)
     {
-        try
-        {
-            var stored = await storage.GetItemAsStringAsync(StorageKey, ct);
-            IsOn = !string.Equals(stored?.Trim('"'), Off, StringComparison.Ordinal);
-        }
-        catch (Exception ex) when (ex is JSException or InvalidOperationException)
-        {
-            // Storage blocked or not ready — sound stays on, which is what js/sfx.js decided too.
-        }
-
-        await ApplyAsync(IsOn, persist: false, ct);
-        try
-        {
-            Volume = (int)Math.Round(await js.InvokeAsync<double>(GetVolume, ct) * 100);
-        }
-        catch (Exception ex) when (ex is JSException or InvalidOperationException)
-        {
-            // No script here (a test host, or a browser with nothing to play through): full volume, as before.
-            Volume = 100;
-        }
-    }
-
-    public Task ToggleAsync(CancellationToken ct = default) => ApplyAsync(!IsOn, persist: true, ct);
-
-    private async Task ApplyAsync(bool on, bool persist, CancellationToken ct)
-    {
-        IsOn = on;
-        await BestEffort.JsAsync(() => js.InvokeVoidAsync(SetMuted, ct, !on));
-        if (!persist)
-        {
-            return;
-        }
-
-        try
-        {
-            await storage.SetItemAsStringAsync(StorageKey, on ? On : Off, ct);
-        }
-        catch (Exception ex) when (ex is JSException or InvalidOperationException)
-        {
-            // Applied for this page at least; it will not be remembered for the next one.
-        }
+        await BestEffort.JsAsync(() => js.InvokeVoidAsync(SetMuted, ct, false));
+        await BestEffort.JsAsync(() => js.InvokeVoidAsync(SetVolume, ct, 1.0));
     }
 
     /// <summary>
