@@ -59,7 +59,8 @@
   align-content: start;
 }
 
-.transcript:empty { display: none; }
+.transcript:empty,
+.transcript[hidden] { display: none; }
 
 .your-turn {
   display: grid;
@@ -196,6 +197,12 @@
 
   .your-turn,
   .judging,
-  .failure,
-  .play > ::deep .verdict { grid-column: 2; }
+  .failure { grid-column: 2; }
+
+  /* The ruling has the floor to itself: the last line is gone by then, so it sits centred under the stage. */
+  .play > ::deep .verdict {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: min(100%, 48rem);
+  }
 }

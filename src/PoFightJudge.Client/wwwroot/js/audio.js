@@ -148,6 +148,42 @@ const PoAudio = (() => {
     return await ctx.decodeAudioData(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
   }
 
+  /** Where every voice is brought to: a speech RMS of about -20 dBFS, the level ordinary dialogue is mixed at. */
+  const TARGET_RMS = 0.1;
+
+  /** Never push a sample past this, however quiet the rest of the clause is. */
+  const PEAK_CEILING = 0.95;
+
+  /** Below this a stretch is a breath or a pause, not speech, and does not count towards how loud the clause is. */
+  const SPEECH_FLOOR = 0.01;
+
+  /** The most a quiet clause is lifted (+18 dB): past this it is noise being turned up, not a voice. */
+  const MAX_GAIN = 8;
+
+  /**
+   * How much to scale one decoded clause so it lands at TARGET_RMS. The providers do not agree on loudness — a Fish
+   * clone, Azure and Gemini each master their own way, and one persona can come out twice as loud as the other —
+   * so every clause is measured on its own and brought to one level before it is scheduled.
+   */
+  function gainFor(samples) {
+    // TODO(human): measure `samples` (a Float32Array, -1..1) and return the multiplier to apply.
+    return 1;
+  }
+
+  /** Scales the buffer in place: it is ours, freshly decoded, and nothing else holds it. */
+  function normalize(buffer) {
+    for (let c = 0; c < buffer.numberOfChannels; c++) {
+      const samples = buffer.getChannelData(c);
+      const gain = gainFor(samples);
+      if (gain !== 1) {
+        for (let i = 0; i < samples.length; i++) {
+          samples[i] *= gain;
+        }
+      }
+    }
+    return buffer;
+  }
+
   return {
     /**
      * Plays one utterance immediately, replacing whatever was playing. Resolves with its duration in seconds —
@@ -173,7 +209,7 @@ const PoAudio = (() => {
         return 0;
       }
       const ctx = ensureContext();
-      const buffer = await toBuffer(ctx, base64, format);
+      const buffer = normalize(await toBuffer(ctx, base64, format));
       const source = ctx.createBufferSource();
       source.buffer = buffer;
       source.connect(inputFor(pan));

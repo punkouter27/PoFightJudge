@@ -77,7 +77,8 @@ public sealed record GenerateRoundRequest(
 public sealed record GenerateRoundResponse(string Text, string Mood, string Attitude, bool IsFake);
 
 /// <summary>Asks for the audio of a line that has already been generated.</summary>
-public sealed record RoundAudioRequest(ProfileId Speaker, string Text);
+/// <param name="Speaker">The persona whose voice speaks it; null is the judge reading the ruling back.</param>
+public sealed record RoundAudioRequest(ProfileId? Speaker, string Text);
 
 /// <summary>
 /// One fragment of a line as it is being written, off the round stream. The server emits these while the model is

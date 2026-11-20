@@ -117,20 +117,34 @@ public sealed class WatchEndpoints : ICarterModule
     }
 
     /// <summary>
+    /// The judge's voice: belongs to neither side, and is not in either role's pool, so it never sounds like one of
+    /// the two people it is ruling on. Gemini's "Orus" is its firm voice; Azure maps it into the lower register.
+    /// </summary>
+    internal static readonly TtsSettings JudgeVoice = new(Pitch: 1.0, Speed: 1.0, VoiceName: "Orus");
+
+    /// <summary>
     /// The same audio, clause by clause as NDJSON, so playback can start on the first phrase instead of the whole
     /// line. Each object carries its own format: the provider chain can fall back mid-line.
     /// </summary>
     private static async Task StreamRoundAudioAsync(HttpContext http, RoundAudioRequest request, IProfileRepository profiles, CachingTtsService voice, CancellationToken ct)
     {
-        var persona = await profiles.GetByIdAsync(request.Speaker, ct);
-        if (persona is null)
+        TtsSettings settings;
+        if (request.Speaker is not { } speaker)
+        {
+            settings = JudgeVoice;
+        }
+        else if (await profiles.GetByIdAsync(speaker, ct) is { } persona)
+        {
+            settings = persona.TtsSettings;
+        }
+        else
         {
             http.Response.StatusCode = StatusCodes.Status404NotFound;
             return;
         }
 
         http.Response.ContentType = "application/x-ndjson";
-        await foreach (var chunk in voice.GenerateTtsStreamAsync(request.Text, persona.TtsSettings, ct))
+        await foreach (var chunk in voice.GenerateTtsStreamAsync(request.Text, settings, ct))
         {
             await WriteLineAsync(http, new RoundAudioChunkDto(chunk.Index, chunk.Audio.Base64, chunk.Audio.Format, chunk.IsLast), ct);
         }

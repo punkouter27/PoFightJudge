@@ -4,6 +4,7 @@ using PoFightJudge.Client.Layout.Components;
 using PoFightJudge.Client.Services;
 using PoFightJudge.Shared.Identifiers;
 using PoFightJudge.Shared.Models;
+using PoFightJudge.Shared.Validators;
 
 namespace PoFightJudge.Client.Features.Watch;
 
@@ -534,6 +535,7 @@ public sealed partial class WatchPlay : IAsyncDisposable
             await Task.Yield();
             await Particles.BurstAsync(StageSelector, ParticleInterop.Confetti, WinnerCorner, ct);
             await LightAsync(ct);
+            await ReadRulingAsync(_verdict, ct);
         }
         catch (ApiException ex)
         {
@@ -545,6 +547,32 @@ public sealed partial class WatchPlay : IAsyncDisposable
         }
 
         StateHasChanged();
+    }
+
+    /// <summary>
+    /// The judge reads the ruling out from the middle of the stage, in a voice that is neither side's (no speaker on
+    /// the request). A voice that fails leaves the ruling on the card, which is where it was going to be anyway.
+    /// </summary>
+    private async Task ReadRulingAsync(VerdictResponse verdict, CancellationToken ct)
+    {
+        var winner = verdict.Winner.Length == 0 ? null : NameOfSide(verdict.Winner);
+        var said = $"{RulingCard.Headline(winner)} {verdict.Verdict}".Trim();
+        if (said.Length > WatchLimits.MaxLineLength)
+        {
+            said = said[..WatchLimits.MaxLineLength];
+        }
+
+        try
+        {
+            await foreach (var chunk in Api.StreamRoundAudioAsync(new RoundAudioRequest(null, said), ct))
+            {
+                await Audio.EnqueueAsync(chunk.Audio, AudioInterop.Centre, ct);
+            }
+        }
+        catch (Exception ex) when (ex is ApiException or HttpRequestException)
+        {
+            // The ruling is printed; the voice is a bonus.
+        }
     }
 
     /// <summary>

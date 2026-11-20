@@ -140,7 +140,8 @@ public sealed class WatchPlayTests : BunitContext, IAsyncLifetime
 
         await cut.WaitForAssertionAsync(() => cut.FindAll("section.verdict").Should().HaveCount(1), TimeSpan.FromSeconds(10));
         cut.Find(".transcript").GetAttribute("data-lines").Should().Be("6", "each side gets its three rounds");
-        cut.FindAll("article.line").Should().ContainSingle("only the line just said is on the page, so the page stays one screen");
+        cut.Find(".transcript").HasAttribute("hidden").Should().BeTrue("once the judge rules, the ruling has the floor on its own");
+        cut.FindAll("article.line").Should().BeEmpty("the last line is not left under the ruling");
         _asked.Select(a => a.Speaker).Should().Equal(
             [WatchTurns.Husband, WatchTurns.Wife, WatchTurns.Husband, WatchTurns.Wife, WatchTurns.Husband, WatchTurns.Wife],
             "the husband opens and the two alternate");
@@ -152,12 +153,15 @@ public sealed class WatchPlayTests : BunitContext, IAsyncLifetime
         cut.Markup.Should().Contain("Matthew", "the ruling names the winner rather than printing initials alone");
 
         // The stage cue is voiced but not printed.
-        cut.FindAll("article.line p").Select(p => p.TextContent).Should().Equal(
-            ["line 6"], "the cue is for the voice, not the page, and the page shows the last line only");
-        _api.ReceivedCalls()
+        cut.Markup.Should().NotContain("(seething)", "the cue is for the voice, not the page");
+        var voiced = _api.ReceivedCalls()
             .Where(c => string.Equals(c.GetMethodInfo().Name, nameof(IApiClient.StreamRoundAudioAsync), StringComparison.Ordinal))
-            .Select(c => ((RoundAudioRequest)c.GetArguments()[0]!).Text)
+            .Select(c => (RoundAudioRequest)c.GetArguments()[0]!)
+            .ToList();
+        voiced.Where(r => r.Speaker is not null).Select(r => r.Text)
             .Should().NotBeEmpty().And.OnlyContain(t => t.EndsWith("(seething)", StringComparison.Ordinal), "the voice still gets the cue");
+        voiced.Where(r => r.Speaker is null).Should().ContainSingle("the judge reads the ruling back, in nobody's voice")
+            .Which.Text.Should().StartWith("Matthew took it.");
     }
 
     [Fact(Timeout = 60_000)]
