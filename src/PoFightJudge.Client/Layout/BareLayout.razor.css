@@ -12,3 +12,8 @@
   min-width: 0;
   padding-bottom: var(--po-space-7);
 }
+
+@media (max-width: 48rem) {
+  /* The stamp follows the page on a phone (po-tokens.css), so no room is kept for it. */
+  .po-bare-main { padding-bottom: var(--po-space-2); }
+}

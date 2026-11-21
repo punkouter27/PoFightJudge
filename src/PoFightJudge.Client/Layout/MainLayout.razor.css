@@ -17,10 +17,10 @@
   padding-bottom: var(--po-space-7);
 }
 
-@media (max-width: 40rem) {
+@media (max-width: 48rem) {
   .content {
-    /* The bottom nav (3.75rem, --po-stamp-lift) and the build stamp lifted above it. */
-    padding-bottom: calc(var(--po-space-7) + var(--po-stamp-lift, 0px) + var(--po-safe-b));
+    /* On a phone the stamp is in the column under the page (po-tokens.css), and it keeps itself above the bottom nav. */
+    padding-bottom: var(--po-space-2);
   }
 }
 

@@ -56,7 +56,9 @@ h1 {
 
 @media (max-width: 40rem) {
   .po-shell {
-    padding-block: var(--po-space-4) calc(var(--po-space-7) + var(--po-safe-b));
+    /* The build stamp follows the page on a phone (po-tokens.css) and clears the bottom nav itself, so the shell
+       keeps only its own breathing room at the bottom. */
+    padding-block: var(--po-space-4) var(--po-space-4);
     padding-inline: max(var(--po-space-4), var(--po-safe-l)) max(var(--po-space-4), var(--po-safe-r));
   }
 
