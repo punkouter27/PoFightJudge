@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using PoFightJudge.Api.Features.Auth;
 using PoFightJudge.Shared;
 using PoFightJudge.Shared.Configuration;
+using PoFightJudge.Shared.Diagnostics;
 using PoFightJudge.Shared.Models;
 
 namespace PoFightJudge.E2EAPI;
@@ -21,19 +22,19 @@ public partial class HealthTests(ApiFactory factory)
     }
 
     [Fact]
-    public async Task Diag_requires_authentication_and_neither_diag_report_leaks_a_value()
+    public async Task Admin_diag_requires_authentication_and_neither_diag_report_leaks_a_value()
     {
         // Anonymous → 401
         {
             using var client = factory.CreateClient();
-            (await client.GetAsync(ApiRoutes.Diag.Url)).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            (await client.GetAsync(ApiRoutes.Diag.AdminUrl)).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
         }
 
         // Signed in (Test environment, no admin requirement) → presence only
         {
             using var client = factory.CreateClient();
             client.DefaultRequestHeaders.Add(FakeAuthOptions.UserHeader, "diag-user");
-            var response = await client.GetAsync(ApiRoutes.Diag.Url);
+            var response = await client.GetAsync(ApiRoutes.Diag.AdminUrl);
             response.StatusCode.Should().Be(HttpStatusCode.OK);
 
             var body = await response.Content.ReadAsStringAsync();
@@ -51,7 +52,7 @@ public partial class HealthTests(ApiFactory factory)
             dto.Flags.Keys.Should().BeEquivalentTo(Toggles.All);
         }
 
-        // Anonymous /api/health/details, which the /diag page reads: names and states, never a value.
+        // Anonymous /api/diag (the Po web standard's DiagReportDto), which the /diag page reads: plain words, never a value.
         {
             // Endpoints a leak would echo: the storage hosts, plus the Azure OpenAI host appsettings.json already carries.
             using var host = factory.WithWebHostBuilder(b => b
@@ -59,7 +60,7 @@ public partial class HealthTests(ApiFactory factory)
                 .UseSetting(ConfigKeys.Storage.BlobEndpoint, "https://leaksentinel.blob.core.windows.net/"));
             using var client = host.CreateClient();
 
-            var response = await client.GetAsync(ApiRoutes.Health.DetailsUrl);
+            var response = await client.GetAsync(ApiRoutes.Diag.Url);
             response.StatusCode.Should().Be(HttpStatusCode.OK);
             var body = await response.Content.ReadAsStringAsync();
 
@@ -72,10 +73,15 @@ public partial class HealthTests(ApiFactory factory)
             GuidPattern().IsMatch(body).Should().BeFalse("no tenant, subscription or client id");
             EmailPattern().IsMatch(body).Should().BeFalse();
 
-            var report = await response.Content.ReadFromJsonAsync<HealthReportDto>();
+            var report = await response.Content.ReadFromJsonAsync<DiagReportDto>();
             report!.Environment.Should().Be(ApiFactory.Environment);
-            report.Checks.Where(c => c.Category == HealthCategory.Service).Should().Contain(c => c.Name == "AI provider" && c.Purpose != null);
-            report.Checks.Where(c => c.LatencyMs != null).Should().OnlyContain(c => c.Category == HealthCategory.Storage || c.Category == HealthCategory.Service);
+            report.Version.Should().MatchRegex(@"^\d{6}$", "the BuildVersion stamp");
+            report.Status.Should().BeOneOf("Healthy", "Degraded", "Unhealthy");
+            report.Checks[0].Should().Match<DiagCheckDto>(c => c.Name == "api" && c.Group == "api" && c.Status == "Healthy");
+            report.Checks.Select(c => c.Group).Should().OnlyContain(g => g == "api" || g == "data" || g == "service");
+            report.Checks.Select(c => c.Status).Should().OnlyContain(s => s == "Healthy" || s == "Degraded" || s == "Unhealthy");
+            report.Checks.Should().Contain(c => c.Group == "data" && c.Name == "storage");
+            report.Checks.Should().Contain(c => c.Group == "service" && c.Label == "AI provider" && c.Purpose.Length > 0);
         }
     }
 

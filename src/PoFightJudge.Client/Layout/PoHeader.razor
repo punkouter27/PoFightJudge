@@ -1,5 +1,9 @@
+@inject NavigationManager Nav
+@implements IDisposable
+
 @* The Po shell header (Po web standard), on every page, signed in AND signed out: the app name top-left; top-right
-   the signed-in email (or the Sign in link), then the one settings gear. Styled by .po-header* in po-tokens.css.
+   the signed-in email (or the one Sign in button, except on the sign-in page itself, whose own button is the way in),
+   then the one settings gear. Styled by .po-header* and .po-link-btn in po-tokens.css.
    Everything the old settings panel held (sound, effects, the host, sign out, …) is on /settings, where the gear goes. *@
 <header class="po-header">
     <a class="po-header__title" href="/">
@@ -10,13 +14,28 @@
     <div class="po-header__actions">
         <AuthorizeView>
             <Authorized>
-                @{ var who = AccountMenu.Describe(context.User); }
-                <span class="po-header__email" title="@who.Email">@who.Email</span>
+                @if (AccountMenu.EmailOf(context.User) is { } email)
+                {
+                    <span class="po-header__email" title="@email">@email</span>
+                }
             </Authorized>
             <NotAuthorized>
-                <a class="signin" href="login">Sign in</a>
+                @if (!OnLogin)
+                {
+                    <a class="po-link-btn filled small" href="login">Sign in</a>
+                }
             </NotAuthorized>
         </AuthorizeView>
         <a class="po-header__settings" href="/settings" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></a>
     </div>
 </header>
+
+@code {
+    private bool OnLogin => Nav.ToBaseRelativePath(Nav.Uri).Split('?', '#')[0].Equals("login", StringComparison.OrdinalIgnoreCase);
+
+    protected override void OnInitialized() => Nav.LocationChanged += OnLocationChanged;
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+}

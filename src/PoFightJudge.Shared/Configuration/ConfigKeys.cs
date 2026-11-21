@@ -150,6 +150,6 @@ public static class Toggles
     /// <summary>Content-addressed blob cache of synthesized speech. Off is what a prompt-tuning session wants.</summary>
     public const string TtsCache = $"{Section}:TtsCache";
 
-    /// <summary>Reported by <c>/api/diag</c> and <c>/api/health/details</c>, so a running app can say what it is set to.</summary>
+    /// <summary>Reported by <c>/api/diag/admin</c>, so a running app can say what it is set to.</summary>
     public static readonly IReadOnlyList<string> All = [UseFakes, UseAzurite, TtsCache];
 }

@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using PoFightJudge.Shared;
+using PoFightJudge.Shared.Diagnostics;
 using PoFightJudge.Shared.Identifiers;
 using PoFightJudge.Shared.Models;
 
@@ -34,7 +35,7 @@ namespace PoFightJudge.Mobile.Services;
 [JsonSerializable(typeof(ShareResponse))]
 [JsonSerializable(typeof(SharedMatchDto))]
 [JsonSerializable(typeof(RecordedFightRequest))]
-[JsonSerializable(typeof(DiagDto))]
+[JsonSerializable(typeof(DiagReportDto))]
 [JsonSerializable(typeof(byte[]))]
 [JsonSerializable(typeof(string))]
 internal sealed partial class MobileJsonContext : JsonSerializerContext;
@@ -57,7 +58,7 @@ public sealed class ApiClient(HttpClient http, MobileConfig config)
 
     public Task<bool> LogoutAsync() => SendAsync(ct => http.PostAsync(U(ApiRoutes.Auth.Logout), null, ct));
 
-    public Task<DiagDto?> GetDiagAsync() => ReadAsync(ct => http.GetAsync(U(ApiRoutes.Diag.Url), ct), Json.DiagDto);
+    public Task<DiagReportDto?> GetDiagAsync() => ReadAsync(ct => http.GetAsync(U(ApiRoutes.Diag.Url), ct), Json.DiagReportDto);
 
     // ── FIGHT ──
     public async Task<(MatchId? Id, string? Problem)> StartFightAsync(CreateFightRequest request)

@@ -13,23 +13,21 @@ public static class ApiRoutes
 
     public static class Health
     {
-        /// <summary>Liveness + readiness (storage, configuration, AI reachability) — the deploy gate and the E2E probe.</summary>
+        /// <summary>Readiness (storage, configuration) — the E2E probe.</summary>
         public const string Url = $"{ApiPrefix}/health";
 
-        public const string DetailsSegment = "/details";
-        public const string DetailsUrl = $"{Url}{DetailsSegment}";
-
-        /// <summary>The pair every Po web app answers: readiness (the same checks as <see cref="Url"/>) and bare liveness.</summary>
+        /// <summary>The Po web standard's pair: readiness (the same checks as <see cref="Url"/>) and bare liveness (X-Commit).</summary>
         public const string PlatformUrl = "/health";
         public const string LiveUrl = "/health/live";
     }
 
     public static class Diag
     {
+        /// <summary>Anonymous: the Po web standard's DiagReportDto, read by the /diag "System status" page.</summary>
         public const string Url = $"{ApiPrefix}/diag";
 
-        /// <summary>Anonymous: the /api/health/details checks with their states as words, for the Po developer window.</summary>
-        public const string StatusUrl = $"{Url}/status";
+        /// <summary>Signed in (admin in Production): model ids, toggles, AI latency and token tables (DiagDto).</summary>
+        public const string AdminUrl = $"{Url}/admin";
     }
 
     public static class Features

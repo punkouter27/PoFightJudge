@@ -18,10 +18,9 @@ public class AuthTests(ApiFactory factory)
     // Static files and the Blazor host itself are public by design and are identified by their metadata, not listed.
     private static readonly string[] AnonymousAllowList =
     [
-        "/api/diag/status",
+        "/api/diag",
         "/api/features",
         "/api/health",
-        "/api/health/details",
         "/api/profiles/{id}/face",
         "/api/shared/{token}",
         "/api/{**path}",

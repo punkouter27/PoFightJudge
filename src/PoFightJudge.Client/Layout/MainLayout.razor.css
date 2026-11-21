@@ -19,7 +19,8 @@
 
 @media (max-width: 40rem) {
   .content {
-    padding-bottom: calc(3.75rem + var(--po-safe-b) + var(--po-space-2));
+    /* The bottom nav (3.75rem, --po-stamp-lift) and the build stamp lifted above it. */
+    padding-bottom: calc(var(--po-space-7) + var(--po-stamp-lift, 0px) + var(--po-safe-b));
   }
 }
 

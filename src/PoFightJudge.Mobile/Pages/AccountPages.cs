@@ -1,4 +1,5 @@
 using PoFightJudge.Mobile.Services;
+using PoFightJudge.Shared.Diagnostics;
 using PoFightJudge.Shared.Models;
 
 namespace PoFightJudge.Mobile.Pages;
@@ -116,8 +117,8 @@ public sealed class SettingsPage(ApiClient api, Session session, MobileConfig co
             }),
             Ui.Secondary("System status", async () =>
             {
-                DiagDto? d = await api.GetDiagAsync();
-                diag.Text = d is null ? "Can't reach the API." : $"{d.Status} · {d.Environment} · AI {(d.FakeAi ? "stand-in" : d.Gemini)} · tables {d.TableStorage} · blobs {d.BlobStorage}";
+                DiagReportDto? d = await api.GetDiagAsync();
+                diag.Text = d is null ? "Can't reach the API." : $"{d.Status} · {d.Environment} · v{d.Version} · {string.Join(" · ", d.Checks.Select(c => $"{c.Label}: {c.Status}"))}";
             }),
             diag)));
         body.Add(Ui.Muted($"v{AppInfo.Current.VersionString}"));

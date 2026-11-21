@@ -4,12 +4,9 @@
 <div class="shell">
     <FakeAiBanner />
     <ConnectionBanner />
-    @* The Po shell header: app name, email or Sign in, settings gear (Po web standard). No nav: Home is every
-       destination, and the name leads back to it. Not on the sign-in page: there is nowhere to go before signing in. *@
-    @if (!OnLogin)
-    {
-        <PoHeader />
-    }
+    @* The Po shell header on every page, the sign-in page too: app name, email or Sign in, settings gear (Po web
+       standard). No nav: Home is every destination, and the name leads back to it. *@
+    <PoHeader />
     <main class="content" id="main">
         @* One unhandled render exception used to drop the whole app to index.html's error strip, which offers a
            reload and loses whatever was in progress. The boundary keeps the shell and the banner. *@
@@ -28,7 +25,10 @@
             </ErrorContent>
         </ErrorBoundary>
     </main>
-    <BottomNav />
+    @* Every bottom-nav destination needs a signed-in player, so a signed-out visitor is not offered them. *@
+    <AuthorizeView>
+        <Authorized><BottomNav /></Authorized>
+    </AuthorizeView>
     <BuildVersion />
     <RadzenDialog />
     <RadzenTooltip />
@@ -37,8 +37,6 @@
 </div>
 
 @code {
-    private bool OnLogin => Nav.ToBaseRelativePath(Nav.Uri).Split('?', '#')[0].Equals("login", StringComparison.OrdinalIgnoreCase);
-
     [Inject] private SfxInterop Sound { get; set; } = default!;
 
     /// <summary>

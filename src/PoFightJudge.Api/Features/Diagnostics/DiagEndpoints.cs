@@ -8,13 +8,13 @@ using PoFightJudge.Shared.Models;
 namespace PoFightJudge.Api.Features.Diagnostics;
 
 /// <summary>
-/// Authenticated diagnostics: environment, readiness, which providers are configured (presence, never values), the
+/// Authenticated diagnostics at /api/diag/admin (the anonymous /api/diag is HealthEndpoints' DiagReportDto): environment, readiness, which providers are configured (presence, never values), the
 /// model ids in use, the toggles as set, and the AI latency/token tables. Admin-only in Production.
 /// </summary>
 public sealed class DiagEndpoints : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app) =>
-        app.MapGet(ApiRoutes.Diag.Url, (HttpContext ctx, IConfiguration config, IHostEnvironment env, StartupHealthState health, AiLatencyTracker latency) =>
+        app.MapGet(ApiRoutes.Diag.AdminUrl, (HttpContext ctx, IConfiguration config, IHostEnvironment env, StartupHealthState health, AiLatencyTracker latency) =>
         {
             if (env.IsProduction() && !ctx.User.IsAdmin())
             {

@@ -1,7 +1,7 @@
 namespace PoFightJudge.Api.Common;
 
 /// <summary>
-/// Masking helpers shared by the diagnostics surfaces (/api/diag and /api/health/details). Centralised so a new
+/// Masking helpers shared by the diagnostics surfaces (/api/diag/admin). Centralised so a new
 /// diagnostic view cannot accidentally ship an unmasked secret — every caller goes through the same code path.
 /// </summary>
 public static class SecretMasker

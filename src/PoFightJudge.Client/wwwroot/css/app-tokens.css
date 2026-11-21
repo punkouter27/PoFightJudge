@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    PoFightJudge app tokens — the "Broadcast" system (SPEC §14), on the Po web standard.
 
-   css/po-tokens.css (the Po web standard, the same file in every Po web app, loaded FIRST) owns the look: Inter
+   css/po-tokens.css (the Po web standard's tokens and shell, owned by this repo, loaded FIRST) owns the look: Inter
    body, Space Grotesk headings, the indigo accent, the light/dark palette that follows the device, the radii and
    the spacing ladder. This file never redefines one of those --po-* tokens; it adds the ones only this app has
    (players, tiers, glass, motion, page widths) and aliases its own colour names to the estate's:

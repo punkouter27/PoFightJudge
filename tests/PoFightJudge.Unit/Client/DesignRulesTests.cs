@@ -102,8 +102,8 @@ public partial class DesignRulesTests
             .Select(f => Path.GetRelativePath(ClientRoot, f));
         pages.Should().BeEmpty("anything a person operates is a Radzen component");
 
-        // po-tokens.css is the Po web standard's own file, the same in every Po web app (an owner decision): it alone
-        // asks the device for its colour scheme, and it carries the estate's breakpoints, not this app's.
+        // po-tokens.css carries the Po web standard's tokens and shell (an owner decision): it alone asks the device
+        // for its colour scheme, and it carries the shell's breakpoints, not this app's.
         var sheets = StyleSheets()
             .Where(f => !string.Equals(Path.GetFileName(f), EstateTokens, StringComparison.Ordinal))
             .ToDictionary(f => Path.GetRelativePath(ClientRoot, f), File.ReadAllText, StringComparer.Ordinal);
@@ -113,7 +113,7 @@ public partial class DesignRulesTests
             .Should().BeSubsetOf(["40rem", "48rem", "64rem"], "there are three breakpoints and no fourth");
     }
 
-    /// <summary>The Po web standard's token file: copied verbatim into every Po web app, never edited here.</summary>
+    /// <summary>The Po web standard's token and shell file (this repo owns it).</summary>
     private const string EstateTokens = "po-tokens.css";
 
     /// <summary>Classes the JavaScript layer adds to an element, which therefore never appear in the markup.</summary>

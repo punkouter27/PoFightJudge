@@ -1,52 +1,10 @@
 namespace PoFightJudge.Shared.Models;
 
-/// <summary>Outcome of a single health probe.</summary>
-public enum HealthState
-{
-    /// <summary>Reachable / configured as expected.</summary>
-    Ok,
-
-    /// <summary>Optional dependency is absent — the app still runs.</summary>
-    NotConfigured,
-
-    /// <summary>Reachable but not in a fully healthy state.</summary>
-    Degraded,
-
-    /// <summary>Required dependency is unreachable or unconfigured.</summary>
-    Failed,
-}
-
-/// <summary>Grouping used by the /diag page to lay out its sections.</summary>
-public enum HealthCategory
-{
-    /// <summary>A data store the app reads and writes (Table and Blob storage), probed live.</summary>
-    Storage,
-
-    /// <summary>An external dependency: AI provider, Key Vault, sign-in, required settings.</summary>
-    Service,
-
-    /// <summary>Presence (never the raw value) of configuration.</summary>
-    Configuration,
-
-    /// <summary>Runtime feature flags.</summary>
-    Feature,
-}
-
-/// <summary>
-/// One row of the health report. <see cref="Detail"/> is plain English written server-side — never a secret, a URI,
-/// a path or an exception message. <see cref="Purpose"/> says in one line what the dependency is for, and
-/// <see cref="LatencyMs"/> is how long a live probe took (null for a presence-only row).
-/// </summary>
-public sealed record HealthCheckDto(string Name, HealthState State, string Detail, HealthCategory Category, string? Purpose = null, double? LatencyMs = null);
-
-/// <summary>Full connection/configuration status, rendered by the /diag page. Anonymous, so presence only.</summary>
-public sealed record HealthReportDto(string Environment, HealthState Overall, DateTimeOffset Timestamp, IReadOnlyList<HealthCheckDto> Checks);
-
-/// <summary>Model ids in use per operation, as reported by /api/diag.</summary>
+/// <summary>Model ids in use per operation, as reported by /api/diag/admin.</summary>
 public sealed record ModelIdsDto(string Round, string Judge, string Profile, string Tts, string Live, string Transcribe, string TurnTranscribe, string Voice);
 
 /// <summary>
-/// What <c>/api/diag</c> reports: environment, readiness, provider presence and the model ids in use. Presence only —
+/// What <c>/api/diag/admin</c> reports: environment, readiness, provider presence and the model ids in use. Presence only —
 /// never a secret value. Both ends read this one record, so a field added here cannot go missing on the other side.
 /// </summary>
 public sealed record DiagDto(
