@@ -19,6 +19,7 @@ public sealed class HealthEndpoints : ICarterModule
 {
     public const string ReadyTag = "ready";
     public const string AiTag = "ai";
+    public const string ServiceTag = "service";
 
     public void AddRoutes(IEndpointRouteBuilder app)
     {
@@ -76,23 +77,24 @@ public sealed class HealthEndpoints : ICarterModule
                 null));
         }
 
-        checks.Add(AiProvider(env, config));
-        checks.Add(Configured(
-            "key-vault",
-            "Key Vault",
-            "Keeps the app's secrets (API keys) out of the code.",
-            config[ConfigKeys.KeyVault.Uri],
-            "Connected at startup.",
-            "Not used here; settings come from local files.",
-            env));
-        checks.Add(Configured(
-            "sign-in",
-            "Microsoft sign-in",
-            "Lets people sign in with a Microsoft account.",
-            config[ConfigKeys.AzureAd.ClientId],
-            "Microsoft sign-in is set up.",
-            "Microsoft sign-in is not set up here; the guest door is used instead.",
-            env));
+        checks.Add(AiProvider(env, config, report));
+
+        // A service that is configured is probed live (DiagnosticsServiceExtensions); one that is not is named here, so
+        // the page still lists every external service the app can use.
+        if (!report.Entries.ContainsKey("key-vault"))
+        {
+            checks.Add(NotConfigured("key-vault", "Not used here; settings come from local files.", env));
+        }
+
+        if (!report.Entries.ContainsKey("sign-in"))
+        {
+            checks.Add(NotConfigured("sign-in", "Microsoft sign-in is not set up here; the guest door is used instead.", env));
+        }
+
+        if (!report.Entries.ContainsKey("app-insights"))
+        {
+            checks.Add(NotConfigured("app-insights", "Not used here; logs stay on this machine.", env));
+        }
 
         var worst = checks.Any(c => c.Status == Unhealthy) ? Unhealthy
             : checks.Any(c => c.Status == Degraded) ? Degraded
@@ -112,6 +114,10 @@ public sealed class HealthEndpoints : ICarterModule
         "storage" => ("data", "Table and Blob storage", "Saves profiles, matches, recordings and faces."),
         "configuration" => ("service", "Required settings", "Checks the keys the app needs to run are present."),
         "gemini-reachable" => ("service", "Google Gemini", "The AI service used when Azure OpenAI is not set up."),
+        "azure-openai" => ("service", "Azure OpenAI", "Writes the arguments, voices the fighters and judges the fights."),
+        "key-vault" => ("service", "Key Vault", "Keeps the app's secrets (API keys) out of the code."),
+        "sign-in" => ("service", "Microsoft sign-in", "Lets people sign in with a Microsoft account."),
+        "app-insights" => ("service", "Application Insights", "Collects errors and usage so problems can be found."),
         _ => ("service", name, "A dependency the app checks on."),
     };
 
@@ -126,30 +132,44 @@ public sealed class HealthEndpoints : ICarterModule
         _ => entry.Exception is not null ? "It did not answer in time." : "It did not answer as expected.",
     };
 
-    /// <summary>Which AI is answering: the stand-ins, Azure OpenAI or Gemini. Named, never its endpoint.</summary>
-    private static DiagCheckDto AiProvider(IHostEnvironment env, IConfiguration config)
+    /// <summary>
+    /// Which AI is answering — the stand-ins, Azure OpenAI or Gemini, named, never its endpoint — and how that one's
+    /// live probe went, so the row is never a hard-coded "fine".
+    /// </summary>
+    private static DiagCheckDto AiProvider(IHostEnvironment env, IConfiguration config, HealthReport report)
     {
         const string Purpose = "Writes the arguments, voices the fighters and judges the fights.";
-        var detail = DiagEndpoints.IsFakeAi(env, config) ? "Stand-in AI: canned answers, nothing is sent out."
-            : string.IsNullOrWhiteSpace(config[ConfigKeys.Ai.AzureOpenAiEndpoint]) ? "Google Gemini."
-            : "Azure OpenAI.";
-        return new DiagCheckDto("ai-provider", "service", "AI provider", Healthy, Purpose, detail, 0, null);
+        if (DiagEndpoints.IsFakeAi(env, config))
+        {
+            return new DiagCheckDto("ai-provider", "service", "AI provider", Healthy, Purpose, "Stand-in AI: canned answers, nothing is sent out.", 0, null);
+        }
+
+        var (probe, name) = string.IsNullOrWhiteSpace(config[ConfigKeys.Ai.AzureOpenAiEndpoint])
+            ? ("gemini-reachable", "Google Gemini")
+            : ("azure-openai", "Azure OpenAI");
+        if (!report.Entries.TryGetValue(probe, out var entry))
+        {
+            return new DiagCheckDto("ai-provider", "service", "AI provider", Unhealthy, Purpose, $"{name}: not checked.", 0, "Its address is not set up.");
+        }
+
+        return new DiagCheckDto("ai-provider", "service", "AI provider", entry.Status.ToString(), Purpose, $"{name}: {Plain(entry.Status)}",
+            Math.Round(entry.Duration.TotalMilliseconds, 1), entry.Status == HealthStatus.Healthy ? null : Problem(probe, entry));
     }
 
     /// <summary>
-    /// A service switched on by configuration: Healthy when set; when unset, Healthy outside Production (the local
-    /// stand-in is used) and Unhealthy in Production, which always needs it.
+    /// A service that is not configured, so nothing was probed: Healthy outside Production (the local stand-in is used)
+    /// and Unhealthy in Production, which always needs it (Application Insights only degrades).
     /// </summary>
-    private static DiagCheckDto Configured(string name, string label, string purpose, string? value, string set, string unset, IHostEnvironment env)
+    private static DiagCheckDto NotConfigured(string name, string unset, IHostEnvironment env)
     {
-        if (!string.IsNullOrWhiteSpace(value))
+        var (group, label, purpose) = Describe(name);
+        if (!env.IsProduction())
         {
-            return new DiagCheckDto(name, "service", label, Healthy, purpose, set, 0, null);
+            return new DiagCheckDto(name, group, label, Healthy, purpose, unset, 0, null);
         }
 
-        return env.IsProduction()
-            ? new DiagCheckDto(name, "service", label, Unhealthy, purpose, "Not set up.", 0, "Production needs it, and it is not configured.")
-            : new DiagCheckDto(name, "service", label, Healthy, purpose, unset, 0, null);
+        var status = name == "app-insights" ? Degraded : Unhealthy;
+        return new DiagCheckDto(name, group, label, status, purpose, "Not set up.", 0, "Production needs it, and it is not configured.");
     }
 
     private static string Plain(HealthStatus status) => status switch
