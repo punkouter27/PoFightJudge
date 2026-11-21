@@ -24,26 +24,52 @@ followed by the PoFightJudge-specific operating detail.
 - **CI/CD:** One workflow (`.github/workflows/deploy.yml`) that checks formatting, builds Release, runs Unit tests,
   publishes, deploys to `app-pofightjudge2`, and verifies `/health/live` `X-Commit`.
 
+### Approved deviations from the standard
+
+| Since | Deviation | Decided in |
+| --- | --- | --- |
+| 2026-09-06 | Outside Production the sign-in page keeps a "Continue as Guest (Dev)" button beside "Sign in with Microsoft"; Production shows only the Microsoft button | `5ada637` (T09); kept by the fleet audit 2026-11-21 (`6be2537`) |
+| 2026-09-07 | `FormSparklines` drawn as a hand-made SVG polyline, not a Radzen chart (display only, nothing to operate) | `2274381` (T47) |
+| 2026-09-08 | Azure names predate the naming rule: `app-pofightjudge2`, `stpofightjudge2`, `asp-pofightjudge-f1` in RG `PoFightJudge`; renaming means recreating, so they stay | first release 2026-09-08 (see Still outstanding) |
+| 2026-11-18 | `.po-card` outlines use `--po-border-strong`, not `--po-border` (1.3:1 hairline on white) | Po web standard 261118; `PaletteContrastTests` checks the pair |
+| 2026-11-21 | Phones (<= 48rem): the `vYYMMDD` stamp is the last item in the shell column, still bottom-right, not fixed over content | Po standard v2, `6be2537` |
+
+/diag has no row that is off or degraded on purpose: every configured service is probed live (`0c91616`), and a
+service with no configuration shows as "not set up".
+
 ## 2. Concurrent work
 
 - Only `master` exists locally and on GitHub.
 - Before every commit and every push: `git fetch origin && git rebase --autostash origin/master`.
-- Stage only your own files (`git add <paths>`); never `git add -A` / `git add .`; inspect `git diff --cached`.
+- Stage only named paths (`git add <paths>`); never `git add -A` / `git add .`; inspect `git diff --cached`.
+- One heavy process at a time: never run two headless-browser runs (E2EUI, `ScreenshotRunner`, Playwright checks of
+  the live site) at once, here or alongside another repo's.
 - Keep recent owner decisions in commit history; never revert or reformat unrelated changes.
 - Do not commit or sync from the IDE while an agent is working in this folder.
-- Ask before renaming or deleting Azure resources or rewriting git history.
+- Push policy: a normal session pushes only when the owner types `commit and sync` (see Session rules). An
+  owner-authorised fleet audit run may push after every local check in section 3 has passed, then watches the
+  deploy (`gh run watch`) and confirms `/health/live` `X-Commit`.
+- Ask before renaming or deleting Azure resources or rewriting git history (no force-push, no rebase of pushed commits).
 
 ## 3. Verification
 
-| Check | Command | Notes |
-| --- | --- | --- |
-| Format | `dotnet format PoFightJudge.slnx --verify-no-changes` | Must exit 0 |
-| Build | `dotnet build PoFightJudge.slnx -c Release` | Zero warnings (`TreatWarningsAsErrors=true`) |
-| Unit tests | `dotnet test tests/PoFightJudge.Unit -c Release --no-build` | Fast, no I/O (100 cases) |
-| Integration tests | `dotnet test tests/PoFightJudge.Integration -c Release --no-build` | Uses Docker (Testcontainers Azurite); live AI tests skip without `GEMINI_API_KEY` |
-| E2E API tests | `dotnet test tests/PoFightJudge.E2EAPI -c Release --no-build` | In-memory API + FakeAuth (25 cases) |
-| E2E UI tests | `dotnet test tests/PoFightJudge.E2EUI -c Release --no-build` | Playwright Chromium; deployed-site smoke skips without `POFIGHTJUDGE_SMOKE_URL` |
-| Live check | `curl -sI https://app-pofightjudge2.azurewebsites.net/health/live` | Check `X-Commit` header and `/api/diag` |
+Prerequisites: .NET SDK `10.0.400` (`global.json`); Docker running for Integration (Testcontainers starts Azurite);
+Playwright Chromium for E2EUI (`pwsh tests/PoFightJudge.E2EUI/bin/Release/net10.0/playwright.ps1 install chromium`
+after the build, or `./scripts/setup.ps1`). Run from the repo root, in this order (the test commands use `--no-build`):
+
+| Check | Command | Without the prerequisite | Last full run (2026-11-21) |
+| --- | --- | --- | --- |
+| Format | `dotnet format PoFightJudge.slnx --verify-no-changes` | — | exit 0 |
+| Build | `dotnet build PoFightJudge.slnx -c Release` | — | 0 warnings (`TreatWarningsAsErrors=true`) |
+| Unit | `dotnet test tests/PoFightJudge.Unit -c Release --no-build` | no I/O | 100 passed |
+| Integration | `dotnet test tests/PoFightJudge.Integration -c Release --no-build` | no Docker: storage tests skip with the Azurite reason; live Gemini/judge-eval tests skip without `GEMINI_API_KEY` | 25 passed, 2 skipped (no key) |
+| E2E API | `dotnet test tests/PoFightJudge.E2EAPI -c Release --no-build` | in-memory host + FakeAuth, nothing needed | 25 passed |
+| E2E UI | `dotnet test tests/PoFightJudge.E2EUI -c Release --no-build` | no Chromium: every test skips with "Playwright unavailable — UI tests skip"; `ScreenshotRunner` skips unless `SHOTS` is set; `DeployedSiteTests` skips unless `POFIGHTJUDGE_SMOKE_URL` is set | 23 passed, 2 skipped |
+| Deployed build (trimmed publish) | `$env:POFIGHTJUDGE_SMOKE_URL='https://app-pofightjudge2.azurewebsites.net'; dotnet test tests/PoFightJudge.E2EUI -c Release --no-build --filter "FullyQualifiedName~DeployedSiteTests"` | skips without the variable | 1 passed |
+| Live check | `curl -sI https://app-pofightjudge2.azurewebsites.net/health/live` | — | `X-Commit` = pushed SHA; `/api/diag` Healthy |
+
+E2EUI hosts the Release API in-process on Kestrel with the test environment (fake AI, FakeAuth); the trimmed,
+published client is only exercised by the `DeployedSiteTests` row above, against the deployment.
 
 ---
 
@@ -192,10 +218,8 @@ Each was a deliberate decision made while building; the commit that made it says
 | T146 | the 2P host as a radio list (keyboard + screen reader as one choice) | a `RadzenDropDown` of the same items | the same single, keyboard-operable choice in one line instead of 210 px, which is what lets a desktop show the whole 2P setup at once |
 | T204 | Gemini as the one AI provider (SPEC §2) | Azure OpenAI on `po-aiservices-shared2` behind the same seams, chosen by `Ai:AzureOpenAiEndpoint`; Gemini stays for an empty endpoint. Also touched outside the AI slices: `StorageServiceExtensions` (shares its `TokenCredential`), `DiagEndpoints.IsFakeAi`, `GeminiClaimChecker`'s prompt wording | the Gemini account's prepaid credit ran out; the Azure resource was already paid for, and reaching it with the app identity keeps a key out of Key Vault |
 | T208 (2026-11-17) | client validation and inline errors on every submitting form, with tests | the 2P setup, CPU/1P setup and fighter rename on Shared validators; `CreateProfileRequestValidatorTests` became `Shared/FormValidatorTests` (one fact for every form validator), and the refused-start check rides in `FightSetupTests`' existing theory | Unit sat at its 100-case cap and E2EAPI at 25; the new rules are covered without raising either |
-| Po web standard (261118) | card outlines on `--po-border` | `.po-card` outlines on `--po-border-strong`; `PaletteContrastTests` checks that pair | the estate's `--po-border` (po-tokens.css, an owner decision, not edited here) is a 1.3:1 hairline on white, under the outline floor |
 | — | face uploads decoded and re-encoded on the server with ImageSharp | the browser crops to a 512 px PNG (`js/face.js`); the server checks the PNG header and size, and decodes nothing | every ImageSharp 3.x has open advisories (three high), the fixes are 4.1.2+ only, and 4.x will not build without a paid-for licence key |
 | Phone app (261118) | FIGHT is live-only, recorded on the server from the hub | plus `POST /api/fights/recorded` (`RecordedFightEndpoints`, `RecordedFightRequest`/`RecordedTurnDto` in `LiveModels`, `ApiRoutes.Fights.Recorded*`), its E2EAPI case folded into `AnalysisTests`' "argued" fact | a phone with no signal must still be able to have the fight and be judged later; E2EAPI sat at its 25-case cap, and a recorded fight being read into the same records is the decision that fact already makes |
-| Po standard v2 (261121) | stamp fixed bottom-right everywhere | on phones (<= 48rem) the `vYYMMDD` stamp is the last item in the shell's column, still bottom-right, with the bottom padding it used to need given back | a badge fixed over a scrolling page sits on whatever passes under it; the sign-in page shows only the title and the sign-in button. `WatchFlowTests`/`GridOnAPhoneTests` now assert the owner's 07f0e4b (no line under the ruling) and 3813f95 (podium, no roster) layouts |
 
 ## Still outstanding
 
