@@ -33,7 +33,7 @@ public class WatchFlowTests(AppFixture app)
 
         (await verdict.InnerTextAsync()).Should().NotBeNullOrWhiteSpace();
         (await page.EvaluateAsync<int>(AppFixture.LinesSaid)).Should().Be(6, "three rounds each, no slap");
-        (await page.Locator("article.line").CountAsync()).Should().Be(1, "only the line just said is on the page");
+        (await page.Locator("article.line").CountAsync()).Should().Be(0, "once the judge rules the last line is gone and the ruling has the floor (07f0e4b)");
         (await verdict.InnerTextAsync()).Should().ContainEquivalentOf("took it", "the ruling says who took it, and innerText carries the display font uppercase");
         if (await verdict.Locator("h2").InnerTextAsync() is var headline && !headline.Contains("NOBODY", StringComparison.OrdinalIgnoreCase))
         {

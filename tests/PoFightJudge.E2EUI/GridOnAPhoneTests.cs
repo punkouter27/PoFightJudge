@@ -37,8 +37,9 @@ public class GridOnAPhoneTests(AppFixture app)
 
             if (string.Equals(route, "/fighters", StringComparison.Ordinal))
             {
-                // Somebody is on the card, or this page is an empty state and says nothing about its grid.
-                (await page.Locator(".roster .po-stacked").CountAsync()).Should().BeGreaterThan(0, "two people have fought");
+                // Somebody is on the card, or this page is an empty state and says nothing about its grid. The card is
+                // the podium since the roster list went (3813f95).
+                (await page.Locator(".podium .podium-link").CountAsync()).Should().BeGreaterThan(0, "two people have fought");
                 (await page.Locator(".board tbody tr").CountAsync()).Should().BeGreaterThan(0, "both have two games, so the board is drawn");
             }
 

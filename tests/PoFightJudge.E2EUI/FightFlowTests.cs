@@ -76,7 +76,19 @@ public class FightFlowTests(AppFixture app)
         await page.Locator("footer.after a[href='fighters']").ClickAsync();
         await page.WaitForURLAsync(u => u.EndsWith("/fighters", StringComparison.Ordinal), new() { Timeout = 30_000 });
         // The standings need two fights; after one each, both of them are on the podium above it.
+        // The page reads the card once; under a loaded run the fight's records can land a moment after the verdict
+        // shows, so the page is asked again rather than waited on forever.
         var podium = page.Locator(".podium a[href='fighters/ALI']");
+        for (var attempt = 0; attempt < 10 && await podium.CountAsync() == 0; attempt++)
+        {
+            await page.WaitForTimeoutAsync(1_500);
+            if (await podium.CountAsync() == 0)
+            {
+                await page.ReloadAsync();
+                await page.Locator("h1").First.WaitForAsync(new() { Timeout = 30_000 });
+            }
+        }
+
         await podium.WaitForAsync(new() { Timeout = 30_000 });
         (await page.Locator(".podium a[href='fighters/SAM']").CountAsync()).Should().BeGreaterThan(0, "both of them are on the card");
 

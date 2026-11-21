@@ -17,7 +17,9 @@ followed by the PoFightJudge-specific operating detail.
   (device theme). Title upper-left, signed-in email upper-right, `vYYMMDD` lower-right (no overlap on mobile). Sign-in
   page shows title and sign-in control only, with no nav until signed in.
 - **API & auth:** Minimal API feature modules (`src/PoFightJudge.Api/Features/*`), Serilog, `/health/live` (`X-Commit`),
-  `/health`, `/api/diag` (`DiagReportDto`) + anonymous `/diag` UI page ("System status" in plain words). Auth is
+  `/health`, `/api/diag` (`DiagReportDto`) + anonymous `/diag` UI page ("System status" in plain words), which probes
+  every configured external service live (storage, Azure OpenAI, Gemini, Key Vault, Microsoft sign-in, Application
+  Insights) and names the ones that are not set up. Auth is
   Microsoft Entra ID (FakeAuth/guest cookie outside Production).
 - **CI/CD:** One workflow (`.github/workflows/deploy.yml`) that checks formatting, builds Release, runs Unit tests,
   publishes, deploys to `app-pofightjudge2`, and verifies `/health/live` `X-Commit`.
@@ -193,6 +195,7 @@ Each was a deliberate decision made while building; the commit that made it says
 | Po web standard (261118) | card outlines on `--po-border` | `.po-card` outlines on `--po-border-strong`; `PaletteContrastTests` checks that pair | the estate's `--po-border` (po-tokens.css, an owner decision, not edited here) is a 1.3:1 hairline on white, under the outline floor |
 | — | face uploads decoded and re-encoded on the server with ImageSharp | the browser crops to a 512 px PNG (`js/face.js`); the server checks the PNG header and size, and decodes nothing | every ImageSharp 3.x has open advisories (three high), the fixes are 4.1.2+ only, and 4.x will not build without a paid-for licence key |
 | Phone app (261118) | FIGHT is live-only, recorded on the server from the hub | plus `POST /api/fights/recorded` (`RecordedFightEndpoints`, `RecordedFightRequest`/`RecordedTurnDto` in `LiveModels`, `ApiRoutes.Fights.Recorded*`), its E2EAPI case folded into `AnalysisTests`' "argued" fact | a phone with no signal must still be able to have the fight and be judged later; E2EAPI sat at its 25-case cap, and a recorded fight being read into the same records is the decision that fact already makes |
+| Po standard v2 (261121) | stamp fixed bottom-right everywhere | on phones (<= 48rem) the `vYYMMDD` stamp is the last item in the shell's column, still bottom-right, with the bottom padding it used to need given back | a badge fixed over a scrolling page sits on whatever passes under it; the sign-in page shows only the title and the sign-in button. `WatchFlowTests`/`GridOnAPhoneTests` now assert the owner's 07f0e4b (no line under the ruling) and 3813f95 (podium, no roster) layouts |
 
 ## Still outstanding
 
