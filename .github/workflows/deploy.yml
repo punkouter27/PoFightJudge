@@ -1,6 +1,6 @@
 name: Build & Deploy
 
-# The one workflow in every Po .NET web repo: check formatting, build, run the Unit tier, publish,
+# Build & Deploy workflow: check formatting, build, run the Unit tier, publish,
 # deploy to App Service, confirm the new build is the one answering. A red check stops the deploy
 # and the live site keeps its last good build. Integration, E2E and Bicep run locally, not here.
 #

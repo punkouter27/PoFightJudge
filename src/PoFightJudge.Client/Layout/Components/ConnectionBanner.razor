@@ -17,7 +17,7 @@ else if (Connection.IsDegraded)
     <div class="banner degraded" role="status" aria-live="polite">
         <RadzenIcon Icon="warning" />
         <span>The server is up but not configured to do anything. An argument cannot be started right now.</span>
-        <RadzenLink Path="status" Text="What is wrong" />
+        <RadzenLink Path="diag" Text="What is wrong" />
     </div>
 }
 
@@ -39,7 +39,7 @@ else if (Connection.IsDegraded)
         _checking = true;
         try
         {
-            await Api.GetHealthDetailsAsync();
+            await Api.GetDiagAsync();
         }
         catch (HttpRequestException)
         {

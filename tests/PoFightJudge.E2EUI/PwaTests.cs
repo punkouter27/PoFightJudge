@@ -30,7 +30,7 @@ public class PwaTests(AppFixture app)
         root.GetProperty("display").GetString().Should().Be("standalone", "an installed app opens in its own window");
         root.GetProperty("start_url").GetString().Should().Be("/");
         root.GetProperty("name").GetString().Should().Be("PoFightJudge");
-        root.GetProperty("theme_color").GetString().Should().Be("#0b0d12", "the window chrome matches the dark default");
+        root.GetProperty("theme_color").GetString().Should().Be("#4f46e5", "the window chrome matches the Po indigo accent");
 
         var icons = root.GetProperty("icons").EnumerateArray().ToList();
         icons.Select(i => i.GetProperty("sizes").GetString()).Should().Contain(["192x192", "512x512"]);

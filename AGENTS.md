@@ -1,7 +1,49 @@
-# AGENTS.md — how this repository is worked on
+# AGENTS.md — PoFightJudge
 
 Written for whoever (or whatever) picks the work up next. [README.md](README.md) says what the app is and how to
-run it. This file is the operating detail that does not live there.
+run it. This file has three core sections first — the standard, concurrent work rules, and exact verification commands —
+followed by the PoFightJudge-specific operating detail.
+
+## 1. Standard
+
+> This repo owns every file in it. Nothing here is generated from, synced with, or required to stay identical to
+> another repository. Only Azure resources in the `PoShared` resource group may be shared.
+
+- **Layout & build:** `PoFightJudge.slnx`, `global.json` (.NET `10.0.400`, `latestFeature`), `.editorconfig`,
+  `Directory.Build.props` (`Nullable=enable`, `TreatWarningsAsErrors=true`, `PoBuildStamp` emitting `BuildVersion`),
+  and Central Package Management (`Directory.Packages.props`).
+- **UI & shell:** Radzen Blazor components only, consistent layout, NotFound page, loading/empty/error states,
+  FluentValidation with inline errors (no browser `alert`/`confirm`/`prompt`), >= 4.5:1 text contrast in light & dark
+  (device theme). Title upper-left, signed-in email upper-right, `vYYMMDD` lower-right (no overlap on mobile). Sign-in
+  page shows title and sign-in control only, with no nav until signed in.
+- **API & auth:** Minimal API feature modules (`src/PoFightJudge.Api/Features/*`), Serilog, `/health/live` (`X-Commit`),
+  `/health`, `/api/diag` (`DiagReportDto`) + anonymous `/diag` UI page ("System status" in plain words). Auth is
+  Microsoft Entra ID (FakeAuth/guest cookie outside Production).
+- **CI/CD:** One workflow (`.github/workflows/deploy.yml`) that checks formatting, builds Release, runs Unit tests,
+  publishes, deploys to `app-pofightjudge2`, and verifies `/health/live` `X-Commit`.
+
+## 2. Concurrent work
+
+- Only `master` exists locally and on GitHub.
+- Before every commit and every push: `git fetch origin && git rebase --autostash origin/master`.
+- Stage only your own files (`git add <paths>`); never `git add -A` / `git add .`; inspect `git diff --cached`.
+- Keep recent owner decisions in commit history; never revert or reformat unrelated changes.
+- Do not commit or sync from the IDE while an agent is working in this folder.
+- Ask before renaming or deleting Azure resources or rewriting git history.
+
+## 3. Verification
+
+| Check | Command | Notes |
+| --- | --- | --- |
+| Format | `dotnet format PoFightJudge.slnx --verify-no-changes` | Must exit 0 |
+| Build | `dotnet build PoFightJudge.slnx -c Release` | Zero warnings (`TreatWarningsAsErrors=true`) |
+| Unit tests | `dotnet test tests/PoFightJudge.Unit -c Release --no-build` | Fast, no I/O (100 cases) |
+| Integration tests | `dotnet test tests/PoFightJudge.Integration -c Release --no-build` | Uses Docker (Testcontainers Azurite); live AI tests skip without `GEMINI_API_KEY` |
+| E2E API tests | `dotnet test tests/PoFightJudge.E2EAPI -c Release --no-build` | In-memory API + FakeAuth (25 cases) |
+| E2E UI tests | `dotnet test tests/PoFightJudge.E2EUI -c Release --no-build` | Playwright Chromium; deployed-site smoke skips without `POFIGHTJUDGE_SMOKE_URL` |
+| Live check | `curl -sI https://app-pofightjudge2.azurewebsites.net/health/live` | Check `X-Commit` header and `/api/diag` |
+
+---
 
 ## Identity and history
 
@@ -55,8 +97,7 @@ configuration and is answered where it is asked. `/api/features` tells the clien
 - **`TimeProvider`, never `DateTime.UtcNow`.** Also banned at build time.
 - **Radzen for anything a person operates.** `DesignRulesTests` greps the `.razor` files for raw `<button>`,
   `<input>`, `<select>` and `<textarea>`.
-- **The theme follows the device (Po web standard, an owner decision).** `css/po-tokens.css` (the estate's file,
-  identical in every Po web app) is the only stylesheet that asks `prefers-color-scheme`; this app's own colours are
+- **The theme follows the device (Po web standard, an owner decision).** `css/po-tokens.css` (owned by this repo) is the only stylesheet that asks `prefers-color-scheme`; this app's own colours are
   `light-dark()` or aliases of its `--po-*` tokens, and there is no toggle and no `data-theme`. `DesignRulesTests`
   refuses the query anywhere else and a fourth breakpoint, and `PaletteContrastTests` checks contrast in both themes.
 - **Never weaken a test to make it pass.** A failing test is reported as failing.
@@ -224,9 +265,9 @@ the judge has no order-bias correction: there was no bias to correct.
   corner: the UTC date of the HEAD commit, stamped into every assembly by the `PoBuildStamp` target in
   `Directory.Build.props` (`AssemblyMetadata("BuildVersion")`); `BuildStamp.Version` reads it. Never typed by hand.
 
-## CI/CD and Azure (same section in every Po repo)
+## CI/CD and Azure
 
-- A push to `master` checks formatting (`dotnet format --verify-no-changes`), builds, runs the Unit tier, then deploys (`.github/workflows/deploy.yml`, identical in every Po web repo; each repo owns its copy) and waits for `/health/live` to report the pushed commit in `X-Commit`. A red check stops the deploy and the live site keeps its last good build. Integration, E2E, Bicep and other checks run locally; there is no infra job, rollback or PR build. Nothing is deployed by hand.
+- A push to `master` checks formatting (`dotnet format --verify-no-changes`), builds, runs the Unit tier, then deploys (`.github/workflows/deploy.yml`, owned by this repo) and waits for `/health/live` to report the pushed commit in `X-Commit`. A red check stops the deploy and the live site keeps its last good build. Integration, E2E, Bicep and other checks run locally; there is no infra job, rollback or PR build. Nothing is deployed by hand.
 - Azure sign-in is GitHub OIDC (the `gh-<repo>-deploy` app). Its IDs are repo **variables** `AZURE_CLIENT_ID`, `AZURE_TENANT_ID` and `AZURE_SUBSCRIPTION_ID`, and the App Service name is `AZURE_WEBAPP_NAME`. Never move them to secrets or write resource names into workflows.
 - Every permission the app and CI need lives in `scripts/ensure-azure-access.ps1`. A role granted by hand and not added there is a bug: the next re-provision loses it.
 - The app answers `/health/live` (process up, no dependencies) and `/health` (dependencies reachable). The deploy's health gate checks both.

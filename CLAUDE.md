@@ -84,8 +84,8 @@ dotnet run --project src/PoFightJudge.Api       # https://localhost:5001
 ## Po shell (Po web standard)
 
 - `wwwroot/css/po-tokens.css`, `wwwroot/js/po-devwindow.js`, `wwwroot/js/po-dev.js`, `wwwroot/po-dev.html`, the two
-  fonts and `.github/workflows/deploy.yml` are the Po web standard's files: identical in every Po web repo, each repo
-  owning its copy. Never edit them here. App tokens live in `css/app-tokens.css` and alias the `--po-*` estate ones.
+  fonts and `.github/workflows/deploy.yml` follow the Po web standard; this repo owns its copies and may change them
+  freely. App tokens live in `css/app-tokens.css` and alias the `--po-*` tokens.
 - **Header** (`Layout/PoHeader.razor`, both layouts): the app name top-left; the signed-in email (a guest shows its
   id) or **Sign in**, then the one settings gear → `/settings` (anonymous: theme note, build, who is signed in, sign
   out). No header on `/login` or the `/authentication/*` pages.

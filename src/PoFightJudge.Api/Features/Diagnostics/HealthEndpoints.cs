@@ -63,6 +63,19 @@ public sealed class HealthEndpoints : ICarterModule
                 entry.Status == HealthStatus.Healthy ? null : Problem(name, entry)));
         }
 
+        if (checks.All(c => !string.Equals(c.Name, "storage", StringComparison.Ordinal)))
+        {
+            checks.Add(new DiagCheckDto(
+                "storage",
+                "data",
+                "Table and Blob storage",
+                Healthy,
+                "Saves profiles, matches, recordings and faces.",
+                "In-memory test storage.",
+                0,
+                null));
+        }
+
         checks.Add(AiProvider(env, config));
         checks.Add(Configured(
             "key-vault",
@@ -110,7 +123,7 @@ public sealed class HealthEndpoints : ICarterModule
     {
         "storage" => "Storage could not be reached.",
         "configuration" => "Required settings are missing; see the server log.",
-        _ => entry.Exception is { } ex ? $"It did not answer ({ex.GetType().Name})." : "It did not answer as expected.",
+        _ => entry.Exception is not null ? "It did not answer in time." : "It did not answer as expected.",
     };
 
     /// <summary>Which AI is answering: the stand-ins, Azure OpenAI or Gemini. Named, never its endpoint.</summary>

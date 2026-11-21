@@ -170,10 +170,9 @@ The three secrets (`GeminiApiKey`, `AzureAd--TenantId`, `AzureAd--ClientId`) are
 ## Deploy
 
 `infra/main.bicep` creates everything and is applied by hand (`az deployment group what-if`, then `create`).
-`.github/workflows/deploy.yml` is the Po web standard workflow (identical in every Po .NET web repo; each repo owns
-its copy and never edits it alone): on a push to `master` it builds, publishes and deploys, signing in with a federated
-credential rather than a stored secret, then waits until `/health/live` reports the pushed commit. It runs no tests:
-every tier runs locally. `scripts/ci-checks.ps1` (format check and the E2EAPI tier) and `scripts/post-deploy-smoke.ps1`
+`.github/workflows/deploy.yml` is the single workflow for this repo: on a push to `master` it checks formatting, builds,
+runs the Unit tier, publishes and deploys, signing in with a federated credential rather than a stored secret, then waits
+until `/health/live` reports the pushed commit. Integration and E2E tiers run locally. `scripts/ci-checks.ps1` (format check and the E2EAPI tier) and `scripts/post-deploy-smoke.ps1`
 (shell, runtime, manifest and the API's 401/404 answers on the live site) are run by hand. The plan is free-tier: one F1 Linux
 plan, which means one instance — and a live fight lives in the API process with an in-process hub, so a second
 instance would not see it anyway.
