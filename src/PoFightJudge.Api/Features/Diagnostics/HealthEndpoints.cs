@@ -70,9 +70,9 @@ public sealed class HealthEndpoints : ICarterModule
                 "storage",
                 "data",
                 "Table and Blob storage",
-                Healthy,
+                Off,
                 "Saves profiles, matches, recordings and faces.",
-                "In-memory test storage.",
+                "Off here: in-memory test storage.",
                 0,
                 null));
         }
@@ -108,6 +108,9 @@ public sealed class HealthEndpoints : ICarterModule
     private const string Degraded = nameof(HealthStatus.Degraded);
     private const string Unhealthy = nameof(HealthStatus.Unhealthy);
 
+    /// <summary>Switched off on purpose here (a stand-in is used): neutral, never counted as a problem.</summary>
+    public const string Off = "Off";
+
     /// <summary>A probe's registration name turned into what the page shows: its section, a label and what it is for.</summary>
     private static (string Group, string Label, string Purpose) Describe(string name) => name switch
     {
@@ -141,7 +144,7 @@ public sealed class HealthEndpoints : ICarterModule
         const string Purpose = "Writes the arguments, voices the fighters and judges the fights.";
         if (DiagEndpoints.IsFakeAi(env, config))
         {
-            return new DiagCheckDto("ai-provider", "service", "AI provider", Healthy, Purpose, "Stand-in AI: canned answers, nothing is sent out.", 0, null);
+            return new DiagCheckDto("ai-provider", "service", "AI provider", Off, Purpose, "Stand-in AI: canned answers, nothing is sent out.", 0, null);
         }
 
         var (probe, name) = string.IsNullOrWhiteSpace(config[ConfigKeys.Ai.AzureOpenAiEndpoint])
@@ -157,7 +160,7 @@ public sealed class HealthEndpoints : ICarterModule
     }
 
     /// <summary>
-    /// A service that is not configured, so nothing was probed: Healthy outside Production (the local stand-in is used)
+    /// A service that is not configured, so nothing was probed: Off outside Production (the local stand-in is used)
     /// and Unhealthy in Production, which always needs it (Application Insights only degrades).
     /// </summary>
     private static DiagCheckDto NotConfigured(string name, string unset, IHostEnvironment env)
@@ -165,7 +168,7 @@ public sealed class HealthEndpoints : ICarterModule
         var (group, label, purpose) = Describe(name);
         if (!env.IsProduction())
         {
-            return new DiagCheckDto(name, group, label, Healthy, purpose, unset, 0, null);
+            return new DiagCheckDto(name, group, label, Off, purpose, unset, 0, null);
         }
 
         var status = name == "app-insights" ? Degraded : Unhealthy;

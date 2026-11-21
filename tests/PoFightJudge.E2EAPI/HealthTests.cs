@@ -79,7 +79,11 @@ public partial class HealthTests(ApiFactory factory)
             report.Status.Should().BeOneOf("Healthy", "Degraded", "Unhealthy");
             report.Checks[0].Should().Match<DiagCheckDto>(c => c.Name == "api" && c.Group == "api" && c.Status == "Healthy");
             report.Checks.Select(c => c.Group).Should().OnlyContain(g => g == "api" || g == "data" || g == "service");
-            report.Checks.Select(c => c.Status).Should().OnlyContain(s => s == "Healthy" || s == "Degraded" || s == "Unhealthy");
+            report.Checks.Select(c => c.Status).Should().OnlyContain(s => s == "Healthy" || s == "Degraded" || s == "Unhealthy" || s == "Off");
+            // Services this host leaves unconfigured on purpose are "Off" (neutral), never a fake "Healthy".
+            report.Checks.Should().Contain(c => c.Name == "key-vault" && c.Status == "Off");
+            report.Checks.Should().Contain(c => c.Name == "ai-provider" && c.Status == "Off");
+            report.Status.Should().NotBe("Unhealthy", "an Off row is not a problem");
             report.Checks.Should().Contain(c => c.Group == "data" && c.Name == "storage");
             report.Checks.Should().Contain(c => c.Group == "service" && c.Label == "AI provider" && c.Purpose.Length > 0);
         }

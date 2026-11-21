@@ -21,7 +21,7 @@ public sealed record DiagReportDto(
 /// <param name="Name">Stable machine id (e.g. "api", "table-storage").</param>
 /// <param name="Group">"api", "data" or "service": the section it is shown in.</param>
 /// <param name="Label">What the page calls it.</param>
-/// <param name="Status">"Healthy", "Degraded" or "Unhealthy".</param>
+/// <param name="Status">"Healthy", "Degraded", "Unhealthy", or "Off" (switched off on purpose here; neutral).</param>
 /// <param name="Purpose">What the app uses it for, in one line.</param>
 /// <param name="Detail">How it is, in one line.</param>
 /// <param name="LatencyMs">How long the check took.</param>

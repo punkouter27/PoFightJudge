@@ -12,11 +12,20 @@ public class NavigationTests(AppFixture app)
     [SkippableFact]
     public async Task The_header_is_the_name_the_email_and_one_settings_gear()
     {
-        var (context, page, errors) = await app.OpenAsync(AppFixture.Desktop, "/");
+        // A test sign-in whose name is an address: the header must show exactly that address, top right.
+        const string Email = "judge.e2e@example.com";
+        var (context, page, errors) = await app.OpenAsync(AppFixture.Desktop, "/", user: Email);
         await using var _ = context;
 
         (await page.Locator("header.po-header nav, nav.po-drawer").CountAsync()).Should().Be(0, "Home is the nav");
-        (await page.Locator("header.po-header .po-header__email").CountAsync()).Should().Be(1, "who is signed in, top right");
+        var email = page.Locator("header.po-header .po-header__email");
+        (await email.CountAsync()).Should().Be(1, "who is signed in, top right");
+        (await email.InnerTextAsync()).Trim().Should().Be(Email, "the signed-in address is shown as is");
+        var emailBox = (await email.BoundingBoxAsync())!;
+        var titleBox = (await page.Locator("header.po-header .po-header__title").BoundingBoxAsync())!;
+        titleBox.X.Should().BeLessThan(AppFixture.Desktop.Width / 4f, "the app title is top left");
+        (emailBox.X + emailBox.Width).Should().BeGreaterThan(AppFixture.Desktop.Width * 3 / 4f, "the email is top right");
+        emailBox.Y.Should().BeLessThan(80, "the email is in the header");
         (await page.Locator("header.po-header .po-header__actions button").CountAsync()).Should().Be(0, "the gear is the one way to the settings");
 
         await page.GetByRole(AriaRole.Link, new() { Name = "Settings" }).ClickAsync();

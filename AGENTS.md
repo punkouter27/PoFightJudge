@@ -13,7 +13,8 @@ followed by the PoFightJudge-specific operating detail.
   `Directory.Build.props` (`Nullable=enable`, `TreatWarningsAsErrors=true`, `PoBuildStamp` emitting `BuildVersion`),
   and Central Package Management (`Directory.Packages.props`).
 - **UI & shell:** Radzen Blazor components only, consistent layout, NotFound page, loading/empty/error states,
-  FluentValidation with inline errors (no browser `alert`/`confirm`/`prompt`), >= 4.5:1 text contrast in light & dark
+  FluentValidation with inline errors (validators registered by type in `Program.cs`, never assembly scanning; no
+  browser `alert`/`confirm`/`prompt`), >= 4.5:1 text contrast in light & dark
   (device theme). Title upper-left, signed-in email upper-right, `vYYMMDD` lower-right (no overlap on mobile). Sign-in
   page shows title and sign-in control only, with no nav until signed in.
 - **API & auth:** Minimal API feature modules (`src/PoFightJudge.Api/Features/*`), Serilog, `/health/live` (`X-Commit`),
@@ -34,8 +35,13 @@ followed by the PoFightJudge-specific operating detail.
 | 2026-11-18 | `.po-card` outlines use `--po-border-strong`, not `--po-border` (1.3:1 hairline on white) | Po web standard 261118; `PaletteContrastTests` checks the pair |
 | 2026-11-21 | Phones (<= 48rem): the `vYYMMDD` stamp is the last item in the shell column, still bottom-right, not fixed over content | Po standard v2, `6be2537` |
 
-/diag has no row that is off or degraded on purpose: every configured service is probed live (`0c91616`), and a
-service with no configuration shows as "not set up".
+**Radzen exceptions** (the only non-Radzen UI, all allowed kinds): the native `<audio controls>` clip player in
+`Layout/Components/HighlightReel.razor` (native audio), and the display-only `FormSparklines` SVG (nothing to operate).
+No native file inputs, no other raw controls (`DesignRulesTests` greps for them).
+
+/diag: every configured service is probed live (`0c91616`). A service deliberately left unconfigured outside
+Production (Key Vault, Microsoft sign-in, Application Insights, in-memory storage, the stand-in AI) shows as **Off**:
+a neutral grey pill, never counted as a problem. In Production an unconfigured service is Unhealthy (App Insights: Degraded).
 
 ## 2. Concurrent work
 
@@ -64,12 +70,16 @@ after the build, or `./scripts/setup.ps1`). Run from the repo root, in this orde
 | Unit | `dotnet test tests/PoFightJudge.Unit -c Release --no-build` | no I/O | 100 passed |
 | Integration | `dotnet test tests/PoFightJudge.Integration -c Release --no-build` | no Docker: storage tests skip with the Azurite reason; live Gemini/judge-eval tests skip without `GEMINI_API_KEY` | 25 passed, 2 skipped (no key) |
 | E2E API | `dotnet test tests/PoFightJudge.E2EAPI -c Release --no-build` | in-memory host + FakeAuth, nothing needed | 25 passed |
-| E2E UI | `dotnet test tests/PoFightJudge.E2EUI -c Release --no-build` | no Chromium: every test skips with "Playwright unavailable — UI tests skip"; `ScreenshotRunner` skips unless `SHOTS` is set; `DeployedSiteTests` skips unless `POFIGHTJUDGE_SMOKE_URL` is set | 23 passed, 2 skipped |
+| Publish for E2E UI | `dotnet publish src/PoFightJudge.Api -c Release --no-build -p:WasmApplicationEnvironmentName=Test -o artifacts/e2e-publish` | — | trimmed client in `artifacts/e2e-publish/wwwroot` |
+| E2E UI (trimmed publish) | `$env:POFIGHTJUDGE_E2E_PUBLISH_DIR="$PWD/artifacts/e2e-publish"; dotnet test tests/PoFightJudge.E2EUI -c Release --no-build` | no Chromium: every test skips with "Playwright unavailable — UI tests skip"; `ScreenshotRunner` skips unless `SHOTS` is set; `DeployedSiteTests` skips unless `POFIGHTJUDGE_SMOKE_URL` is set | 23 passed, 2 skipped, three full runs in a row |
 | Deployed build (trimmed publish) | `$env:POFIGHTJUDGE_SMOKE_URL='https://app-pofightjudge2.azurewebsites.net'; dotnet test tests/PoFightJudge.E2EUI -c Release --no-build --filter "FullyQualifiedName~DeployedSiteTests"` | skips without the variable | 1 passed |
 | Live check | `curl -sI https://app-pofightjudge2.azurewebsites.net/health/live` | — | `X-Commit` = pushed SHA; `/api/diag` Healthy |
 
-E2EUI hosts the Release API in-process on Kestrel with the test environment (fake AI, FakeAuth); the trimmed,
-published client is only exercised by the `DeployedSiteTests` row above, against the deployment.
+E2EUI hosts the Release API in-process on Kestrel with the test environment (fake AI, FakeAuth). With
+`POFIGHTJUDGE_E2E_PUBLISH_DIR` set, the browser loads the trimmed, compressed client from that publish output (the same
+ILLink pass that deploys); the only difference from the deployed client is its baked-in environment name (`Test`, so
+the guest door and FakeAuth exist — .NET 10 fixes the WASM environment at publish time). Without the variable it
+falls back to the untrimmed build-time static web assets, which is not the release check.
 
 ---
 

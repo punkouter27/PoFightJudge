@@ -273,6 +273,7 @@ main {
 .po-badge--ok { background: var(--po-success-soft); border-color: var(--po-success); }
 .po-badge--warn { background: var(--po-warning-soft); border-color: var(--po-warning); }
 .po-badge--bad { background: var(--po-danger-soft); border-color: var(--po-danger); }
+.po-badge--off { border-style: dashed; } /* switched off on purpose: neutral, not a problem */
 
 /* ── /diag: "System status" — banner, then API, Data, Services; one card per check ── */
 .po-diag__head { display: flex; align-items: center; justify-content: space-between; gap: var(--po-space-3); flex-wrap: wrap; }

@@ -22,6 +22,7 @@ using PoFightJudge.Api.Features.Voice;
 using PoFightJudge.Api.Features.Watch;
 using PoFightJudge.Shared;
 using PoFightJudge.Shared.Configuration;
+using PoFightJudge.Shared.Models;
 using PoFightJudge.Shared.Validators;
 using Scalar.AspNetCore;
 using Serilog;
@@ -173,7 +174,17 @@ try
     builder.Services.AddScoped<IFighterWordsRepository, FighterWordsRepository>();
     builder.Services.AddScoped<IWatchResultRepository, WatchResultRepository>();
     builder.Services.AddPoWatch();
-    builder.Services.AddValidatorsFromAssemblyContaining<CreateProfileRequestValidator>(ServiceLifetime.Singleton);
+    // Validators by type, not assembly scanning: nothing here depends on reflection over the Shared assembly.
+    builder.Services.AddSingleton<IValidator<CreateProfileRequest>, CreateProfileRequestValidator>();
+    builder.Services.AddSingleton<IValidator<TtsSettingsDto>, TtsSettingsDtoValidator>();
+    builder.Services.AddSingleton<IValidator<CreateFightRequest>, CreateFightRequestValidator>();
+    builder.Services.AddSingleton<IValidator<WatchSetup>, WatchSetupValidator>();
+    builder.Services.AddSingleton<IValidator<MatchSide>, MatchSideValidator>();
+    builder.Services.AddSingleton<IValidator<WatchRoundDto>, WatchRoundValidator>();
+    builder.Services.AddSingleton<IValidator<GenerateRoundRequest>, GenerateRoundRequestValidator>();
+    builder.Services.AddSingleton<IValidator<RoundAudioRequest>, RoundAudioRequestValidator>();
+    builder.Services.AddSingleton<IValidator<VerdictRequest>, VerdictRequestValidator>();
+    builder.Services.AddSingleton<IValidator<RenameFighterRequest>, RenameFighterRequestValidator>();
     builder.Services.AddHostedService<StartupSecretValidator>();
     var ai = builder.Services.AddPoAi(builder.Configuration, builder.Environment);
     builder.Services.AddPoVoice(builder.Configuration, ai);

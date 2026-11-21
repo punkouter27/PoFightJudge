@@ -28,6 +28,10 @@ public sealed class AppFixture : IAsyncLifetime
 {
     public static bool RealMode => string.Equals(Environment.GetEnvironmentVariable("POFIGHTJUDGE_E2E_REAL"), "1", StringComparison.Ordinal);
 
+    /// <summary>The trimmed Release publish output the browser tests run against, when <c>POFIGHTJUDGE_E2E_PUBLISH_DIR</c> is set.</summary>
+    public static string? PublishDir =>
+        Environment.GetEnvironmentVariable("POFIGHTJUDGE_E2E_PUBLISH_DIR") is { Length: > 0 } dir ? Path.GetFullPath(dir) : null;
+
     public static readonly ViewportSize Desktop = new() { Width = 1440, Height = 900 };
 
     public static readonly ViewportSize Mobile = new() { Width = 390, Height = 844 };
@@ -53,6 +57,8 @@ public sealed class AppFixture : IAsyncLifetime
         _factory.StartServer();
 
         // The address Kestrel actually bound, not the client default (which would send the browser to :5000).
+        Console.WriteLine($"[AppFixture] client: {PublishDir ?? "build-time static web assets (set POFIGHTJUDGE_E2E_PUBLISH_DIR for the trimmed publish)"}");
+
         BaseUrl = _factory.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()?.Addresses.FirstOrDefault() is { } bound
             ? bound.Replace("[::]", "127.0.0.1", StringComparison.Ordinal).Replace("0.0.0.0", "127.0.0.1", StringComparison.Ordinal).TrimEnd('/')
             : _factory.ClientOptions.BaseAddress.ToString().TrimEnd('/');
@@ -215,7 +221,24 @@ internal sealed class HostFactory : WebApplicationFactory<Program>
         builder.UseEnvironment("Test");
         // Port 0 = whatever is free. The default :5000 collides with whichever Po* app a developer has running.
         builder.UseUrls("http://127.0.0.1:0");
-        builder.UseStaticWebAssets(); // only automatic in Development; the WASM client lives in static web assets
+        // POFIGHTJUDGE_E2E_PUBLISH_DIR = a `dotnet publish -c Release` output: the browser then loads the trimmed,
+        // compressed client that deploys (wwwroot/_framework), not the untrimmed build-time static web assets.
+        if (AppFixture.PublishDir is { } published)
+        {
+            var webRoot = Path.Combine(published, "wwwroot");
+            if (!File.Exists(Path.Combine(webRoot, "index.html")) || !Directory.Exists(Path.Combine(webRoot, "_framework")))
+            {
+                throw new InvalidOperationException($"POFIGHTJUDGE_E2E_PUBLISH_DIR='{published}' is not a publish output (no wwwroot/index.html or wwwroot/_framework).");
+            }
+
+            builder.UseContentRoot(published);
+            builder.UseWebRoot(webRoot);
+        }
+        else
+        {
+            builder.UseStaticWebAssets(); // only automatic in Development; the WASM client lives in static web assets
+        }
+
         builder.UseSetting(ConfigKeys.KeyVault.Uri, string.Empty);
         builder.UseSetting(ConfigKeys.Auth.AllowFakeAuth, "true");
         builder.UseSetting(Toggles.UseAzurite, "false");

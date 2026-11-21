@@ -31,7 +31,6 @@
     <PackageReference Include="Concentus" />
     <PackageReference Include="Concentus.Oggfile" />
     <PackageReference Include="Riok.Mapperly" PrivateAssets="all" />
-    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
     <PackageReference Include="Bogus" />
     <PackageReference Include="MinVer" PrivateAssets="all" />
   </ItemGroup>
