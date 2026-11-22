@@ -314,4 +314,4 @@ the judge has no order-bias correction: there was no bias to correct.
 - Every permission the app and CI need lives in `scripts/ensure-azure-access.ps1`. A role granted by hand and not added there is a bug: the next re-provision loses it.
 - The app answers `/health/live` (process up, no dependencies) and `/health` (dependencies reachable). The deploy's health gate checks both.
 - Tests pass on any machine: no drive-letter, temp-folder or working-directory assumptions, and no live config value hard-coded as an expected result (read it from the same config the app reads).
-- A red run on the default branch gets an ntfy push from the CI watcher in PoPunkouterSoftware. Fix it, or say why it is red.
+- Nothing alerts on a red run any more (the PoPunkouterSoftware CI watcher was dropped 2026-11-20): check `gh run list -L 1` after a push. Fix it, or say why it is red.
