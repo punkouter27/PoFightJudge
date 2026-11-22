@@ -91,7 +91,7 @@ dotnet run --project src/PoFightJudge.Api       # https://localhost:5001
   out). No header on `/login` or the `/authentication/*` pages.
 - **Theme** follows the device (`prefers-color-scheme`): no toggle, no `data-theme`; `ThemeInterop` keeps Radzen's
   material / material-dark sheet in step.
-- **/diag** (anonymous, also in Production): API / Data / Services as `.po-diag__card`s with `.po-badge--ok|warn|bad`.
+- **/diag** (anonymous, also in Production): API / Data / Services as `.po-diag__card`s with `.po-badge--ok|warn|bad|off` (Off = deliberately not set up).
 - **Tab** with nothing focused opens `/po-dev.html`: `/health/live` + `X-Commit`, and the checks from the anonymous
   `GET /api/diag/status`. `App.razor` moves focus to the h1 only after the user follows a link.
 

@@ -25,23 +25,20 @@ followed by the PoFightJudge-specific operating detail.
 - **CI/CD:** One workflow (`.github/workflows/deploy.yml`) that checks formatting, builds Release, runs Unit tests,
   publishes, deploys to `app-pofightjudge2`, and verifies `/health/live` `X-Commit`.
 
-### Approved deviations from the standard
+### Deliberate deviations
 
-| Since | Deviation | Decided in |
-| --- | --- | --- |
-| 2026-09-06 | Outside Production the sign-in page keeps a "Continue as Guest (Dev)" button beside "Sign in with Microsoft"; Production shows only the Microsoft button | `5ada637` (T09); kept by the fleet audit 2026-11-21 (`6be2537`) |
-| 2026-09-07 | `FormSparklines` drawn as a hand-made SVG polyline, not a Radzen chart (display only, nothing to operate) | `2274381` (T47) |
-| 2026-09-08 | Azure names predate the naming rule: `app-pofightjudge2`, `stpofightjudge2`, `asp-pofightjudge-f1` in RG `PoFightJudge`; renaming means recreating, so they stay | first release 2026-09-08 (see Still outstanding) |
-| 2026-11-18 | `.po-card` outlines use `--po-border-strong`, not `--po-border` (1.3:1 hairline on white) | Po web standard 261118; `PaletteContrastTests` checks the pair |
-| 2026-11-21 | Phones (<= 48rem): the `vYYMMDD` stamp is the last item in the shell column, still bottom-right, not fixed over content | Po standard v2, `6be2537` |
+| Deviation | Why | Commit sha / date | How to undo |
+| --- | --- | --- | --- |
+| Radzen exceptions: native `<audio controls>` in `Layout/Components/HighlightReel.razor`; `FormSparklines` as a hand-made SVG (display only) | native audio player; nothing to operate in a sparkline | `2274381` 2026-09-07; listed `d8e2823` 2026-11-21 | swap in Radzen controls; `DesignRulesTests` greps for any other raw control |
+| /diag shows a service left unconfigured outside Production (Key Vault, sign-in, App Insights, in-memory storage, stand-in AI) as a grey **Off** pill, not a problem; in Production it is Unhealthy (App Insights: Degraded) | dev/test hosts run offline on purpose | `0c91616`, `d8e2823` 2026-11-21 | `HealthEndpoints.NotConfigured()` |
+| Outside Production the sign-in page keeps "Continue as Guest (Dev)"; Production shows only the Microsoft button | owner decision | `5ada637` 2026-09-06, kept `6be2537` | remove the guest button |
+| Phones (<= 48rem): the `vYYMMDD` stamp is the last item in the shell column, not fixed over content | older fixed-stamp rule covered content | `6be2537` 2026-11-21 | `git revert 6be2537` |
+| `.po-card` outlines use `--po-border-strong` | `--po-border` is a 1.3:1 hairline on white | 2026-11-18 (web standard 261118) | change the token; `PaletteContrastTests` checks the pair |
+| E2E UI runs on a publish with `-p:WasmApplicationEnvironmentName=Test` | .NET 10 bakes the client environment at publish; Production has no FakeAuth | `d8e2823` 2026-11-21 | drop the flag (tests then need a real account) |
+| Azure names `app-pofightjudge2`, `stpofightjudge2`, `asp-pofightjudge-f1` predate the naming rule | renaming means recreating | 2026-09-08 | owner-approved recreate |
 
-**Radzen exceptions** (the only non-Radzen UI, all allowed kinds): the native `<audio controls>` clip player in
-`Layout/Components/HighlightReel.razor` (native audio), and the display-only `FormSparklines` SVG (nothing to operate).
-No native file inputs, no other raw controls (`DesignRulesTests` greps for them).
-
-/diag: every configured service is probed live (`0c91616`). A service deliberately left unconfigured outside
-Production (Key Vault, Microsoft sign-in, Application Insights, in-memory storage, the stand-in AI) shows as **Off**:
-a neutral grey pill, never counted as a problem. In Production an unconfigured service is Unhealthy (App Insights: Degraded).
+**Hosting:** App Service F1 (Free, `asp-pofightjudge-f1`): 60 CPU-minutes and 165 MB of data out per day, no Always On.
+Never run test suites against the live site; live checks = at most 6 page loads + /diag + X-Commit.
 
 ## 2. Concurrent work
 
@@ -59,6 +56,14 @@ a neutral grey pill, never counted as a problem. In Production an unconfigured s
 
 ## 3. Verification
 
+One command (format, Release build, E2E API, Unit):
+
+```powershell
+dotnet build PoFightJudge.slnx -c Release && ./scripts/ci-checks.ps1 && dotnet test tests/PoFightJudge.Unit -c Release --no-build
+```
+
+The full release check is the table below.
+
 Prerequisites: .NET SDK `10.0.400` (`global.json`); Docker running for Integration (Testcontainers starts Azurite);
 Playwright Chromium for E2EUI (`pwsh tests/PoFightJudge.E2EUI/bin/Release/net10.0/playwright.ps1 install chromium`
 after the build, or `./scripts/setup.ps1`). Run from the repo root, in this order (the test commands use `--no-build`):
@@ -72,7 +77,7 @@ after the build, or `./scripts/setup.ps1`). Run from the repo root, in this orde
 | E2E API | `dotnet test tests/PoFightJudge.E2EAPI -c Release --no-build` | in-memory host + FakeAuth, nothing needed | 25 passed |
 | Publish for E2E UI | `dotnet publish src/PoFightJudge.Api -c Release --no-build -p:WasmApplicationEnvironmentName=Test -o artifacts/e2e-publish` | — | trimmed client in `artifacts/e2e-publish/wwwroot` |
 | E2E UI (trimmed publish) | `$env:POFIGHTJUDGE_E2E_PUBLISH_DIR="$PWD/artifacts/e2e-publish"; dotnet test tests/PoFightJudge.E2EUI -c Release --no-build` | no Chromium: every test skips with "Playwright unavailable — UI tests skip"; `ScreenshotRunner` skips unless `SHOTS` is set; `DeployedSiteTests` skips unless `POFIGHTJUDGE_SMOKE_URL` is set | 23 passed, 2 skipped, three full runs in a row |
-| Deployed build (trimmed publish) | `$env:POFIGHTJUDGE_SMOKE_URL='https://app-pofightjudge2.azurewebsites.net'; dotnet test tests/PoFightJudge.E2EUI -c Release --no-build --filter "FullyQualifiedName~DeployedSiteTests"` | skips without the variable | 1 passed |
+| Deployed build (1 test, counts in the live budget) | `$env:POFIGHTJUDGE_SMOKE_URL='https://app-pofightjudge2.azurewebsites.net'; dotnet test tests/PoFightJudge.E2EUI -c Release --no-build --filter "FullyQualifiedName~DeployedSiteTests"` | skips without the variable | 1 passed |
 | Live check | `curl -sI https://app-pofightjudge2.azurewebsites.net/health/live` | — | `X-Commit` = pushed SHA; `/api/diag` Healthy |
 
 E2EUI hosts the Release API in-process on Kestrel with the test environment (fake AI, FakeAuth). With
