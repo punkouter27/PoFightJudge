@@ -102,6 +102,20 @@ public partial class DesignRulesTests
             .Select(f => Path.GetRelativePath(ClientRoot, f));
         pages.Should().BeEmpty("anything a person operates is a Radzen component");
 
+        // Radzen's CSS loads before the app's (js/theme.js appends it from above every app <link>), and only once: a
+        // <RadzenTheme> would inject a second copy after app.css. One layout. No browser alert/confirm/prompt.
+        var index = File.ReadAllText(Path.Combine(ClientRoot, "wwwroot", "index.html"));
+        index.IndexOf("js/theme.js", StringComparison.Ordinal).Should().BeInRange(0, index.IndexOf("rel=\"stylesheet\"", StringComparison.Ordinal),
+            "Radzen's sheet goes in ahead of the app's CSS");
+        File.ReadAllText(Path.Combine(ClientRoot, "App.razor")).Should().NotContain("<RadzenTheme");
+        Directory.EnumerateFiles(ClientRoot, "*Layout.razor", SearchOption.AllDirectories).Select(Path.GetFileName)
+            .Should().Equal(["MainLayout.razor"], "one layout");
+        Directory.EnumerateFiles(Path.Combine(ClientRoot, "wwwroot", "js"), "*.js", SearchOption.AllDirectories)
+            .Concat(Directory.EnumerateFiles(ClientRoot, "*.razor", SearchOption.AllDirectories))
+            .Where(f => BrowserDialog().IsMatch(File.ReadAllText(f)))
+            .Select(f => Path.GetRelativePath(ClientRoot, f))
+            .Should().BeEmpty("messages and questions are Radzen notifications and dialogs");
+
         // po-tokens.css carries the Po web standard's tokens and shell (an owner decision): it alone asks the device
         // for its colour scheme, and it carries the shell's breakpoints, not this app's.
         var sheets = StyleSheets()
@@ -158,7 +172,10 @@ public partial class DesignRulesTests
         return directory!.FullName;
     }
 
-    [GeneratedRegex(@"<(?:button|input|select|textarea)\b", RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 2000)]
+    [GeneratedRegex(@"(?<![\w.])(?:window\.)?(?:alert|confirm|prompt)\s*\(", RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 2000)]
+    private static partial Regex BrowserDialog();
+
+    [GeneratedRegex(@"<(?:button|input|select|textarea|table|dialog)\b", RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 2000)]
     private static partial Regex RawControl();
 
     [GeneratedRegex(@"@media[^{]*?\((?:max|min)-width:\s*(?<value>[\d.]+(?:rem|px|em))\)", RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 2000)]

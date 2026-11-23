@@ -7,11 +7,12 @@
   <meta name="theme-color" content="#f6f7fb" />
   <title>PoFightJudge</title>
   <base href="/" />
-  <!-- Po web standard tokens FIRST: self-hosted Inter + Space Grotesk, the indigo accent, the light/dark palette that
+  <!-- Radzen's sheet for the device's scheme FIRST, before any of the app's own CSS (see js/theme.js): it is appended
+       to <head> here, so everything below wins over it at equal specificity and a plain class keeps the app look. -->
+  <script src="js/theme.js"></script>
+  <!-- Po web standard tokens: self-hosted Inter + Space Grotesk, the indigo accent, the light/dark palette that
        follows the device, and the shell (header, gear, build stamp, /diag cards). -->
   <link rel="stylesheet" href="css/po-tokens.css" />
-  <!-- Radzen's sheet for the device's scheme goes in the critical path from here (see js/theme.js). -->
-  <script src="js/theme.js"></script>
   <!-- Tab with nothing focused opens the developer window (/po-dev.html). A file, not inline: the CSP is script-src 'self'. -->
   <script src="js/po-devwindow.js"></script>
   <script src="js/audio.js"></script>
@@ -27,8 +28,8 @@
   <script src="js/wake.js"></script>
   <script src="js/viewport.js"></script>
   <!-- Fonts are self-hosted (css/po-tokens.css → fonts/*.woff2): no third-party font request. Radzen's theme
-       stylesheet is appended by js/theme.js; <RadzenTheme> in App.razor owns the runtime swap, and app-tokens.css
-       bridges its variables onto the --po-* tokens. -->
+       stylesheet is the one js/theme.js put above (it also swaps it when the device flips; there is no <RadzenTheme>,
+       which would inject a second copy after these), and app-tokens.css bridges its variables onto the --po-* tokens. -->
   <link rel="stylesheet" href="css/app-tokens.css" />
   <link rel="stylesheet" href="css/po-motion.css" />
   <link rel="stylesheet" href="css/app.css" />

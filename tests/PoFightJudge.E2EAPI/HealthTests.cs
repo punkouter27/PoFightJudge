@@ -86,6 +86,10 @@ public partial class HealthTests(ApiFactory factory)
             report.Status.Should().NotBe("Unhealthy", "an Off row is not a problem");
             report.Checks.Should().Contain(c => c.Group == "data" && c.Name == "storage");
             report.Checks.Should().Contain(c => c.Group == "service" && c.Label == "AI provider" && c.Purpose.Length > 0);
+
+            // Cached (DiagReportCache): a second read inside the lifetime is the same report, not a second set of probes.
+            var again = await client.GetFromJsonAsync<DiagReportDto>(ApiRoutes.Diag.Url);
+            again!.CheckedAt.Should().Be(report.CheckedAt, "the probes run at most once per DiagReportCache.Lifetime");
         }
     }
 

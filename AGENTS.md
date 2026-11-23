@@ -12,7 +12,9 @@ followed by the PoFightJudge-specific operating detail.
 - **Layout & build:** `PoFightJudge.slnx`, `global.json` (.NET `10.0.400`, `latestFeature`), `.editorconfig`,
   `Directory.Build.props` (`Nullable=enable`, `TreatWarningsAsErrors=true`, `PoBuildStamp` emitting `BuildVersion`),
   and Central Package Management (`Directory.Packages.props`).
-- **UI & shell:** Radzen Blazor components only, consistent layout, NotFound page, loading/empty/error states,
+- **UI & shell:** Radzen Blazor components only, Radzen's CSS loaded before the app's (`js/theme.js` appends the one
+  Radzen sheet above every app `<link>` and swaps it when the device flips; no `<RadzenTheme>`), one layout
+  (`MainLayout`, the NotFound page too), NotFound page, loading/empty/error states,
   FluentValidation with inline errors (validators registered by type in `Program.cs`, never assembly scanning; no
   browser `alert`/`confirm`/`prompt`), >= 4.5:1 text contrast in light & dark
   (device theme). Title upper-left, signed-in email upper-right, `vYYMMDD` lower-right (no overlap on mobile). Sign-in
@@ -20,7 +22,8 @@ followed by the PoFightJudge-specific operating detail.
 - **API & auth:** Minimal API feature modules (`src/PoFightJudge.Api/Features/*`), Serilog, `/health/live` (`X-Commit`),
   `/health`, `/api/diag` (`DiagReportDto`) + anonymous `/diag` UI page ("System status" in plain words), which probes
   every configured external service live (storage, Azure OpenAI, Gemini, Key Vault, Microsoft sign-in, Application
-  Insights) and names the ones that are not set up. Auth is
+  Insights) with unauthenticated reachability calls, caches the report for 60 s (`DiagReportCache`), and names the
+  ones that are not set up. Auth is
   Microsoft Entra ID (FakeAuth/guest cookie outside Production).
 - **CI/CD:** One workflow (`.github/workflows/deploy.yml`) that checks formatting, builds Release, runs Unit tests,
   publishes, deploys to `app-pofightjudge2`, and verifies `/health/live` `X-Commit`.
@@ -68,15 +71,15 @@ Prerequisites: .NET SDK `10.0.400` (`global.json`); Docker running for Integrati
 Playwright Chromium for E2EUI (`pwsh tests/PoFightJudge.E2EUI/bin/Release/net10.0/playwright.ps1 install chromium`
 after the build, or `./scripts/setup.ps1`). Run from the repo root, in this order (the test commands use `--no-build`):
 
-| Check | Command | Without the prerequisite | Last full run (2026-11-21) |
+| Check | Command | Without the prerequisite | Last full run (2026-11-23) |
 | --- | --- | --- | --- |
 | Format | `dotnet format PoFightJudge.slnx --verify-no-changes` | — | exit 0 |
 | Build | `dotnet build PoFightJudge.slnx -c Release` | — | 0 warnings (`TreatWarningsAsErrors=true`) |
-| Unit | `dotnet test tests/PoFightJudge.Unit -c Release --no-build` | no I/O | 100 passed |
+| Unit | `dotnet test tests/PoFightJudge.Unit -c Release --no-build` | no I/O | 100 passed (at the cap) |
 | Integration | `dotnet test tests/PoFightJudge.Integration -c Release --no-build` | no Docker: storage tests skip with the Azurite reason; live Gemini/judge-eval tests skip without `GEMINI_API_KEY` | 25 passed, 2 skipped (no key) |
 | E2E API | `dotnet test tests/PoFightJudge.E2EAPI -c Release --no-build` | in-memory host + FakeAuth, nothing needed | 25 passed |
 | Publish for E2E UI | `dotnet publish src/PoFightJudge.Api -c Release --no-build -p:WasmApplicationEnvironmentName=Test -o artifacts/e2e-publish` | — | trimmed client in `artifacts/e2e-publish/wwwroot` |
-| E2E UI (trimmed publish) | `$env:POFIGHTJUDGE_E2E_PUBLISH_DIR="$PWD/artifacts/e2e-publish"; dotnet test tests/PoFightJudge.E2EUI -c Release --no-build` | no Chromium: every test skips with "Playwright unavailable — UI tests skip"; `ScreenshotRunner` skips unless `SHOTS` is set; `DeployedSiteTests` skips unless `POFIGHTJUDGE_SMOKE_URL` is set | 23 passed, 2 skipped, three full runs in a row |
+| E2E UI (trimmed publish) | `$env:POFIGHTJUDGE_E2E_PUBLISH_DIR="$PWD/artifacts/e2e-publish"; dotnet test tests/PoFightJudge.E2EUI -c Release --no-build` | no Chromium: every test skips with "Playwright unavailable — UI tests skip"; `ScreenshotRunner` skips unless `SHOTS` is set; `DeployedSiteTests` skips unless `POFIGHTJUDGE_SMOKE_URL` is set | 23 passed, 2 skipped, three full runs in a row (all tiers) |
 | Deployed build (1 test, counts in the live budget) | `$env:POFIGHTJUDGE_SMOKE_URL='https://app-pofightjudge2.azurewebsites.net'; dotnet test tests/PoFightJudge.E2EUI -c Release --no-build --filter "FullyQualifiedName~DeployedSiteTests"` | skips without the variable | 1 passed |
 | Live check | `curl -sI https://app-pofightjudge2.azurewebsites.net/health/live` | — | `X-Commit` = pushed SHA; `/api/diag` Healthy |
 

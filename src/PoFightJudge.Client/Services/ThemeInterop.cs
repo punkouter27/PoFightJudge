@@ -5,9 +5,9 @@ namespace PoFightJudge.Client.Services;
 
 /// <summary>
 /// The theme follows the device (Po web standard): light or dark as <c>prefers-color-scheme</c> says, with no switch
-/// and nothing stored. Our tokens follow it in CSS on their own (po-tokens.css, light-dark()); this keeps Radzen's
-/// stylesheet (<see cref="ThemeService"/>) on the matching material/material-dark sheet, at start and whenever the
-/// device flips. <c>js/theme.js</c> makes the same choice before first paint.
+/// and nothing stored. Our tokens follow it in CSS on their own (po-tokens.css, light-dark()), and <c>js/theme.js</c>
+/// owns Radzen's one stylesheet link (ahead of the app's CSS) and swaps it when the device flips. This keeps
+/// <see cref="ThemeService"/> and <see cref="IsDark"/> (shown on Settings) on the same scheme.
 /// </summary>
 public sealed class ThemeInterop(IJSRuntime js, ThemeService radzen) : IDisposable
 {
