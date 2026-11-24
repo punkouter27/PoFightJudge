@@ -62,7 +62,8 @@ dotnet run --project src/PoFightJudge.Api       # https://localhost:5001
   errors; only `CS1591` and `NU1900` are let through.
 - **Say when a lot goes.** If a prompt removes more than 100 lines of code overall, mention it.
 - **UI changes get a before/after.** Take annotated screenshots of the old and the new UI with the changes
-  marked, put them in `SCREENSHOTS/YYMMDD-feature-name.html`, and give its absolute path.
+  marked, put them in `SCREENSHOTS/YYMMDD-feature-name.html`, and give its absolute path
+  (`pwsh ./scripts/screenshots.ps1 -Feature feature-name` does it; AGENTS.md section 3).
 - **3-tier diff summary.** A code change over 20 lines ends with three summaries, strictly one sentence each: *Toddler* (the
   simple idea), *Child* (what it does), *Adult* (the technical/architectural change).
 - **Direction questions.** After a code change over 100 lines, and only when the prompt asked no questions of

@@ -88,6 +88,11 @@ dotnet test tests/PoFightJudge.E2EUI         # Playwright Chromium with a fake m
 
 `dotnet test PoFightJudge.slnx` runs all four.
 
+UI changes get a before/after page: `pwsh ./scripts/screenshots.ps1 -Feature <name>` shoots the old (`-Before`, default
+`HEAD~1`) and new build with the E2EUI `ScreenshotRunner` (local Test host, never the live site) and writes
+`SCREENSHOTS/<yyMMdd>-<name>.html` plus one annotated PNG. `SCREENSHOTS/` is git-ignored on purpose (review material,
+not source): the page is handed over by its path.
+
 ## How it is put together
 
 ```

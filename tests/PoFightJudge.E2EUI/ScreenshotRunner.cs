@@ -8,7 +8,8 @@ namespace PoFightJudge.E2EUI;
 /// against the same in-memory, fake-AI host the rest of this suite drives. A cloud session cannot be browsed, so this
 /// is how a change gets looked at before it is deployed. <c>ROUTES</c> (comma-separated names or paths) narrows it
 /// to the pages a change touched. Skipped when <c>SHOTS</c> is unset, so the suite is unaffected.
-/// <c>VIEWPORTS=desktop,phone</c> takes each page at both sizes (a phone shot is named <c>-phone</c>), and
+/// <c>VIEWPORTS=desktop,phone</c> takes each page at both sizes (a phone shot is named <c>-phone</c>; <c>DESKTOP_SIZE=1366x768</c>
+/// overrides the desktop one), and
 /// <c>SEED=1</c> loads the default cast and plays one watch through first, so the lists have something in them and
 /// the finished argument is captured as <c>watch-play</c>; then one fight is played on the fake microphone and
 /// captured as <c>fight-live</c>, <c>verdict-reveal</c> and <c>verdict</c>. <c>EFFECTS=off</c> photographs the
@@ -33,6 +34,15 @@ public sealed class ScreenshotRunner(AppFixture app, ITestOutputHelper output)
         ("login", "/login"),
     ];
 
+    /// <summary>
+    /// The desktop shot's viewport: <c>DESKTOP_SIZE=1366x768</c> (what scripts/screenshots.ps1 asks for), else the suite's
+    /// <see cref="AppFixture.Desktop"/>.
+    /// </summary>
+    private static ViewportSize DesktopSize =>
+        Environment.GetEnvironmentVariable("DESKTOP_SIZE")?.Split('x') is [var w, var h] && int.TryParse(w, out var width) && int.TryParse(h, out var height)
+            ? new ViewportSize { Width = width, Height = height }
+            : AppFixture.Desktop;
+
     [SkippableFact]
     public async Task Capture()
     {
@@ -49,7 +59,7 @@ public sealed class ScreenshotRunner(AppFixture app, ITestOutputHelper output)
 
         var sizes = (Environment.GetEnvironmentVariable("VIEWPORTS") ?? "desktop")
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(v => string.Equals(v, "phone", StringComparison.OrdinalIgnoreCase) ? (Suffix: "-phone", Size: AppFixture.Mobile) : (Suffix: string.Empty, Size: AppFixture.Desktop))
+            .Select(v => string.Equals(v, "phone", StringComparison.OrdinalIgnoreCase) ? (Suffix: "-phone", Size: AppFixture.Mobile) : (Suffix: string.Empty, Size: DesktopSize))
             .ToList();
 
         if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SEED")))
@@ -85,7 +95,7 @@ public sealed class ScreenshotRunner(AppFixture app, ITestOutputHelper output)
     /// <summary>Where the header's gear goes on a desktop: the settings page.</summary>
     private async Task MenusAsync(string folder)
     {
-        var (context, page, errors) = await app.OpenAsync(AppFixture.Desktop, "/", effects: Effects);
+        var (context, page, errors) = await app.OpenAsync(DesktopSize, "/", effects: Effects);
         try
         {
             await page.WaitForLoadStateAsync(LoadState.NetworkIdle);

@@ -81,6 +81,7 @@ after the build, or `./scripts/setup.ps1`). Run from the repo root, in this orde
 | Publish for E2E UI | `dotnet publish src/PoFightJudge.Api -c Release --no-build -p:WasmApplicationEnvironmentName=Test -o artifacts/e2e-publish` | — | trimmed client in `artifacts/e2e-publish/wwwroot` |
 | E2E UI (trimmed publish) | `$env:POFIGHTJUDGE_E2E_PUBLISH_DIR="$PWD/artifacts/e2e-publish"; dotnet test tests/PoFightJudge.E2EUI -c Release --no-build` | no Chromium: every test skips with "Playwright unavailable — UI tests skip"; `ScreenshotRunner` skips unless `SHOTS` is set; `DeployedSiteTests` skips unless `POFIGHTJUDGE_SMOKE_URL` is set | 23 passed, 2 skipped, three full runs in a row (all tiers) |
 | Deployed build (1 test, counts in the live budget) | `$env:POFIGHTJUDGE_SMOKE_URL='https://app-pofightjudge2.azurewebsites.net'; dotnet test tests/PoFightJudge.E2EUI -c Release --no-build --filter "FullyQualifiedName~DeployedSiteTests"` | skips without the variable | 1 passed |
+| Before/after page | `pwsh ./scripts/screenshots.ps1 -Feature <name> [-Before <ref>\|-BeforeDir <pngs>] [-After <ref>] [-Routes home,fighters] [-Notes '...']` | a heavy browser run (one at a time); builds + publishes each side (temp worktree for a ref), runs `ScreenshotRunner` with `VIEWPORTS=desktop,phone DESKTOP_SIZE=1366x768 EFFECTS=off`, boxes changed pixels in red, writes `SCREENSHOTS/<yyMMdd>-<name>.html` + `.png` (git-ignored; give the path) | one page + one PNG |
 | Live check | `curl -sI https://app-pofightjudge2.azurewebsites.net/health/live` | — | `X-Commit` = pushed SHA; `/api/diag` Healthy |
 
 E2EUI hosts the Release API in-process on Kestrel with the test environment (fake AI, FakeAuth). With
@@ -300,7 +301,8 @@ the judge has no order-bias correction: there was no bias to correct.
   errors; only `CS1591` and `NU1900` are let through.
 - **Say when a lot goes.** If a prompt removes more than 100 lines of code overall, mention it.
 - **UI changes get a before/after.** Take annotated screenshots of the old and the new UI with the changes
-  marked, put them in `SCREENSHOTS/YYMMDD-feature-name.html`, and give its absolute path.
+  marked, put them in `SCREENSHOTS/YYMMDD-feature-name.html`, and give its absolute path
+  (`pwsh ./scripts/screenshots.ps1 -Feature feature-name` does it; section 3).
 - **3-tier diff summary.** A code change over 20 lines ends with three summaries, strictly one sentence each: *Toddler* (the
   simple idea), *Child* (what it does), *Adult* (the technical/architectural change).
 - **Direction questions.** After a code change over 100 lines, and only when the prompt asked no questions of
