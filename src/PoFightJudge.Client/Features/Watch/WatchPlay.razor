@@ -75,10 +75,8 @@
                             @if (_recording)
                             {
                                 @* The microphone opened with the turn and closes itself on a pause. The meter is
-                                   the interface; typing instead is the one thing left to press. *@
+                                   the whole interface: there is nothing to press while it listens. *@
                                 <LevelMeter Listening="true" Caption="Listening — just talk" />
-                                <RadzenButton Text="Type it instead" Icon="keyboard" ButtonStyle="ButtonStyle.Base" Variant="Variant.Text"
-                                              Click="@StopListeningAsync" />
                             }
                             else if (_transcribing)
                             {

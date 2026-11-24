@@ -35,12 +35,6 @@
             </AuthorizeView>
             <AuthorizeView>
                 <Authorized>
-                    <div class="links">
-                        @foreach (var link in AccountMenu.Links())
-                        {
-                            <RadzenLink Path="@link.Path" Text="@link.Label" Icon="@link.Icon" />
-                        }
-                    </div>
                     @if (!HostEnvironment.IsProduction())
                     {
                         <div class="links">

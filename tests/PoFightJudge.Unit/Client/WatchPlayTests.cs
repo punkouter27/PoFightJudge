@@ -195,9 +195,17 @@ public sealed class WatchPlayTests : BunitContext, IAsyncLifetime
         _asked.Should().HaveCount(1, "the page does not write the person's line for them");
         cut.Markup.Should().Contain("Kim", "the panel addresses the person by the name they argue under");
 
-        // While it listens the turn is spoken, so there is no box taking up the panel; typing is one press away.
+        // While it listens the turn is spoken, so there is no box taking up the panel and nothing to press.
         cut.FindAll("textarea[name=line]").Should().BeEmpty("a turn that is being spoken has nothing to type into");
-        await cut.FindAll("button").Single(b => b.TextContent.Contains("Type it instead", StringComparison.Ordinal)).ClickAsync(new());
+        cut.FindAll("button").Should().NotContain(b => b.TextContent.Contains("Type it instead", StringComparison.Ordinal), "listening is voice only");
+
+        // They say something, then pause. The microphone hands back nothing usable here, so the box comes back.
+        var level = JSInterop.Setup<double>(MicInterop.Level);
+        level.SetResult(0.5);
+        await cut.InvokeAsync(() => _clock.Advance(TimeSpan.FromMilliseconds(100)));
+        await cut.WaitForAssertionAsync(() => JSInterop.Invocations.Should().Contain(i => i.Identifier == MicInterop.Level), TimeSpan.FromSeconds(10));
+        level.SetResult(0.0);
+        await cut.AdvanceUntilAsync(_clock, "textarea[name=line]", seconds: 1);
 
         // Typed, not changed: the line is published on every keystroke so the button answers straight away.
         await cut.Find("textarea[name=line]").InputAsync(new Microsoft.AspNetCore.Components.ChangeEventArgs { Value = "that is not what I said and you know it" });

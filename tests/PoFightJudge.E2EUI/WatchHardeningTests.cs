@@ -18,6 +18,10 @@ public class WatchHardeningTests(AppFixture app)
         await using var _ = context;
         await AppFixture.ListenForLinesAsync(page);
 
+        // Listening is voice only, so a typed turn is the one whose microphone could not open: refuse it here.
+        await page.AddInitScriptAsync(
+            "navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException('refused', 'NotAllowedError'));");
+
         await SeedAsync(page);
         await page.GotoAsync($"{app.BaseUrl}/1p");
         await page.Locator("div.picker").First.WaitForAsync(new() { Timeout = 30_000 });
@@ -38,10 +42,7 @@ public class WatchHardeningTests(AppFixture app)
         var innerWidth = await page.EvaluateAsync<int>("window.innerWidth");
         scrollWidth.Should().BeLessThanOrEqualTo(innerWidth, "the play screen must never scroll sideways at 390 px");
 
-        await turn.Locator(".meter--on").WaitForAsync(new() { Timeout = 30_000 });
-        (await turn.Locator("textarea[name=line]").CountAsync()).Should().Be(0, "while it listens there is no box taking up the panel");
-        await ShootAsync(page, "watch-turn-listening");
-        await turn.GetByRole(AriaRole.Button, new() { Name = "Type it instead" }).ClickAsync();
+        // The microphone was refused (see the init script above), so the turn is typed: the box is there already.
         await turn.Locator("textarea[name=line]").FillAsync("We are not having this argument again.");
         // From the keyboard: somebody who typed their answer should not have to find the button to give it.
         await turn.GetByRole(AriaRole.Button, new() { Name = "Say it" }).WaitForAsync(new() { Timeout = 10_000 });

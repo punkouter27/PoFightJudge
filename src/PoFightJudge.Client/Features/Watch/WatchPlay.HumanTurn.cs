@@ -9,7 +9,7 @@ namespace PoFightJudge.Client.Features.Watch;
 /// that mishears would otherwise put words on their record.
 /// </summary>
 /// <remarks>
-/// There is still a button to stop early, and still a box to type in. The browser's own recogniser stays on offer
+/// Listening is voice only; the box to type in comes back once the microphone stops or fails. The browser's own recogniser stays on offer
 /// where it exists: it is instant and free, and some people would rather watch words appear than talk to a meter.
 /// </remarks>
 public sealed partial class WatchPlay

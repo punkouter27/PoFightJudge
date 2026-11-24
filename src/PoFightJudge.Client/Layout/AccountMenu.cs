@@ -7,17 +7,8 @@ namespace PoFightJudge.Client.Layout;
 
 public static class AccountMenu
 {
-    public sealed record Link(string Path, string Icon, string Label);
-
     /// <param name="Email">What the Po header shows: the sign-in address, or the guest's id when there is none.</param>
     public sealed record Identity(bool IsAuthenticated, string Label, string Email);
-
-    public static IReadOnlyList<Link> Links() =>
-    [
-        new("/profiles", "theater_comedy", "Cast profiles"),
-        new("/history", "history", "History"),
-        new("/diag", "health_and_safety", "System status"),
-    ];
 
     public static Identity Describe(ClaimsPrincipal user)
     {

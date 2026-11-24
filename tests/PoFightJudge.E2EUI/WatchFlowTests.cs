@@ -99,6 +99,8 @@ public class WatchFlowTests(AppFixture app)
         // fixture into it, and a pause is what ends it. The fixture never pauses, so the test goes quiet the way a
         // person does, after a second and a half of talking: the track is muted, and the words then send themselves.
         await turn.Locator(".meter--on").WaitForAsync(new() { Timeout = 30_000 });
+        (await turn.Locator("textarea[name=line]").CountAsync()).Should().Be(0, "while it listens there is no box taking up the panel");
+        await WatchHardeningTests.ShootAsync(page, "watch-turn-listening");
         await page.WaitForTimeoutAsync(1_500);
         await page.EvaluateAsync("() => window.__streams.forEach(s => s.getAudioTracks().forEach(t => { t.enabled = false; }))");
 
