@@ -195,8 +195,8 @@ body { background: transparent; }
 /* Radzen gives an icon a box of 1em and draws the glyph at whatever the font resolves it to, and inside a button
    with a label beside it the two disagreed: a 20 px box around a 24 px glyph, on every page with such a button.
    The box sizes to what is in it instead — pinning it to --rz-icon-size fixes that one and breaks the small
-   buttons, whose icons Radzen deliberately draws smaller. !important because <RadzenTheme> injects its stylesheet
-   at runtime, after this file, which is what the rest of this section is working around too. */
+   buttons, whose icons Radzen deliberately draws smaller. !important dates from when <RadzenTheme> injected its
+   stylesheet at runtime, after this file (js/theme.js now loads it first); kept so the look does not move. */
 .rz-button .rzi {
   width: auto !important;
   min-width: 1em;
@@ -222,8 +222,8 @@ body { background: transparent; }
    them out all week" was reaching the About column as "who forgot the bins and…".
 
    The truncating class is named directly: Radzen puts `rz-text-truncate` on the cell itself, so a rule reaching it
-   through a grid-root ancestor never applied. !important because <RadzenTheme> injects its stylesheet after this
-   file. Scoped to cells, so the utility class keeps its meaning anywhere else it is used. */
+   through a grid-root ancestor never applied. !important dates from when <RadzenTheme> injected its
+   stylesheet after this file. Scoped to cells, so the utility class keeps its meaning anywhere else it is used. */
 .rz-cell-data,
 .rz-cell-data.rz-text-truncate {
   white-space: normal !important;
@@ -244,10 +244,10 @@ body { background: transparent; }
 /* ── Touch targets ──
    The size a finger needs, which is not the size the glyph needs. Icon-only buttons carry no text to widen them,
    so they are held square; the responsive menu toggle is the one control a phone cannot do without and Radzen
-   ships it at the size of its icon. Measured by TouchTargetTests rather than trusted. */
-.rz-button, .rz-navigation-item-link { min-height: 44px; }
-
-.rz-button-icon-only { min-width: 44px; }
+   ships it at the size of its icon. Measured by TouchTargetTests rather than trusted. Radzen buttons take their
+   size from --rz-button-size-* (app-tokens.css: md is 44 px; sm stays 28 px on purpose), so no .rz-button rule
+   here: now that Radzen's sheet loads first, one would win and blow every small button up to 44 px. */
+.rz-navigation-item-link { min-height: 44px; }
 
 .rz-menu-toggle {
   display: inline-flex;

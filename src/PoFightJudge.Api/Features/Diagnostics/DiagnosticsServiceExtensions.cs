@@ -15,6 +15,7 @@ public static class DiagnosticsServiceExtensions
     public static IServiceCollection AddPoDiagnostics(this IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
+        services.AddSingleton<DiagReportCache>();
         var checks = services.AddHealthChecks()
             .AddCheck<ConfigurationHealthCheck>("configuration", tags: [ReadyTagName]);
 

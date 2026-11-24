@@ -184,6 +184,7 @@ h1, h2, h3, .po-display { font-family: var(--po-font-display); letter-spacing: -
 .po-header__settings svg { width: 20px; height: 20px; }
 
 /* ── Shell: build stamp, vYYMMDD, fixed lower-right on every page ── */
+.po-footer { display: contents; }
 .po-version {
   position: fixed;
   right: max(var(--po-space-3), env(safe-area-inset-right, 0px));

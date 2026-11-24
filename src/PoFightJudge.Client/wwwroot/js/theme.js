@@ -3,12 +3,10 @@
 // The theme follows the device (prefers-color-scheme): there is no switch and no stored choice. Two jobs, both about
 // the first frame, and one for when the device flips:
 //
-//  1. Put Radzen's stylesheet for the device's scheme in the critical path. <RadzenTheme> injects it from Blazor,
-//     which is roughly 1.4 s in, and until then every Radzen component on the page is unstyled: an icon is its
-//     ligature *text*, so the menu icon measured 72 px wide instead of 24 and the whole top bar re-laid out when the
-//     sheet landed. Appended here, it downloads alongside the framework and is applied before Blazor's first render.
-//     <RadzenTheme> still owns the runtime swap (ThemeInterop follows the device); a second link to the same file is
-//     inert.
+//  1. Put Radzen's stylesheet for the device's scheme in the critical path, and BEFORE the app's own CSS: this
+//     script sits above every app <link> in index.html, so the sheet is appended ahead of them and the app's rules
+//     win at equal specificity. It is the only Radzen sheet: there is no <RadzenTheme> (that injected a second copy
+//     into <body>, after app.css, ~1.4 s in). When the device flips, the same link is pointed at the other sheet.
 //
 //  2. Colour the browser's own chrome (the theme-color meta) for the same scheme.
 (function () {
@@ -16,10 +14,15 @@
   try { dark = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) { /* no media queries: light */ }
 
   var base = '/_content/Radzen.Blazor/';
+  var href = function (isDark) { return base + 'css/' + (isDark ? 'material-dark-base.css' : 'material-base.css'); };
   var sheet = document.createElement('link');
   sheet.rel = 'stylesheet';
-  sheet.href = base + 'css/' + (dark ? 'material-dark-base.css' : 'material-base.css');
+  sheet.id = 'radzen-theme';
+  sheet.href = href(dark);
   document.head.appendChild(sheet);
+  try {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) { sheet.href = href(e.matches); });
+  } catch (e) { /* no media queries: the sheet stays as loaded */ }
 
   // The icon font is declared inside that sheet, so the browser cannot find it until the sheet parses. Asking for
   // it here means the glyphs are ready when the rules that use them arrive.

@@ -144,8 +144,8 @@ html:root {
   --rz-border-color: var(--po-border);
   --rz-input-border-color: var(--po-border);
   --rz-border-radius: var(--po-radius-md);
-  /* Radzen sizes its buttons from these, in a sheet <RadzenTheme> injects after this file at the same specificity —
-     which is why app.css asking .rz-button for a 44 px min-height lost, and the session buttons measured 36. The
+  /* Radzen sizes its buttons from these. When <RadzenTheme> injected its sheet after this file at the same
+     specificity, app.css asking .rz-button for a 44 px min-height lost, and the session buttons measured 36. The
      bridge sits on html:root, so setting the variable is what actually moves them. sm stays where it is: 28 px
      clears WCAG 2.5.8's 24, and a select bar of 44 px pills is a different design. */
   --rz-button-size-md: 2.75rem;

@@ -597,9 +597,10 @@ public sealed partial class Verdict : ComponentBase, IDisposable
 
     public void Dispose()
     {
+        // Cancelled, not disposed: the celebration may still be between awaits, and it reads _leaving.Token and
+        // _skip.Token when it wakes (a disposed source throws ObjectDisposedException there instead of answering
+        // "leaving"). Neither source has a timer, so there is nothing to release; cancelling _leaving cancels _skip.
         _leaving.Cancel();
-        _skip?.Dispose();
-        _leaving.Dispose();
 
         // This page disposes synchronously, so the canvases are let go rather than awaited. Neither call can fail
         // in a way anybody could act on.

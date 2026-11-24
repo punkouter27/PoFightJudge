@@ -13,7 +13,8 @@ namespace PoFightJudge.Api.Features.Diagnostics;
 /// (configuration, storage) — no network probes, so the deploy gate and the tests never depend on a third party being up.
 /// <c>/health/live</c> is bare liveness (the X-Commit header is added to every response in Program.cs).
 /// <c>/api/diag</c> is the anonymous <see cref="DiagReportDto"/> for the /diag "System status" page: every check,
-/// including the <c>ai</c> reachability probes, in plain words — never a value, URI, path or exception message.
+/// including the <c>ai</c> reachability probes, in plain words — never a value, URI, path or exception message — and
+/// cached for <see cref="DiagReportCache.Lifetime"/>.
 /// </summary>
 public sealed class HealthEndpoints : ICarterModule
 {
@@ -28,8 +29,9 @@ public sealed class HealthEndpoints : ICarterModule
         app.MapHealthChecks(ApiRoutes.Health.PlatformUrl, ready).AllowAnonymous().WithTags("Health");
         app.MapGet(ApiRoutes.Health.LiveUrl, () => Results.Text("Healthy")).AllowAnonymous().WithTags("Health");
 
-        app.MapGet(ApiRoutes.Diag.Url, async (HealthCheckService health, IConfiguration config, IHostEnvironment env, TimeProvider clock, CancellationToken ct) =>
-            Results.Ok(await BuildReportAsync(health, config, env, clock, ct))).AllowAnonymous().WithTags("Diagnostics");
+        // Cached (DiagReportCache.Lifetime): the page is anonymous and the host is on the F1 plan.
+        app.MapGet(ApiRoutes.Diag.Url, async (HealthCheckService health, IConfiguration config, IHostEnvironment env, TimeProvider clock, DiagReportCache cache, CancellationToken ct) =>
+            Results.Ok(await cache.GetAsync(token => BuildReportAsync(health, config, env, clock, token), ct))).AllowAnonymous().WithTags("Diagnostics");
     }
 
     /// <summary>The build stamp (UTC yyMMdd), from the one <c>BuildVersion</c> assembly metadata key.</summary>

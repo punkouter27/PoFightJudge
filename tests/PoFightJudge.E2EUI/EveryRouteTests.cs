@@ -52,8 +52,8 @@ public class EveryRouteTests(AppFixture app)
 
     /// <summary>
     /// WCAG 2.2 SC 2.5.8 (AA): everything pressable on these clears 24 × 24 CSS px on a phone. Measured, not read off
-    /// a stylesheet: Radzen sizes its buttons from <c>--rz-button-size-*</c> in a sheet <c>&lt;RadzenTheme&gt;</c>
-    /// injects after app.css, so app.css's 44 px claim once lost and the session buttons measured 36×36.
+    /// a stylesheet: Radzen sizes its buttons from <c>--rz-button-size-*</c>, and when <c>&lt;RadzenTheme&gt;</c>
+    /// injected its sheet after app.css, app.css's 44 px claim lost and the session buttons measured 36×36.
     /// </summary>
     private static readonly string[] PressRoutes = ["/", "/cpu", "/2p", "/profiles", "/fighters", "/history"];
 
@@ -86,6 +86,7 @@ public class EveryRouteTests(AppFixture app)
                         viewportHeight: window.innerHeight,
                         viewportWidth: window.innerWidth,
                         headings: [...document.querySelectorAll('h1,h2,h3,h4,h5,h6')].map(h => Number(h.tagName[1])),
+                        sheets: [...document.querySelectorAll('link[rel=stylesheet]')].map(l => new URL(l.href).pathname),
                         sideways: [...document.querySelectorAll('*')]
                             .filter(e => !e.classList.contains('po-sr-only') && e.scrollWidth > e.clientWidth + 2 && e.clientWidth > 0 && getComputedStyle(e).overflowX !== 'auto' && getComputedStyle(e).overflowX !== 'scroll')
                             .slice(0, 3)
@@ -126,6 +127,14 @@ public class EveryRouteTests(AppFixture app)
                     }
                 }
 
+                // Radzen's CSS loads before the app's, once, so a plain app class wins at equal specificity.
+                var radzen = measured.Sheets.Select((s, i) => (s, i)).Where(x => x.s.Contains("/Radzen.Blazor/css/", StringComparison.Ordinal)).Select(x => x.i).ToList();
+                var firstApp = Array.FindIndex(measured.Sheets, s => !s.Contains("/_content/", StringComparison.Ordinal));
+                if (radzen.Count != 1 || firstApp < 0 || radzen[0] > firstApp)
+                {
+                    problems.Add($"{where}: stylesheets out of order ({string.Join(", ", measured.Sheets)})");
+                }
+
                 problems.AddRange(measured.Sideways.Select(s => $"{where}: {s} overflows its own box"));
                 if (holdToTheViewport && PressRoutes.Contains(route, StringComparer.Ordinal))
                 {
@@ -151,6 +160,8 @@ public class EveryRouteTests(AppFixture app)
         public int ViewportWidth { get; set; }
 
         public int[] Headings { get; set; } = [];
+
+        public string[] Sheets { get; set; } = [];
 
         public string[] Sideways { get; set; } = [];
 
