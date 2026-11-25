@@ -46,7 +46,7 @@ model is loaded, or if it fails, the turn goes to the server as before.
 **AI provider: Azure OpenAI.** `PoFightJudge:Ai:AzureOpenAiEndpoint` points at `po-aiservices-shared2` (AI
 Foundry, resource group `PoShared`), and the model ids are its deployment names: `gpt-4.1-mini` writes the WATCH
 lines, `gpt-5-mini` judges, rewrites personas and fact-checks with web search, `gpt-4o-mini-tts` speaks,
-`gpt-4o-transcribe-diarize` transcribes, and `gpt-realtime-mini` hosts a FIGHT. There is no key: the app's
+`gpt-4o-transcribe-diarize` transcribes, and `gpt-realtime-2.1-mini` hosts a FIGHT. There is no key: the app's
 identity (`az login` locally, the web app's managed identity in Azure) holds **Cognitive Services OpenAI User** on
 the resource. The Gemini personas' voices are mapped to the nearest OpenAI voice. Two things Gemini did that Azure
 does not: the judge reads the transcript and the measurements but not the audio, and a dropped live line

@@ -46,7 +46,7 @@ public partial class HealthTests(ApiFactory factory)
             dto.Gemini.Should().Be(DiagDto.Configured);
             dto.FakeAi.Should().BeTrue("the test host keeps a placeholder key but forces the fakes with the flag");
             dto.Ready.Should().BeTrue();
-            dto.Models.Live.Should().Be("gpt-realtime-mini");
+            dto.Models.Live.Should().Be("gpt-realtime-2.1-mini");
             dto.Models.Round.Should().Be("gpt-4.1-mini");
             dto.Models.Tts.Should().Be("gpt-4o-mini-tts");
             dto.Flags.Keys.Should().BeEquivalentTo(Toggles.All);

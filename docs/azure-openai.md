@@ -13,7 +13,7 @@ them did not change.
 | `IGeminiTranscribeClient` (a whole fight) | `AzureTranscribeClient` | `gpt-4o-transcribe-diarize` | the same, `diarized_json`, in ten-minute pieces |
 | `IGeminiJudgeClient` (the FIGHT judge) | `AzureJudgeClient` | `gpt-5-mini` | through `IGeminiText`, three calls as before |
 | `IClaimChecker` (the fact check) | `AzureClaimChecker` | `gpt-5-mini` | `POST openai/v1/responses` with the `web_search` tool |
-| `IGeminiLiveClient` (the FIGHT host) | `AzureRealtimeClient` | `gpt-realtime-mini` | `wss://…/openai/v1/realtime?model=…`, GA events |
+| `IGeminiLiveClient` (the FIGHT host) | `AzureRealtimeClient` | `gpt-realtime-2.1-mini` | `wss://…/openai/v1/realtime?model=…`, GA events |
 | `IGeminiFilesClient` | `AzureRecordingFiles` | — | a temp file; Azure takes audio inline |
 
 ## Access

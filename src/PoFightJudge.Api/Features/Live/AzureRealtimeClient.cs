@@ -9,7 +9,7 @@ using PoFightJudge.Api.Features.Voice;
 namespace PoFightJudge.Api.Features.Live;
 
 /// <summary>
-/// The live host on Azure OpenAI realtime (<c>gpt-realtime-mini</c>), speaking the same <see cref="LiveServerEvent"/>s
+/// The live host on Azure OpenAI realtime (<c>gpt-realtime-2.1-mini</c>), speaking the same <see cref="LiveServerEvent"/>s
 /// the Gemini client does, so the orchestrator cannot tell them apart. The differences live here: audio goes in at
 /// 24 kHz (the room is recorded at 16), a text nudge or a tool result has to ask for a response of its own, and
 /// only one response may be running at a time, so a request made while one is running waits for it to finish.
